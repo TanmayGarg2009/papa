@@ -386,21 +386,70 @@ function renderTable(payload) {
   let sumVisiblePeOi = 0;
   let sumVisiblePeOiChg = 0;
 
-  visibleStrikes.forEach(s => {
+  // Breakdown calculations:
+  // ITM Call (Yellow Call side) = Set B strikes (< spot)
+  // OTM Call (White Call side) = Set A strikes (> spot)
+  // ITM Put (Yellow Put side) = Set A strikes (> spot)
+  // OTM Put (White Put side) = Set B strikes (< spot)
+  let sumItmCeOi = 0;
+  let sumItmCeOiChg = 0;
+  let sumOtmCeOi = 0;
+  let sumOtmCeOiChg = 0;
+
+  let sumItmPeOi = 0;
+  let sumItmPeOiChg = 0;
+  let sumOtmPeOi = 0;
+  let sumOtmPeOiChg = 0;
+
+  selectedA.forEach(s => {
     const item = strikeMap.get(s);
     if (item) {
       if (item.CE) {
-        sumVisibleCeOi += Number(item.CE.openInterest) || 0;
-        sumVisibleCeOiChg += Number(item.CE.changeinOpenInterest) || 0;
+        sumOtmCeOi += Number(item.CE.openInterest) || 0;
+        sumOtmCeOiChg += Number(item.CE.changeinOpenInterest) || 0;
       }
       if (item.PE) {
-        sumVisiblePeOi += Number(item.PE.openInterest) || 0;
-        sumVisiblePeOiChg += Number(item.PE.changeinOpenInterest) || 0;
+        sumItmPeOi += Number(item.PE.openInterest) || 0;
+        sumItmPeOiChg += Number(item.PE.changeinOpenInterest) || 0;
       }
     }
   });
 
-  // Calculate percentages for OI and OI Change sums
+  selectedB.forEach(s => {
+    const item = strikeMap.get(s);
+    if (item) {
+      if (item.CE) {
+        sumItmCeOi += Number(item.CE.openInterest) || 0;
+        sumItmCeOiChg += Number(item.CE.changeinOpenInterest) || 0;
+      }
+      if (item.PE) {
+        sumOtmPeOi += Number(item.PE.openInterest) || 0;
+        sumOtmPeOiChg += Number(item.PE.changeinOpenInterest) || 0;
+      }
+    }
+  });
+
+  // Include exact match strike if present
+  if (exactMatchStrike) {
+    const item = strikeMap.get(exactMatchStrike);
+    if (item) {
+      if (item.CE) {
+        sumItmCeOi += Number(item.CE.openInterest) || 0;
+        sumItmCeOiChg += Number(item.CE.changeinOpenInterest) || 0;
+      }
+      if (item.PE) {
+        sumItmPeOi += Number(item.PE.openInterest) || 0;
+        sumItmPeOiChg += Number(item.PE.changeinOpenInterest) || 0;
+      }
+    }
+  }
+
+  sumVisibleCeOi = sumItmCeOi + sumOtmCeOi;
+  sumVisibleCeOiChg = sumItmCeOiChg + sumOtmCeOiChg;
+  sumVisiblePeOi = sumItmPeOi + sumOtmPeOi;
+  sumVisiblePeOiChg = sumItmPeOiChg + sumOtmPeOiChg;
+
+  // Calculate percentages for overall totals
   const totalVisibleOiSum = sumVisibleCeOi + sumVisiblePeOi;
   let ceOiTotalPctStr = '-';
   let peOiTotalPctStr = '-';
@@ -417,9 +466,25 @@ function renderTable(payload) {
     peOiChgTotalPctStr = ((Math.abs(sumVisiblePeOiChg) / absTotalOiChgSum) * 100).toFixed(1) + '%';
   }
 
-  // Render Table Footer Row (matching Top Header colors with Sum & Percentage)
+  // Calculate percentages for ITM vs OTM within Calls and Puts
+  let itmCeOiPctStr = '-';
+  let otmCeOiPctStr = '-';
+  if (sumVisibleCeOi > 0) {
+    itmCeOiPctStr = ((sumItmCeOi / sumVisibleCeOi) * 100).toFixed(1) + '%';
+    otmCeOiPctStr = ((sumOtmCeOi / sumVisibleCeOi) * 100).toFixed(1) + '%';
+  }
+
+  let itmPeOiPctStr = '-';
+  let otmPeOiPctStr = '-';
+  if (sumVisiblePeOi > 0) {
+    itmPeOiPctStr = ((sumItmPeOi / sumVisiblePeOi) * 100).toFixed(1) + '%';
+    otmPeOiPctStr = ((sumOtmPeOi / sumVisiblePeOi) * 100).toFixed(1) + '%';
+  }
+
+  // Render Table Footer Rows (Row 1: OVERALL TOTALS, Row 2: ITM / OTM BREAKDOWN)
   if (tableFoot) {
     tableFoot.innerHTML = `
+      <!-- Row 1: TOTAL SUMMARY -->
       <tr class="total-row">
         <!-- CALLS (CE) TOTALS -->
         <td class="total-ce">-</td>
@@ -467,6 +532,58 @@ function renderTable(payload) {
           </div>
         </td>
         <td class="total-pe">-</td>
+      </tr>
+
+      <!-- Row 2: ITM & OTM BREAKDOWN (Realtime based on visible entries) -->
+      <tr class="breakdown-row">
+        <!-- CALLS (CE) ITM / OTM -->
+        <td class="breakdown-ce">-</td>
+        <td class="breakdown-ce">
+          <div class="total-cell-stacked">
+            <span class="total-line-sum"><span class="tag-itm">ITM:</span> ${formatIndianNumber(sumItmCeOiChg)}</span>
+            <span class="total-line-sum"><span class="tag-otm">OTM:</span> ${formatIndianNumber(sumOtmCeOiChg)}</span>
+          </div>
+        </td>
+        <td class="breakdown-ce">-</td>
+        <td class="breakdown-ce">-</td>
+        <td class="breakdown-ce">
+          <div class="total-cell-stacked">
+            <span class="total-line-sum"><span class="tag-itm">ITM Call:</span> ${formatIndianNumber(sumItmCeOi)}</span>
+            <span class="total-line-sum"><span class="tag-otm">OTM Call:</span> ${formatIndianNumber(sumOtmCeOi)}</span>
+          </div>
+        </td>
+        <td class="breakdown-ce">
+          <div class="total-cell-stacked">
+            <span class="total-line-pct"><span class="tag-itm">ITM:</span> ${itmCeOiPctStr}</span>
+            <span class="total-line-pct"><span class="tag-otm">OTM:</span> ${otmCeOiPctStr}</span>
+          </div>
+        </td>
+
+        <!-- STRIKE BREAKDOWN LABEL -->
+        <td class="breakdown-strike">ITM / OTM</td>
+
+        <!-- PUTS (PE) ITM / OTM -->
+        <td class="breakdown-pe">
+          <div class="total-cell-stacked">
+            <span class="total-line-pct"><span class="tag-itm">ITM:</span> ${itmPeOiPctStr}</span>
+            <span class="total-line-pct"><span class="tag-otm">OTM:</span> ${otmPeOiPctStr}</span>
+          </div>
+        </td>
+        <td class="breakdown-pe">
+          <div class="total-cell-stacked">
+            <span class="total-line-sum"><span class="tag-itm">ITM Put:</span> ${formatIndianNumber(sumItmPeOi)}</span>
+            <span class="total-line-sum"><span class="tag-otm">OTM Put:</span> ${formatIndianNumber(sumOtmPeOi)}</span>
+          </div>
+        </td>
+        <td class="breakdown-pe">-</td>
+        <td class="breakdown-pe">-</td>
+        <td class="breakdown-pe">
+          <div class="total-cell-stacked">
+            <span class="total-line-sum"><span class="tag-itm">ITM:</span> ${formatIndianNumber(sumItmPeOiChg)}</span>
+            <span class="total-line-sum"><span class="tag-otm">OTM:</span> ${formatIndianNumber(sumOtmPeOiChg)}</span>
+          </div>
+        </td>
+        <td class="breakdown-pe">-</td>
       </tr>
     `;
   }

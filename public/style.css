@@ -334,6 +334,50 @@ input[type="number"] {
   text-align: right;
 }
 
+/* Second Footer Row - ITM / OTM Breakdown */
+.breakdown-row td {
+  padding: 6px 10px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.8rem;
+  font-weight: 700;
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+  border-right: 1px solid rgba(255, 255, 255, 0.15);
+  user-select: none;
+}
+
+.breakdown-ce {
+  background-color: #881337 !important; /* Rich Burgundy Red for Call ITM/OTM */
+  color: #ffffff !important;
+  text-align: right;
+}
+
+.breakdown-strike {
+  background-color: #0f172a !important;
+  color: #facc15 !important; /* Gold accent */
+  text-align: center;
+  font-weight: 800;
+  font-size: 0.8rem;
+  letter-spacing: 0.05em;
+  border-left: 2px solid #0f172a;
+  border-right: 2px solid #0f172a;
+}
+
+.breakdown-pe {
+  background-color: #064e3b !important; /* Rich Dark Forest Green for Put ITM/OTM */
+  color: #ffffff !important;
+  text-align: right;
+}
+
+.tag-itm {
+  color: #fef08a; /* Soft yellow matching ITM rows */
+  font-weight: 800;
+}
+
+.tag-otm {
+  color: #f8fafc; /* Crisp white matching OTM rows */
+  font-weight: 800;
+}
+
 .total-cell-stacked {
   display: flex;
   flex-direction: column;
