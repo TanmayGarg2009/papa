@@ -1,33 +1,13 @@
-
 {
-  "name": "happy-birthday",
+  "name": "nse-option-chain-viewer",
   "version": "1.0.0",
-  "description": "An app that let's you say happy birthday to your friend in a nerdy way.",
-  "main": "index.js",
-  "devDependencies": {
-    "browser-sync": "^2.18.13",
-    "run-script-os": "^1.0.2"
-  },
+  "description": "NSE India Option Chain Viewer with Set A / Set B Strike Filter, Baseline Divider, and Random Interval Auto-refresh",
+  "main": "server.js",
   "scripts": {
-    "start": "run-script-os",
-    "start:win32": "browser-sync start --server --files '**/*.css, **/*.html, **/*.js, !node_modules/**/*' --directory --port 7777 --browser \"C:\\Program Files\\Firefox Developer Edition\\firefox.exe\"",
-    "//": "Hello! If you are having trouble running this command. Try changing Firefox Developer Edition to FirefoxDeveloperEdition",
-    "start:darwin:linux": "browser-sync start --server --files '**/*.css, **/*.html, **/*.js, !node_modules/**/*' --directory --port 7777",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Damantha126/Happy-BirthDay.git"
-  },
-  "keywords": [
-    "Happy",
-    "Birthday"
-  ],
-  "author": "Afiur Rahman Fahim",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/Damantha126/Happy-BirthDay/issues"
-  },
-  "homepage": "https://github.com/Damantha126/Happy-BirthDay#readme",
-  "dependencies": {}
+  "dependencies": {
+    "express": "^4.19.2",
+    "cors": "^2.8.5"
+  }
 }

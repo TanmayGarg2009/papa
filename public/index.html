@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NSE Option Chain | Live Analytics</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Top App Navigation & Controls -->
+  <header class="app-header">
+    <div class="header-left">
+      <div class="brand-title">
+        <span class="brand-badge">NSE</span>
+        <span class="brand-text">Option Chain</span>
+      </div>
+      
+      <!-- Symbol Selector -->
+      <div class="control-group">
+        <label for="symbolSelect">Index</label>
+        <select id="symbolSelect" class="styled-select">
+          <option value="NIFTY" selected>NIFTY</option>
+          <option value="BANKNIFTY">BANKNIFTY</option>
+          <option value="FINNIFTY">FINNIFTY</option>
+          <option value="MIDCPNIFTY">MIDCPNIFTY</option>
+        </select>
+      </div>
+
+      <!-- Expiry Selector -->
+      <div class="control-group">
+        <label for="expirySelect">Expiry Date</label>
+        <select id="expirySelect" class="styled-select">
+          <option value="01-Sep-2026" selected>01-Sep-2026</option>
+        </select>
+      </div>
+
+      <!-- Strike Count Input -->
+      <div class="control-group">
+        <label for="strikeCountInput">Strikes Above / Below</label>
+        <div class="input-with-stepper">
+          <input type="number" id="strikeCountInput" min="1" max="100" value="20">
+        </div>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <!-- Random Interval Timer Display -->
+      <div class="timer-box">
+        <div class="timer-label">Next Auto-Refresh (Random 1-3m)</div>
+        <div class="timer-value" id="timerDisplay">--:--</div>
+      </div>
+
+      <!-- Refresh Button -->
+      <button id="refreshBtn" class="btn-refresh" title="Refresh Live Data">
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+        </svg>
+        <span>Refresh Now</span>
+      </button>
+
+      <!-- Status Indicator -->
+      <div class="status-badge" id="statusBadge">
+        <span class="status-dot"></span>
+        <span class="status-text" id="statusText">Connecting...</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Notice Banner for Fallback/Errors -->
+  <div id="noticeBanner" class="notice-banner hidden">
+    <span class="notice-icon">⚠️</span>
+    <span id="noticeMessage" class="notice-text">Something went wrong fetching live data from NSE. Showing fallback data.</span>
+  </div>
+
+  <!-- Main Container -->
+  <main class="main-content">
+    
+    <!-- Option Chain Table Container -->
+    <div class="table-container">
+      <table class="oc-table" id="optionChainTable">
+        <thead>
+          <!-- Top Super Header (CE Red / Strike / PE Green) -->
+          <tr class="super-header">
+            <th colspan="6" class="th-ce">CALLS (CE)</th>
+            <th class="th-strike-title">STRIKE</th>
+            <th colspan="6" class="th-pe">PUTS (PE)</th>
+          </tr>
+          <!-- Sub Column Headers -->
+          <tr class="sub-header">
+            <!-- CE Headers (Left to Right towards Center) -->
+            <th class="col-iv">IV</th>
+            <th class="col-oichg">OI Chg</th>
+            <th class="col-vol">Volume</th>
+            <th class="col-ltp">LTP</th>
+            <th class="col-oi">OI</th>
+            <th class="col-oi-pct">CALL OI%</th>
+
+            <!-- Center Strike Header -->
+            <th class="col-strike">Strike Price</th>
+
+            <!-- PE Headers (Center towards Right) -->
+            <th class="col-oi-pct">PUT OI%</th>
+            <th class="col-oi">OI</th>
+            <th class="col-ltp">LTP</th>
+            <th class="col-vol">Volume</th>
+            <th class="col-oichg">OI Chg</th>
+            <th class="col-iv">IV</th>
+          </tr>
+        </thead>
+        
+        <!-- Table Body -->
+        <tbody id="tableBody">
+          <!-- Populated dynamically via app.js -->
+        </tbody>
+
+        <!-- Table Footer for Sums -->
+        <tfoot id="tableFoot">
+          <!-- Populated dynamically via app.js -->
+        </tfoot>
+      </table>
+    </div>
+
+  </main>
+
+  <!-- Floating Corner Toast Notification -->
+  <div id="toastContainer" class="toast-container"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
