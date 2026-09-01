@@ -400,27 +400,72 @@ function renderTable(payload) {
     }
   });
 
-  // Render Table Footer Row (matching Top Header colors)
+  // Calculate percentages for OI and OI Change sums
+  const totalVisibleOiSum = sumVisibleCeOi + sumVisiblePeOi;
+  let ceOiTotalPctStr = '-';
+  let peOiTotalPctStr = '-';
+  if (totalVisibleOiSum > 0) {
+    ceOiTotalPctStr = ((sumVisibleCeOi / totalVisibleOiSum) * 100).toFixed(1) + '%';
+    peOiTotalPctStr = ((sumVisiblePeOi / totalVisibleOiSum) * 100).toFixed(1) + '%';
+  }
+
+  const absTotalOiChgSum = Math.abs(sumVisibleCeOiChg) + Math.abs(sumVisiblePeOiChg);
+  let ceOiChgTotalPctStr = '-';
+  let peOiChgTotalPctStr = '-';
+  if (absTotalOiChgSum > 0) {
+    ceOiChgTotalPctStr = ((Math.abs(sumVisibleCeOiChg) / absTotalOiChgSum) * 100).toFixed(1) + '%';
+    peOiChgTotalPctStr = ((Math.abs(sumVisiblePeOiChg) / absTotalOiChgSum) * 100).toFixed(1) + '%';
+  }
+
+  // Render Table Footer Row (matching Top Header colors with Sum & Percentage)
   if (tableFoot) {
     tableFoot.innerHTML = `
       <tr class="total-row">
         <!-- CALLS (CE) TOTALS -->
         <td class="total-ce">-</td>
-        <td class="total-ce">${formatIndianNumber(sumVisibleCeOiChg)}</td>
+        <td class="total-ce">
+          <div class="total-cell-stacked">
+            <span class="total-line-sum">sum: ${formatIndianNumber(sumVisibleCeOiChg)}</span>
+            <span class="total-line-pct">%: ${ceOiChgTotalPctStr}</span>
+          </div>
+        </td>
         <td class="total-ce">-</td>
         <td class="total-ce">-</td>
-        <td class="total-ce">${formatIndianNumber(sumVisibleCeOi)}</td>
-        <td class="total-ce">-</td>
+        <td class="total-ce">
+          <div class="total-cell-stacked">
+            <span class="total-line-sum">sum: ${formatIndianNumber(sumVisibleCeOi)}</span>
+            <span class="total-line-pct">%: ${ceOiTotalPctStr}</span>
+          </div>
+        </td>
+        <td class="total-ce">
+          <div class="total-cell-stacked">
+            <span class="total-line-pct">${ceOiTotalPctStr}</span>
+          </div>
+        </td>
 
         <!-- STRIKE TOTAL LABEL -->
         <td class="total-strike">TOTAL (${visibleStrikes.length})</td>
 
         <!-- PUTS (PE) TOTALS -->
+        <td class="total-pe">
+          <div class="total-cell-stacked">
+            <span class="total-line-pct">${peOiTotalPctStr}</span>
+          </div>
+        </td>
+        <td class="total-pe">
+          <div class="total-cell-stacked">
+            <span class="total-line-sum">sum: ${formatIndianNumber(sumVisiblePeOi)}</span>
+            <span class="total-line-pct">%: ${peOiTotalPctStr}</span>
+          </div>
+        </td>
         <td class="total-pe">-</td>
-        <td class="total-pe">${formatIndianNumber(sumVisiblePeOi)}</td>
         <td class="total-pe">-</td>
-        <td class="total-pe">-</td>
-        <td class="total-pe">${formatIndianNumber(sumVisiblePeOiChg)}</td>
+        <td class="total-pe">
+          <div class="total-cell-stacked">
+            <span class="total-line-sum">sum: ${formatIndianNumber(sumVisiblePeOiChg)}</span>
+            <span class="total-line-pct">%: ${peOiChgTotalPctStr}</span>
+          </div>
+        </td>
         <td class="total-pe">-</td>
       </tr>
     `;

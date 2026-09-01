@@ -334,6 +334,28 @@ input[type="number"] {
   text-align: right;
 }
 
+.total-cell-stacked {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  line-height: 1.25;
+}
+
+.total-line-sum {
+  font-size: 0.8rem;
+  font-weight: 700;
+  opacity: 0.95;
+  white-space: nowrap;
+}
+
+.total-line-pct {
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: #fef08a !important; /* Bright golden yellow on red/green headers */
+  letter-spacing: 0.03em;
+  white-space: nowrap;
+}
+
 /* Specific Column Header Alignments */
 th.col-iv, th.col-oichg, th.col-oi, th.col-vol, th.col-ltp, th.col-oi-pct {
   text-align: right;
