@@ -87,13 +87,16 @@ function normalCdf(x) {
 }
 
 // Black-Scholes Delta Calculator
-function calculateDelta(spot, strike, ivPct, daysToExpiry, r = 0.07) {
-  if (!spot || !strike || !ivPct || ivPct <= 0 || daysToExpiry <= 0) {
+function calculateDelta(spot, strike, ivPct, daysToExpiry, r = 0.068) {
+  if (!spot || !strike || daysToExpiry <= 0) {
     return { callDelta: null, putDelta: null };
   }
   const S = Number(spot);
   const K = Number(strike);
-  const sigma = Number(ivPct) / 100.0;
+  let sigma = Number(ivPct) / 100.0;
+  if (!sigma || isNaN(sigma) || sigma <= 0) {
+    sigma = 0.12; // Fallback to standard 12% IV if completely missing
+  }
   const T = Math.max(daysToExpiry, 0.01) / 365.0; // Time in years
 
   const d1 = (Math.log(S / K) + (r + 0.5 * sigma * sigma) * T) / (sigma * Math.sqrt(T));
@@ -437,7 +440,7 @@ function renderTable(payload) {
 
   const LOT_MULTIPLIER = 65;
 
-  // Find max values for badge highlights across the visible set (multiplied by 65)
+  // Find max values for badge highlights and compute fallback ATM IV
   const visibleStrikes = [...selectedA, ...(exactMatchStrike ? [exactMatchStrike] : []), ...selectedB];
   let maxCeOI = 0;
   let maxCeVol = 0;
@@ -445,6 +448,7 @@ function renderTable(payload) {
   let maxPeOI = 0;
   let maxPeVol = 0;
   let maxPeOiChg = 0;
+  const validIvs = [];
 
   visibleStrikes.forEach(s => {
     const r = strikeMap.get(s);
@@ -456,17 +460,21 @@ function renderTable(payload) {
         if (ceOi > maxCeOI) maxCeOI = ceOi;
         if (ceVol > maxCeVol) maxCeVol = ceVol;
         if (ceOiChg > maxCeOiChg) maxCeOiChg = ceOiChg;
+        if (Number(r.CE.impliedVolatility) > 0) validIvs.push(Number(r.CE.impliedVolatility));
       }
       if (r.PE) {
-        const peOi = (Number(pe.openInterest) || 0) * LOT_MULTIPLIER;
-        const peOiChg = (Number(pe.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
-        const peVol = (Number(pe.totalTradedVolume) || 0) * LOT_MULTIPLIER;
+        const peOi = (Number(r.PE.openInterest) || 0) * LOT_MULTIPLIER;
+        const peOiChg = (Number(r.PE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
+        const peVol = (Number(r.PE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
         if (peOi > maxPeOI) maxPeOI = peOi;
         if (peVol > maxPeVol) maxPeVol = peVol;
         if (peOiChg > maxPeOiChg) maxPeOiChg = peOiChg;
+        if (Number(r.PE.impliedVolatility) > 0) validIvs.push(Number(r.PE.impliedVolatility));
       }
     }
   });
+
+  const fallbackAtmIv = validIvs.length > 0 ? (validIvs.reduce((a, b) => a + b, 0) / validIvs.length) : 12.0;
 
   // Helper function to render 2-line stacked cell with relative percentage & highlight badges
   function renderRelativeCell(val, maxVal, isCe, isOiChg = false) {
@@ -542,9 +550,16 @@ function renderTable(payload) {
     const ce = item.CE || {};
     const pe = item.PE || {};
 
+    const ceRawIv = Number(ce.impliedVolatility) || 0;
+    const peRawIv = Number(pe.impliedVolatility) || 0;
+
+    // Use Put-Call Parity / shared strike IV fallback so deep ITM/OTM strikes never miss Delta
+    const ceEffectiveIv = (ceRawIv > 0) ? ceRawIv : ((peRawIv > 0) ? peRawIv : fallbackAtmIv);
+    const peEffectiveIv = (peRawIv > 0) ? peRawIv : ((ceRawIv > 0) ? ceRawIv : fallbackAtmIv);
+
     // Calculate Real-Time Delta for Calls and Puts using Black-Scholes
-    const ceDeltaRes = calculateDelta(underlyingValue, strike, ce.impliedVolatility, daysToExpiry);
-    const peDeltaRes = calculateDelta(underlyingValue, strike, pe.impliedVolatility, daysToExpiry);
+    const ceDeltaRes = calculateDelta(underlyingValue, strike, ceEffectiveIv, daysToExpiry, 0.068);
+    const peDeltaRes = calculateDelta(underlyingValue, strike, peEffectiveIv, daysToExpiry, 0.068);
     const ceDeltaStr = ceDeltaRes.callDelta !== null ? (ceDeltaRes.callDelta > 0 ? '+' : '') + ceDeltaRes.callDelta.toFixed(2) : '-';
     const peDeltaStr = peDeltaRes.putDelta !== null ? peDeltaRes.putDelta.toFixed(2) : '-';
 
