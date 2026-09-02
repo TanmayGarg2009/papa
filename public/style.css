@@ -288,20 +288,22 @@ input[type="number"] {
   border-radius: 6px;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
   overflow-y: auto;
-  overflow-x: hidden;
+  overflow-x: auto;
   border: 1px solid #cbd5e1;
   flex: 1;
   min-height: 0;
   position: relative;
+  scrollbar-width: thin;
 }
 
-/* Option Chain Table - Fixed 100% Fit with No Horizontal Scrolling */
+/* Option Chain Table - Fixed 100% Fit with Responsive Minimum Width */
 .oc-table {
   width: 100%;
+  min-width: 1100px;
   table-layout: fixed;
   border-collapse: separate;
   border-spacing: 0;
-  font-size: 0.75rem;
+  font-size: 0.72rem;
   text-align: right;
   white-space: nowrap;
 }
@@ -315,13 +317,13 @@ input[type="number"] {
 
 /* Table Headers */
 .oc-table th {
-  padding: 4px 3px;
+  padding: 4px 2px;
   font-weight: 700;
   border-right: 1px solid #e2e8f0;
   border-bottom: 1px solid #e2e8f0;
   user-select: none;
   overflow: hidden;
-  text-overflow: ellipsis;
+  text-overflow: clip;
   box-sizing: border-box;
 }
 
@@ -330,10 +332,10 @@ input[type="number"] {
   position: sticky;
   top: 0;
   z-index: 52;
-  font-size: 0.82rem;
-  letter-spacing: 0.05em;
-  padding: 4px 6px;
-  height: 26px;
+  font-size: 0.80rem;
+  letter-spacing: 0.04em;
+  padding: 3px 4px;
+  height: 25px;
   border-bottom: 1px solid rgba(0, 0, 0, 0.2);
 }
 
@@ -361,15 +363,15 @@ input[type="number"] {
 /* Sub Header Row - Floating Sticky directly below Super Header */
 .sub-header th {
   position: sticky;
-  top: 26px;
+  top: 25px;
   z-index: 51;
   background-color: #f8fafc !important;
   color: #334155 !important;
-  font-size: 0.66rem;
+  font-size: 0.65rem;
   text-transform: uppercase;
   border-bottom: 2px solid #94a3b8;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  height: 24px;
+  height: 23px;
 }
 
 .sub-header th.col-strike {
@@ -392,7 +394,7 @@ th.col-oi, td.col-oi {
 }
 
 th.col-vol, td.col-vol {
-  width: 10.5%;
+  width: 10%;
 }
 
 th.col-ltp, td.col-ltp {
@@ -400,14 +402,14 @@ th.col-ltp, td.col-ltp {
 }
 
 th.col-oichg-pct, td.col-oichg-pct {
-  width: 5%;
+  width: 5.5%;
 }
 
 th.col-oi-pct, td.col-oi-pct {
   width: 5%;
 }
 
-th.col-strike, td.cell-strike {
+th.col-strike, td.cell-strike, td.col-strike {
   width: 8%;
 }
 
@@ -517,21 +519,27 @@ th.col-strike, td.cell-strike {
 }
 
 .tag-itm {
-  color: #fef08a; /* Soft yellow matching ITM rows */
+  color: #fef08a !important; /* Soft yellow matching ITM rows */
   font-weight: 800;
+  font-size: 0.65rem;
 }
 
 .tag-otm {
-  color: #f8fafc; /* Crisp white matching OTM rows */
+  color: #ffffff !important; /* Crisp white matching OTM rows */
   font-weight: 800;
+  font-size: 0.65rem;
 }
 
 .total-cell-stacked {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
+  justify-content: center;
   gap: 1px;
   line-height: 1.15;
+  width: 100%;
+  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .total-line-sum {
@@ -540,6 +548,7 @@ th.col-strike, td.cell-strike {
   letter-spacing: -0.03em;
   opacity: 0.95;
   white-space: nowrap;
+  max-width: 100%;
 }
 
 .total-line-pct {
@@ -548,6 +557,7 @@ th.col-strike, td.cell-strike {
   color: #fef08a !important; /* Bright golden yellow on red/green headers */
   letter-spacing: -0.02em;
   white-space: nowrap;
+  max-width: 100%;
 }
 
 /* Specific Column Header Alignments */
