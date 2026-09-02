@@ -367,13 +367,13 @@ input[type="number"] {
   justify-content: center;
   background-color: rgba(0, 0, 0, 0.35);
   color: #fef08a !important; /* Bright golden yellow text for high contrast */
-  padding: 1px 6px;
+  padding: 1px 5px;
   border-radius: 4px;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 0.70rem;
+  font-size: 0.68rem;
   font-weight: 800;
   letter-spacing: 0.01em;
-  margin-left: 6px;
+  margin-left: 5px;
   border: 1px solid rgba(255, 255, 255, 0.25);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   vertical-align: middle;
@@ -383,18 +383,27 @@ input[type="number"] {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  background-color: rgba(0, 0, 0, 0.45);
-  color: #67e8f9 !important; /* Sky Cyan accent for Fixed 9:20 AM level */
-  padding: 1px 6px;
+  padding: 1px 5px;
   border-radius: 4px;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 0.70rem;
+  font-size: 0.68rem;
   font-weight: 800;
   letter-spacing: 0.01em;
   margin-left: 4px;
-  border: 1px solid rgba(103, 232, 249, 0.35);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   vertical-align: middle;
+}
+
+.badge-rf3, .badge-sf3 {
+  background-color: rgba(0, 0, 0, 0.45);
+  color: #67e8f9 !important; /* Sky Cyan accent for 3-parameter fixed level (OI, OI Chg, Vol) */
+  border: 1px solid rgba(103, 232, 249, 0.35);
+}
+
+.badge-rf2, .badge-sf2 {
+  background-color: rgba(0, 0, 0, 0.45);
+  color: #f0abfc !important; /* Pastel Violet accent for 2-parameter fixed level (OI, Vol) */
+  border: 1px solid rgba(240, 171, 252, 0.35);
 }
 
 /* Sub Header Row - Floating Sticky directly below Super Header */

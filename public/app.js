@@ -325,7 +325,7 @@ async function fetchOptionChain(isAutoRefresh = false) {
 
     // DO NOT clear existing table data on network/fetch disconnection
     if (!lastFetchedData) {
-      tableBody.innerHTML = `<tr><td colspan="17" style="text-align:center; padding: 25px; color: #ef4444; font-weight: 600;">Data fetch failed: ${failureReason}. No previous data available.</td></tr>`;
+      tableBody.innerHTML = `<tr><td colspan="15" style="text-align:center; padding: 25px; color: #ef4444; font-weight: 600;">Data fetch failed: ${failureReason}. No previous data available.</td></tr>`;
     }
   } finally {
     // Re-schedule next timer based on configured cooldown
@@ -422,7 +422,7 @@ function renderTable(payload) {
 
   const allStrikes = Array.from(strikeMap.keys()).sort((a, b) => a - b);
   if (allStrikes.length === 0) {
-    tableBody.innerHTML = '<tr><td colspan="17" style="text-align:center; padding: 20px;">No option chain records found.</td></tr>';
+    tableBody.innerHTML = '<tr><td colspan="15" style="text-align:center; padding: 20px;">No option chain records found.</td></tr>';
     return;
   }
 
@@ -477,12 +477,12 @@ function renderTable(payload) {
   const fallbackAtmIv = validIvs.length > 0 ? (validIvs.reduce((a, b) => a + b, 0) / validIvs.length) : 12.0;
 
   // -------------------------------------------------------------
-  // Calculate Resistance (R) for CALLS (CE):
+  // Calculate Resistance (R3: 3 Params [OI, OI Chg, Vol]) for CALLS (CE):
   // Start from 1st ITM row (closest strike < spot). If any of the 3 (OI, OI Chg, Volume)
   // is at 100% max, take that strike. If not, go UP into OTM (ascending from spot)
   // until the first 100% max is found.
   // -------------------------------------------------------------
-  let resistanceStrike = null;
+  let resistanceStrike3 = null;
 
   // Check 1st ITM strike for Calls (or exact match if present)
   const candidateCeItmStrikes = exactMatchStrike ? [exactMatchStrike, ...setB_Strikes] : setB_Strikes;
@@ -494,13 +494,13 @@ function renderTable(payload) {
       const oic = (Number(item.CE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
       const vol = (Number(item.CE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
       if ((maxCeOI > 0 && oi === maxCeOI) || (maxCeOiChg > 0 && oic === maxCeOiChg) || (maxCeVol > 0 && vol === maxCeVol)) {
-        resistanceStrike = firstItmCe;
+        resistanceStrike3 = firstItmCe;
       }
     }
   }
 
   // If not at 1st ITM strike, scan UP into OTM strikes (ascending from spot upwards)
-  if (!resistanceStrike) {
+  if (!resistanceStrike3) {
     for (const strike of setA_Strikes) {
       const item = strikeMap.get(strike);
       if (item && item.CE) {
@@ -508,7 +508,7 @@ function renderTable(payload) {
         const oic = (Number(item.CE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
         const vol = (Number(item.CE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
         if ((maxCeOI > 0 && oi === maxCeOI) || (maxCeOiChg > 0 && oic === maxCeOiChg) || (maxCeVol > 0 && vol === maxCeVol)) {
-          resistanceStrike = strike;
+          resistanceStrike3 = strike;
           break;
         }
       }
@@ -516,12 +516,41 @@ function renderTable(payload) {
   }
 
   // -------------------------------------------------------------
-  // Calculate Support (S) for PUTS (PE):
+  // Calculate Resistance (R2: 2 Params [OI, Volume ONLY]) for CALLS (CE):
+  // -------------------------------------------------------------
+  let resistanceStrike2 = null;
+  if (candidateCeItmStrikes.length > 0) {
+    const firstItmCe = candidateCeItmStrikes[0];
+    const item = strikeMap.get(firstItmCe);
+    if (item && item.CE) {
+      const oi = (Number(item.CE.openInterest) || 0) * LOT_MULTIPLIER;
+      const vol = (Number(item.CE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
+      if ((maxCeOI > 0 && oi === maxCeOI) || (maxCeVol > 0 && vol === maxCeVol)) {
+        resistanceStrike2 = firstItmCe;
+      }
+    }
+  }
+  if (!resistanceStrike2) {
+    for (const strike of setA_Strikes) {
+      const item = strikeMap.get(strike);
+      if (item && item.CE) {
+        const oi = (Number(item.CE.openInterest) || 0) * LOT_MULTIPLIER;
+        const vol = (Number(item.CE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
+        if ((maxCeOI > 0 && oi === maxCeOI) || (maxCeVol > 0 && vol === maxCeVol)) {
+          resistanceStrike2 = strike;
+          break;
+        }
+      }
+    }
+  }
+
+  // -------------------------------------------------------------
+  // Calculate Support (S3: 3 Params [OI, OI Chg, Vol]) for PUTS (PE):
   // Start from 1st ITM row (closest strike > spot). If any of the 3 (OI, OI Chg, Volume)
   // is at 100% max, take that strike. If not, go DOWN into OTM (descending from spot)
   // until the first 100% max is found.
   // -------------------------------------------------------------
-  let supportStrike = null;
+  let supportStrike3 = null;
 
   // Check 1st ITM strike for Puts (or exact match if present)
   const candidatePeItmStrikes = exactMatchStrike ? [exactMatchStrike, ...setA_Strikes] : setA_Strikes;
@@ -533,13 +562,13 @@ function renderTable(payload) {
       const oic = (Number(item.PE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
       const vol = (Number(item.PE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
       if ((maxPeOI > 0 && oi === maxPeOI) || (maxPeOiChg > 0 && oic === maxPeOiChg) || (maxPeVol > 0 && vol === maxPeVol)) {
-        supportStrike = firstItmPe;
+        supportStrike3 = firstItmPe;
       }
     }
   }
 
   // If not at 1st ITM strike, scan DOWN into OTM strikes (descending from spot downwards)
-  if (!supportStrike) {
+  if (!supportStrike3) {
     for (const strike of setB_Strikes) {
       const item = strikeMap.get(strike);
       if (item && item.PE) {
@@ -547,15 +576,44 @@ function renderTable(payload) {
         const oic = (Number(item.PE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
         const vol = (Number(item.PE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
         if ((maxPeOI > 0 && oi === maxPeOI) || (maxPeOiChg > 0 && oic === maxPeOiChg) || (maxPeVol > 0 && vol === maxPeVol)) {
-          supportStrike = strike;
+          supportStrike3 = strike;
           break;
         }
       }
     }
   }
 
-  // Helper to retrieve or freeze 09:20 AM IST Fixed Levels (RF and SF)
-  function getOrUpdateFixedRS(symbol, currentR, currentS) {
+  // -------------------------------------------------------------
+  // Calculate Support (S2: 2 Params [OI, Volume ONLY]) for PUTS (PE):
+  // -------------------------------------------------------------
+  let supportStrike2 = null;
+  if (candidatePeItmStrikes.length > 0) {
+    const firstItmPe = candidatePeItmStrikes[0];
+    const item = strikeMap.get(firstItmPe);
+    if (item && item.PE) {
+      const oi = (Number(item.PE.openInterest) || 0) * LOT_MULTIPLIER;
+      const vol = (Number(item.PE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
+      if ((maxPeOI > 0 && oi === maxPeOI) || (maxPeVol > 0 && vol === maxPeVol)) {
+        supportStrike2 = firstItmPe;
+      }
+    }
+  }
+  if (!supportStrike2) {
+    for (const strike of setB_Strikes) {
+      const item = strikeMap.get(strike);
+      if (item && item.PE) {
+        const oi = (Number(item.PE.openInterest) || 0) * LOT_MULTIPLIER;
+        const vol = (Number(item.PE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
+        if ((maxPeOI > 0 && oi === maxPeOI) || (maxPeVol > 0 && vol === maxPeVol)) {
+          supportStrike2 = strike;
+          break;
+        }
+      }
+    }
+  }
+
+  // Helper to retrieve or freeze 09:20 AM IST Fixed Levels (RF3, RF2, SF3, SF2)
+  function getOrUpdateFixedRS(symbol, r3, r2, s3, s2) {
     const now = new Date();
     const istString = now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
     const istDate = new Date(istString);
@@ -563,7 +621,7 @@ function renderTable(payload) {
     const currentMinutes = istDate.getHours() * 60 + istDate.getMinutes();
     const isPast920 = currentMinutes >= (9 * 60 + 20); // 9:20 AM IST = 560 mins
 
-    const storageKey = `papa_fixed_levels_${symbol}_${todayDateString}`;
+    const storageKey = `papa_fixed_levels_v2_${symbol}_${todayDateString}`;
     let fixedLevels = null;
     try {
       const raw = localStorage.getItem(storageKey);
@@ -573,17 +631,19 @@ function renderTable(payload) {
     } catch (e) {}
 
     // If already locked today, return locked values
-    if (fixedLevels && fixedLevels.rf && fixedLevels.sf) {
+    if (fixedLevels && fixedLevels.rf3 && fixedLevels.sf3) {
       return fixedLevels;
     }
 
-    // If time is 09:20 AM or later and we have valid R & S, lock them permanently for the day
-    if (isPast920 && currentR && currentS) {
+    // If time is 09:20 AM or later and we have valid levels, lock them permanently for the day
+    if (isPast920 && r3 && s3) {
       fixedLevels = {
         date: todayDateString,
         symbol: symbol,
-        rf: currentR,
-        sf: currentS,
+        rf3: r3,
+        rf2: r2 || r3,
+        sf3: s3,
+        sf2: s2 || s3,
         lockedAt: '09:20 AM IST'
       };
       try {
@@ -595,29 +655,41 @@ function renderTable(payload) {
     return fixedLevels;
   }
 
-  const fixedRS = getOrUpdateFixedRS(currentSymbol, resistanceStrike, supportStrike);
-  const fixedRf = fixedRS?.rf || null;
-  const fixedSf = fixedRS?.sf || null;
+  const fixedRS = getOrUpdateFixedRS(currentSymbol, resistanceStrike3, resistanceStrike2, supportStrike3, supportStrike2);
+  const fixedRf3 = fixedRS?.rf3 || null;
+  const fixedRf2 = fixedRS?.rf2 || null;
+  const fixedSf3 = fixedRS?.sf3 || null;
+  const fixedSf2 = fixedRS?.sf2 || null;
 
-  // Update R, RF, S, SF Badges in Super Headers
+  // Update R, RF3, RF2, S, SF3, SF2 Badges in Super Headers
   const badgeResistance = document.getElementById('badgeResistance');
-  const badgeRf = document.getElementById('badgeRf');
+  const badgeRf3 = document.getElementById('badgeRf3');
+  const badgeRf2 = document.getElementById('badgeRf2');
   const badgeSupport = document.getElementById('badgeSupport');
-  const badgeSf = document.getElementById('badgeSf');
+  const badgeSf3 = document.getElementById('badgeSf3');
+  const badgeSf2 = document.getElementById('badgeSf2');
 
   if (badgeResistance) {
-    badgeResistance.textContent = resistanceStrike ? `R: ${formatIndianNumber(resistanceStrike)}` : 'R: -';
+    badgeResistance.textContent = resistanceStrike3 ? `R: ${formatIndianNumber(resistanceStrike3)}` : 'R: -';
   }
-  if (badgeRf) {
-    badgeRf.textContent = fixedRf ? `RF: ${formatIndianNumber(fixedRf)}` : 'RF: --';
-    badgeRf.title = fixedRf ? `Resistance Fixed at 09:20 AM IST: ${formatIndianNumber(fixedRf)}` : 'Resistance (RF) locks at 09:20 AM IST';
+  if (badgeRf3) {
+    badgeRf3.textContent = fixedRf3 ? `RF3: ${formatIndianNumber(fixedRf3)}` : 'RF3: --';
+    badgeRf3.title = fixedRf3 ? `Resistance Fixed at 09:20 AM (3 Params: OI, OI Chg, Vol): ${formatIndianNumber(fixedRf3)}` : 'RF3 (3-param) locks at 09:20 AM IST';
+  }
+  if (badgeRf2) {
+    badgeRf2.textContent = fixedRf2 ? `RF2: ${formatIndianNumber(fixedRf2)}` : 'RF2: --';
+    badgeRf2.title = fixedRf2 ? `Resistance Fixed at 09:20 AM (2 Params: OI, Vol): ${formatIndianNumber(fixedRf2)}` : 'RF2 (2-param) locks at 09:20 AM IST';
   }
   if (badgeSupport) {
-    badgeSupport.textContent = supportStrike ? `S: ${formatIndianNumber(supportStrike)}` : 'S: -';
+    badgeSupport.textContent = supportStrike3 ? `S: ${formatIndianNumber(supportStrike3)}` : 'S: -';
   }
-  if (badgeSf) {
-    badgeSf.textContent = fixedSf ? `SF: ${formatIndianNumber(fixedSf)}` : 'SF: --';
-    badgeSf.title = fixedSf ? `Support Fixed at 09:20 AM IST: ${formatIndianNumber(fixedSf)}` : 'Support (SF) locks at 09:20 AM IST';
+  if (badgeSf3) {
+    badgeSf3.textContent = fixedSf3 ? `SF3: ${formatIndianNumber(fixedSf3)}` : 'SF3: --';
+    badgeSf3.title = fixedSf3 ? `Support Fixed at 09:20 AM (3 Params: OI, OI Chg, Vol): ${formatIndianNumber(fixedSf3)}` : 'SF3 (3-param) locks at 09:20 AM IST';
+  }
+  if (badgeSf2) {
+    badgeSf2.textContent = fixedSf2 ? `SF2: ${formatIndianNumber(fixedSf2)}` : 'SF2: --';
+    badgeSf2.title = fixedSf2 ? `Support Fixed at 09:20 AM (2 Params: OI, Vol): ${formatIndianNumber(fixedSf2)}` : 'SF2 (2-param) locks at 09:20 AM IST';
   }
 
   // Helper function to render 2-line stacked cell with relative percentage & highlight badges
