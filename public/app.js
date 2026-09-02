@@ -315,12 +315,6 @@ function renderTable(payload) {
     futureValue = underlyingValue;
   }
 
-  // Update F: Value in the Column Header
-  const futBadgeEl = document.getElementById('futHeaderBadge');
-  if (futBadgeEl) {
-    futBadgeEl.textContent = `F: ${formatIndianNumber(futureValue)}`;
-  }
-
   // Filter records by selected expiry if multiple are present
   const currentExpiryValue = expirySelect.value || currentExpiry;
   let filteredRecords = records.filter(r => {
@@ -378,8 +372,8 @@ function renderTable(payload) {
         if (ceVol > maxCeVol) maxCeVol = ceVol;
       }
       if (r.PE) {
-        const peOi = (Number(pe.openInterest) || 0) * LOT_MULTIPLIER;
-        const peVol = (Number(pe.totalTradedVolume) || 0) * LOT_MULTIPLIER;
+        const peOi = (Number(r.PE.openInterest) || 0) * LOT_MULTIPLIER;
+        const peVol = (Number(r.PE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
         if (peOi > maxPeOI) maxPeOI = peOi;
         if (peVol > maxPeVol) maxPeVol = peVol;
       }
@@ -388,6 +382,10 @@ function renderTable(payload) {
 
   // Build HTML
   let rowsHtml = '';
+
+  // Calculate difference between Spot and Future LTP for the center divider
+  const spotFutDiff = Math.abs(underlyingValue - futureValue);
+  const spotFutDiffStr = (spotFutDiff % 1 === 0) ? spotFutDiff.toString() : spotFutDiff.toFixed(2);
 
   // Render Row Helper Function
   function buildStrikeRowHtml(strike, isExactMatch = false) {
@@ -455,15 +453,11 @@ function renderTable(payload) {
     }
 
     // Strike bold formatting: Only multiples of 100 are shown in bold
-    // Subtract future price from strike price and show absolute value in bracket next to strike price
-    const absDiff = Math.abs(strike - futureValue);
-    const diffStr = (absDiff % 1 === 0) ? absDiff.toString() : absDiff.toFixed(1);
     const isMultipleOf100 = (Number(strike) % 100 === 0);
     const formattedStrike = formatIndianNumber(strike);
-    const strikeWithDiff = `${formattedStrike} (${diffStr})`;
     const strikeDisplayContent = isExactMatch 
-      ? `<span class="golden-badge">${strikeWithDiff}</span>` 
-      : (isMultipleOf100 ? `<strong>${strikeWithDiff}</strong>` : strikeWithDiff);
+      ? `<span class="golden-badge">${formattedStrike}</span>` 
+      : (isMultipleOf100 ? `<strong>${formattedStrike}</strong>` : formattedStrike);
 
     return `
       <tr class="${rowClass}">
@@ -476,7 +470,7 @@ function renderTable(payload) {
         <td class="${ceClass} ${ceOiChgPctClass}"><strong>${ceOiChgPctStr}</strong></td>
         <td class="${ceClass} cell-oi-pct"><strong>${ceOiPctStr}</strong></td>
 
-        <!-- STRIKE PRICE (CENTER) - Multiples of 100 in Bold + (|Strike - Future LTP|) in Brackets -->
+        <!-- STRIKE PRICE (CENTER) - Multiples of 100 in Bold -->
         <td class="${strikeClass} ${isMultipleOf100 ? 'strike-bold' : ''}">
           ${strikeDisplayContent}
         </td>
@@ -498,7 +492,7 @@ function renderTable(payload) {
     rowsHtml += buildStrikeRowHtml(strike, false);
   });
 
-  // 2. Render Spot Baseline Divider Bar (Blue row separating Set A and Set B, with SPOT and F: badge)
+  // 2. Render Spot Baseline Divider Bar (Blue row separating Set A and Set B, with SPOT and F: (diff))
   rowsHtml += `
     <tr id="spotDividerRow" class="spot-divider-row">
       <td colspan="15">
@@ -506,7 +500,7 @@ function renderTable(payload) {
           <span class="spot-tag-left">▲ SET A (${selectedA.length} Strikes Above Baseline)</span>
           <div class="spot-center-title">
             <span class="spot-label">SPOT: ${formatIndianNumber(underlyingValue)}</span>
-            <span class="spot-price-badge">F: ${formatIndianNumber(futureValue)}</span>
+            <span class="spot-price-badge">F: ${formatIndianNumber(futureValue)} (${spotFutDiffStr})</span>
           </div>
           <span class="spot-tag-right">▼ SET B (${selectedB.length} Strikes Below Baseline)</span>
         </div>
