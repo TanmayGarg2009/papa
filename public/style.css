@@ -337,6 +337,27 @@ input[type="number"] {
   border-bottom: 1px solid rgba(0, 0, 0, 0.2);
 }
 
+.th-ce {
+  background-color: #b71c1c !important; /* Deep Red for Calls */
+  color: #ffffff !important;
+  text-align: center;
+  width: 46%;
+}
+
+.th-pe {
+  background-color: #1b5e20 !important; /* Deep Green for Puts */
+  color: #ffffff !important;
+  text-align: center;
+  width: 46%;
+}
+
+.th-strike-title {
+  background-color: #1e293b !important;
+  color: #ffffff !important;
+  text-align: center;
+  width: 8%;
+}
+
 /* Sub Header Row - Floating Sticky directly below Super Header */
 .sub-header th {
   position: sticky;
@@ -688,10 +709,11 @@ th.col-iv, th.col-oichg, th.col-oi, th.col-vol, th.col-ltp, th.col-oi-pct, th.co
 }
 
 .spot-divider-content {
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
+  display: flex;
   align-items: center;
+  justify-content: space-between;
   width: 100%;
+  gap: 8px;
 }
 
 .spot-tag-left {
@@ -700,6 +722,8 @@ th.col-iv, th.col-oichg, th.col-oi, th.col-vol, th.col-ltp, th.col-oi-pct, th.co
   letter-spacing: 0.04em;
   text-align: left;
   padding-left: 6px;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .spot-center-title {
@@ -707,9 +731,10 @@ th.col-iv, th.col-oichg, th.col-oi, th.col-vol, th.col-ltp, th.col-oi-pct, th.co
   align-items: center;
   justify-content: center;
   gap: 8px;
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   font-weight: 800;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.03em;
+  flex-wrap: nowrap;
 }
 
 .spot-label {
@@ -720,12 +745,40 @@ th.col-iv, th.col-oichg, th.col-oi, th.col-vol, th.col-ltp, th.col-oi-pct, th.co
 .spot-price-badge {
   background-color: #ffffff;
   color: #1e3a8a;
-  padding: 2px 8px;
+  padding: 2px 7px;
   border-radius: 4px;
   font-weight: 800;
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   font-family: 'JetBrains Mono', monospace;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  white-space: nowrap;
+}
+
+.spot-ohlc-badge {
+  background-color: rgba(15, 23, 42, 0.55);
+  color: #f8fafc;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-weight: 700;
+  font-size: 0.76rem;
+  font-family: 'JetBrains Mono', monospace;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+}
+
+.spot-ohlc-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.spot-ohlc-label {
+  color: #93c5fd;
+  font-weight: 800;
+  font-size: 0.72rem;
 }
 
 .spot-tag-right {
@@ -734,6 +787,8 @@ th.col-iv, th.col-oichg, th.col-oi, th.col-vol, th.col-ltp, th.col-oi-pct, th.co
   letter-spacing: 0.04em;
   text-align: right;
   padding-right: 6px;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 /* Toast Notifications (Corner Popup) */

@@ -175,6 +175,69 @@ async function fetchNSEFutures(symbol = 'NIFTY') {
   });
 }
 
+// Index name mapping for allIndices API
+const ALL_INDICES_MAP = {
+  'NIFTY': 'NIFTY 50',
+  'BANKNIFTY': 'NIFTY BANK',
+  'FINNIFTY': 'NIFTY FINANCIAL SERVICES',
+  'MIDCPNIFTY': 'NIFTY MIDCAP SELECT'
+};
+
+// Fetch live indices data (Open, High, Low, Previous Close) from NSE
+async function fetchNSEAllIndices(symbol = 'NIFTY') {
+  const cookies = await getNSECookies();
+  const targetIndexName = ALL_INDICES_MAP[symbol] || 'NIFTY 50';
+
+  return new Promise((resolve) => {
+    const options = {
+      hostname: 'www.nseindia.com',
+      port: 443,
+      path: '/api/allIndices',
+      method: 'GET',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+        'Accept': 'application/json, text/plain, */*',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Referer': 'https://www.nseindia.com/market-data/live-equity-market',
+        'Cookie': cookies,
+        'Accept-Encoding': 'identity'
+      },
+      timeout: 4000
+    };
+
+    const req = https.request(options, (res) => {
+      if (res.statusCode !== 200) return resolve(null);
+      let rawData = '';
+      res.setEncoding('utf8');
+      res.on('data', chunk => rawData += chunk);
+      res.on('end', () => {
+        try {
+          const parsed = JSON.parse(rawData);
+          if (parsed && Array.isArray(parsed.data)) {
+            const indexItem = parsed.data.find(d => 
+              d.index === targetIndexName || 
+              d.indexSymbol === targetIndexName ||
+              (d.index && d.index.toUpperCase() === targetIndexName.toUpperCase())
+            ) || parsed.data.find(d => d.index === 'NIFTY 50');
+            resolve(indexItem || null);
+          } else {
+            resolve(null);
+          }
+        } catch (e) {
+          resolve(null);
+        }
+      });
+    });
+
+    req.on('error', () => resolve(null));
+    req.on('timeout', () => {
+      req.destroy();
+      resolve(null);
+    });
+    req.end();
+  });
+}
+
 // In-memory option chain cache for post-4:00 PM data
 const optionChainCache = new Map();
 
@@ -219,9 +282,10 @@ app.get('/api/option-chain', async (req, res) => {
 
   // Otherwise, fetch live from NSE (during 7 AM - 4 PM IST, or initial cold cache populate)
   try {
-    const [liveData, futureData] = await Promise.all([
+    const [liveData, futureData, allIndicesData] = await Promise.all([
       fetchNSEOptionChain(symbol, expiry),
-      fetchNSEFutures(symbol)
+      fetchNSEFutures(symbol),
+      fetchNSEAllIndices(symbol)
     ]);
 
     const hasRecords = liveData && liveData.records && Array.isArray(liveData.records.data) && liveData.records.data.length > 0;
@@ -239,6 +303,24 @@ app.get('/api/option-chain', async (req, res) => {
         if (liveData.records) {
           liveData.records.futureValue = futLtp;
           liveData.records.futureContract = futureData.contract || '';
+        }
+      }
+
+      // Inject index OHLC data from allIndices
+      if (allIndicesData) {
+        const indexInfo = {
+          open: Number(allIndicesData.open) || 0,
+          high: Number(allIndicesData.high) || 0,
+          low: Number(allIndicesData.low) || 0,
+          previousClose: Number(allIndicesData.previousClose) || 0,
+          last: Number(allIndicesData.last) || 0,
+          variation: Number(allIndicesData.variation) || 0,
+          percentChange: Number(allIndicesData.percentChange) || 0,
+          indexName: allIndicesData.index || 'NIFTY 50'
+        };
+        liveData.indexInfo = indexInfo;
+        if (liveData.records) {
+          liveData.records.indexInfo = indexInfo;
         }
       }
 
@@ -272,6 +354,20 @@ app.get('/api/option-chain', async (req, res) => {
     if (fallbackData.records) {
       fallbackData.records.futureValue = spotVal + 14.5;
       fallbackData.records.futureContract = `${symbol} NEAR FUT`;
+    }
+
+    fallbackData.indexInfo = {
+      open: 23858.0,
+      high: 23914.45,
+      low: 23786.8,
+      previousClose: 24055.8,
+      last: spotVal,
+      variation: -141.35,
+      percentChange: -0.59,
+      indexName: symbol === 'NIFTY' ? 'NIFTY 50' : symbol
+    };
+    if (fallbackData.records) {
+      fallbackData.records.indexInfo = fallbackData.indexInfo;
     }
 
     if (!optionChainCache.has(cacheKey)) {

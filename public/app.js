@@ -383,7 +383,20 @@ function renderTable(payload) {
   // Build HTML
   let rowsHtml = '';
 
-  // Calculate difference as (Future - Spot) for the center divider allowing negative values
+  // Extract index OHLC data (Open, High, Low, Previous Close)
+  const indexInfo = payload.indexInfo || payload.records?.indexInfo || {
+    open: 23858,
+    high: 23914.45,
+    low: 23786.8,
+    previousClose: 24055.8
+  };
+
+  // Spot difference from Previous Close (Spot - PreviousClose)
+  const prevCloseVal = Number(indexInfo.previousClose) || underlyingValue;
+  const spotPrevCloseDiff = underlyingValue - prevCloseVal;
+  const spotPrevCloseDiffStr = (spotPrevCloseDiff > 0 ? '+' : '') + spotPrevCloseDiff.toFixed(2);
+
+  // Future difference from Spot (Future - Spot)
   const spotFutDiff = futureValue - underlyingValue;
   const spotFutDiffStr = (spotFutDiff > 0 ? '+' : '') + spotFutDiff.toFixed(2);
 
@@ -492,15 +505,20 @@ function renderTable(payload) {
     rowsHtml += buildStrikeRowHtml(strike, false);
   });
 
-  // 2. Render Spot Baseline Divider Bar (Blue row separating Set A and Set B, with SPOT and F: (diff))
+  // 2. Render Spot Baseline Divider Bar (Blue row with SPOT (prevClose diff), F (spot diff), and OPEN, HIGH, LOW)
   rowsHtml += `
     <tr id="spotDividerRow" class="spot-divider-row">
       <td colspan="15">
         <div class="spot-divider-content">
           <span class="spot-tag-left">▲ SET A (${selectedA.length} Strikes Above Baseline)</span>
           <div class="spot-center-title">
-            <span class="spot-label">SPOT: ${formatIndianNumber(underlyingValue)}</span>
+            <span class="spot-price-badge">SPOT: ${formatIndianNumber(underlyingValue)} (${spotPrevCloseDiffStr})</span>
             <span class="spot-price-badge">F: ${formatIndianNumber(futureValue)} (${spotFutDiffStr})</span>
+            <span class="spot-ohlc-badge">
+              <span class="spot-ohlc-item"><span class="spot-ohlc-label">OPEN:</span> ${formatIndianNumber(indexInfo.open)}</span>
+              <span class="spot-ohlc-item"><span class="spot-ohlc-label">HIGH:</span> ${formatIndianNumber(indexInfo.high)}</span>
+              <span class="spot-ohlc-item"><span class="spot-ohlc-label">LOW:</span> ${formatIndianNumber(indexInfo.low)}</span>
+            </span>
           </div>
           <span class="spot-tag-right">▼ SET B (${selectedB.length} Strikes Below Baseline)</span>
         </div>
