@@ -383,9 +383,9 @@ function renderTable(payload) {
   // Build HTML
   let rowsHtml = '';
 
-  // Calculate difference between Spot and Future LTP for the center divider
-  const spotFutDiff = Math.abs(underlyingValue - futureValue);
-  const spotFutDiffStr = (spotFutDiff % 1 === 0) ? spotFutDiff.toString() : spotFutDiff.toFixed(2);
+  // Calculate difference as (Future - Spot) for the center divider allowing negative values
+  const spotFutDiff = futureValue - underlyingValue;
+  const spotFutDiffStr = (spotFutDiff > 0 ? '+' : '') + spotFutDiff.toFixed(2);
 
   // Render Row Helper Function
   function buildStrikeRowHtml(strike, isExactMatch = false) {
