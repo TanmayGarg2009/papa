@@ -300,12 +300,12 @@ input[type="number"] {
 /* Option Chain Table - Fixed 100% Fit with Responsive Minimum Width */
 .oc-table {
   width: 100%;
-  min-width: 1300px;
+  min-width: 1380px;
   table-layout: fixed;
   border-collapse: separate;
   border-spacing: 0;
   font-size: 0.70rem;
-  text-align: right;
+  text-align: center;
   white-space: nowrap;
 }
 
@@ -344,21 +344,21 @@ input[type="number"] {
   background-color: #b71c1c !important; /* Deep Red for Calls */
   color: #ffffff !important;
   text-align: center;
-  width: 47%;
+  width: 48%;
 }
 
 .th-pe {
   background-color: #1b5e20 !important; /* Deep Green for Puts */
   color: #ffffff !important;
   text-align: center;
-  width: 47%;
+  width: 48%;
 }
 
 .th-strike-title {
   background-color: #1e293b !important;
   color: #ffffff !important;
   text-align: center;
-  width: 6%;
+  width: 4%;
 }
 
 /* Sub Header Row - Floating Sticky directly below Super Header */
@@ -381,37 +381,50 @@ input[type="number"] {
   text-align: center;
 }
 
-/* Proportional Column Widths (Calls: 47% | Strike: 6% | Puts: 47% = 100%) */
+/* Proportional Column Widths (Calls: 48% | Strike: 4% | Puts: 48% = 100%) */
+th.col-delta, td.col-delta {
+  width: 2.8%;
+  text-align: center;
+}
+
 th.col-iv, td.col-iv {
-  width: 3.2%;
+  width: 2.8%;
+  text-align: center;
 }
 
 th.col-oichg, td.col-oichg {
-  width: 9.5%;
+  width: 10.5%;
+  text-align: center;
 }
 
 th.col-oi, td.col-oi {
-  width: 13.5%;
+  width: 14.5%;
+  text-align: center;
 }
 
 th.col-vol, td.col-vol {
-  width: 8.5%;
+  width: 7.0%;
+  text-align: center;
 }
 
 th.col-ltp, td.col-ltp {
-  width: 3.5%;
+  width: 3.2%;
+  text-align: center;
 }
 
 th.col-oichg-pct, td.col-oichg-pct {
-  width: 4.5%;
+  width: 3.6%;
+  text-align: center;
 }
 
 th.col-oi-pct, td.col-oi-pct {
-  width: 4.3%;
+  width: 3.6%;
+  text-align: center;
 }
 
 th.col-strike, td.cell-strike, td.col-strike {
-  width: 6%;
+  width: 4.0%;
+  text-align: center;
 }
 
 /* Floating Sticky Table Footer (Total Row matching Top Header colors) */
@@ -439,7 +452,7 @@ th.col-strike, td.cell-strike, td.col-strike {
 .total-ce {
   background-color: #b71c1c !important; /* Deep Red */
   color: #ffffff !important;
-  text-align: right;
+  text-align: center;
 }
 
 /* Center Strike Total cell in Dark Slate */
@@ -458,7 +471,7 @@ th.col-strike, td.cell-strike, td.col-strike {
 .total-pe {
   background-color: #1b5e20 !important; /* Deep Green */
   color: #ffffff !important;
-  text-align: right;
+  text-align: center;
 }
 
 /* Second Footer Row - ITM / OTM Breakdown */
@@ -478,7 +491,7 @@ th.col-strike, td.cell-strike, td.col-strike {
 .breakdown-ce {
   background-color: #881337 !important; /* Rich Burgundy Red for Call ITM/OTM */
   color: #ffffff !important;
-  text-align: right;
+  text-align: center;
 }
 
 .breakdown-strike {
@@ -495,14 +508,14 @@ th.col-strike, td.cell-strike, td.col-strike {
 .breakdown-pe {
   background-color: #064e3b !important; /* Rich Dark Forest Green for Put ITM/OTM */
   color: #ffffff !important;
-  text-align: right;
+  text-align: center;
 }
 
 .tag-itm {
   color: #fef08a !important; /* Soft yellow matching ITM rows */
   font-weight: 800;
   font-size: 0.58rem;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
   text-align: left;
   flex-shrink: 0;
 }
@@ -511,16 +524,16 @@ th.col-strike, td.cell-strike, td.col-strike {
   color: #ffffff !important; /* Crisp white matching OTM rows */
   font-weight: 800;
   font-size: 0.58rem;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
   text-align: left;
   flex-shrink: 0;
 }
 
 .val-itm {
   color: #fef08a !important;
-  font-size: 0.65rem;
+  font-size: 0.63rem;
   font-weight: 700;
-  letter-spacing: -0.035em;
+  letter-spacing: -0.04em;
   text-align: right;
   white-space: nowrap;
   flex: 1;
@@ -528,9 +541,9 @@ th.col-strike, td.cell-strike, td.col-strike {
 
 .val-otm {
   color: #ffffff !important;
-  font-size: 0.65rem;
+  font-size: 0.63rem;
   font-weight: 700;
-  letter-spacing: -0.035em;
+  letter-spacing: -0.04em;
   text-align: right;
   white-space: nowrap;
   flex: 1;
@@ -551,14 +564,14 @@ th.col-strike, td.cell-strike, td.col-strike {
   align-items: center;
   justify-content: space-between;
   width: 100%;
-  gap: 3px;
+  gap: 1px;
   white-space: nowrap;
 }
 
 .total-cell-stacked {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: center;
   justify-content: center;
   gap: 1px;
   line-height: 1.15;
@@ -571,6 +584,7 @@ th.col-strike, td.cell-strike, td.col-strike {
   font-size: 0.65rem;
   font-weight: 700;
   letter-spacing: -0.035em;
+  text-align: center;
   opacity: 0.95;
   white-space: nowrap;
   max-width: 100%;
@@ -581,19 +595,21 @@ th.col-strike, td.cell-strike, td.col-strike {
   font-weight: 800;
   color: #fef08a !important; /* Bright golden yellow on red/green headers */
   letter-spacing: -0.025em;
+  text-align: center;
   white-space: nowrap;
   max-width: 100%;
 }
 
 /* Specific Column Header Alignments */
-th.col-iv, th.col-oichg, th.col-oi, th.col-vol, th.col-ltp, th.col-oi-pct, th.col-oichg-pct {
-  text-align: right;
+th.col-delta, th.col-iv, th.col-oichg, th.col-oi, th.col-vol, th.col-ltp, th.col-oi-pct, th.col-oichg-pct {
+  text-align: center;
 }
 
 .cell-oi-pct {
   font-weight: 600;
   color: #334155;
   background-color: rgba(0, 0, 0, 0.02);
+  text-align: center;
 }
 
 /* Table Cells */
@@ -603,6 +619,7 @@ th.col-iv, th.col-oichg, th.col-oi, th.col-vol, th.col-ltp, th.col-oi-pct, th.co
   font-family: 'JetBrains Mono', monospace;
   font-size: 0.70rem;
   letter-spacing: -0.035em;
+  text-align: center;
   overflow: hidden;
   text-overflow: clip;
   box-sizing: border-box;
@@ -612,12 +629,22 @@ td.col-vol {
   font-size: 0.69rem;
   letter-spacing: -0.035em;
   padding: 2px 2px;
+  text-align: center;
 }
 
 td.col-oi, td.col-oichg {
   font-size: 0.69rem;
   letter-spacing: -0.035em;
   padding: 2px 2px;
+  text-align: center;
+}
+
+td.col-delta {
+  font-size: 0.68rem;
+  letter-spacing: -0.035em;
+  padding: 2px 2px;
+  font-weight: 600;
+  text-align: center;
 }
 
 .oc-table td.cell-strike {
@@ -701,6 +728,7 @@ td.col-oi, td.col-oichg {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
   width: 100%;
   box-sizing: border-box;
 }
@@ -710,7 +738,7 @@ td.col-oi, td.col-oichg {
   font-weight: 800;
   font-size: 0.70rem;
   line-height: 1.15;
-  text-align: right;
+  text-align: center !important;
   width: 100%;
 }
 
@@ -719,7 +747,7 @@ td.col-oi, td.col-oichg {
   font-weight: 700;
   font-size: 0.60rem;
   line-height: 1.1;
-  text-align: center !important; /* Centered horizontally */
+  text-align: center !important;
   width: 100%;
 }
 
@@ -731,6 +759,7 @@ td.col-oi, td.col-oichg {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
   width: 100%;
   box-sizing: border-box;
 }
@@ -740,7 +769,7 @@ td.col-oi, td.col-oichg {
   font-weight: 800;
   font-size: 0.70rem;
   line-height: 1.15;
-  text-align: right;
+  text-align: center !important;
   width: 100%;
 }
 
@@ -749,7 +778,7 @@ td.col-oi, td.col-oichg {
   font-weight: 700;
   font-size: 0.60rem;
   line-height: 1.1;
-  text-align: center !important; /* Centered horizontally */
+  text-align: center !important;
   width: 100%;
 }
 
@@ -761,6 +790,7 @@ td.col-oi, td.col-oichg {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
   width: 100%;
   box-sizing: border-box;
 }
@@ -770,7 +800,7 @@ td.col-oi, td.col-oichg {
   font-weight: 800;
   font-size: 0.70rem;
   line-height: 1.15;
-  text-align: right;
+  text-align: center !important;
   width: 100%;
 }
 
@@ -779,7 +809,7 @@ td.col-oi, td.col-oichg {
   font-weight: 700;
   font-size: 0.60rem;
   line-height: 1.1;
-  text-align: center !important; /* Centered horizontally */
+  text-align: center !important;
   width: 100%;
 }
 
@@ -787,6 +817,7 @@ td.col-oi, td.col-oichg {
   display: flex;
   flex-direction: column;
   justify-content: center;
+  align-items: center;
   width: 100%;
   line-height: 1.15;
   box-sizing: border-box;
@@ -795,7 +826,7 @@ td.col-oi, td.col-oichg {
 .cell-val-main {
   font-size: 0.70rem;
   font-weight: 600;
-  text-align: right;
+  text-align: center !important;
   width: 100%;
   white-space: nowrap;
 }
@@ -804,7 +835,7 @@ td.col-oi, td.col-oichg {
   font-size: 0.60rem;
   font-weight: 600;
   color: #64748b;
-  text-align: center !important; /* Centered horizontally */
+  text-align: center !important;
   width: 100%;
   white-space: nowrap;
 }

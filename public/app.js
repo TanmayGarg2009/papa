@@ -68,6 +68,63 @@ function formatDecimal(num, decimals = 2) {
   return Number(num).toFixed(decimals);
 }
 
+// Cumulative standard normal distribution approximation (Abramowitz & Stegun)
+function normalCdf(x) {
+  const a1 =  0.254829592;
+  const a2 = -0.284496736;
+  const a3 =  1.421413741;
+  const a4 = -1.453152027;
+  const a5 =  1.061405429;
+  const p  =  0.3275911;
+
+  const sign = (x < 0) ? -1 : 1;
+  const absX = Math.abs(x) / Math.sqrt(2.0);
+
+  const t = 1.0 / (1.0 + p * absX);
+  const y = 1.0 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * Math.exp(-absX * absX);
+
+  return 0.5 * (1.0 + sign * y);
+}
+
+// Black-Scholes Delta Calculator
+function calculateDelta(spot, strike, ivPct, daysToExpiry, r = 0.068) {
+  if (!spot || !strike || !ivPct || ivPct <= 0 || daysToExpiry <= 0) {
+    return { callDelta: null, putDelta: null };
+  }
+  const S = Number(spot);
+  const K = Number(strike);
+  const sigma = Number(ivPct) / 100.0;
+  const T = Math.max(daysToExpiry, 0.01) / 365.0; // Time in years
+
+  const d1 = (Math.log(S / K) + (r + 0.5 * sigma * sigma) * T) / (sigma * Math.sqrt(T));
+  const callDelta = normalCdf(d1);
+  const putDelta = callDelta - 1.0;
+
+  return {
+    callDelta: Number(callDelta.toFixed(2)),
+    putDelta: Number(putDelta.toFixed(2))
+  };
+}
+
+// Parse expiry date string (e.g. 08-Sep-2026) to remaining days
+function parseDaysToExpiry(expiryStr) {
+  if (!expiryStr) return 7;
+  const parts = expiryStr.split('-');
+  if (parts.length < 3) return 7;
+  const day = parseInt(parts[0]);
+  const monthMap = {
+    'Jan': 0, 'Feb': 1, 'Mar': 2, 'Apr': 3, 'May': 4, 'Jun': 5,
+    'Jul': 6, 'Aug': 7, 'Sep': 8, 'Oct': 9, 'Nov': 10, 'Dec': 11
+  };
+  const month = monthMap[parts[1]] ?? 8;
+  const year = parseInt(parts[2]);
+  const expiryDate = new Date(Date.UTC(year, month, day, 15, 30, 0)); // 3:30 PM IST expiry
+  const now = new Date();
+  const diffMs = expiryDate.getTime() - now.getTime();
+  const diffDays = Math.max(0.05, diffMs / (1000 * 60 * 60 * 24));
+  return diffDays;
+}
+
 // Utility: Format date & time in Standard Indian Time (IST) with second precision
 function formatIndianDateTime(dateObj = new Date()) {
   if (!dateObj) return '-';
@@ -265,7 +322,7 @@ async function fetchOptionChain(isAutoRefresh = false) {
 
     // DO NOT clear existing table data on network/fetch disconnection
     if (!lastFetchedData) {
-      tableBody.innerHTML = `<tr><td colspan="15" style="text-align:center; padding: 25px; color: #ef4444; font-weight: 600;">Data fetch failed: ${failureReason}. No previous data available.</td></tr>`;
+      tableBody.innerHTML = `<tr><td colspan="17" style="text-align:center; padding: 25px; color: #ef4444; font-weight: 600;">Data fetch failed: ${failureReason}. No previous data available.</td></tr>`;
     }
   } finally {
     // Re-schedule next timer based on configured cooldown
@@ -362,7 +419,7 @@ function renderTable(payload) {
 
   const allStrikes = Array.from(strikeMap.keys()).sort((a, b) => a - b);
   if (allStrikes.length === 0) {
-    tableBody.innerHTML = '<tr><td colspan="15" style="text-align:center; padding: 20px;">No option chain records found.</td></tr>';
+    tableBody.innerHTML = '<tr><td colspan="17" style="text-align:center; padding: 20px;">No option chain records found.</td></tr>';
     return;
   }
 
@@ -476,11 +533,20 @@ function renderTable(payload) {
   const rangeVal = highVal - lowVal;
   const rangeStr = (rangeVal % 1 === 0) ? rangeVal.toString() : rangeVal.toFixed(2);
 
+  // Calculate days to expiry for quantitative Delta calculation
+  const daysToExpiry = parseDaysToExpiry(currentExpiryValue);
+
   // Render Row Helper Function
   function buildStrikeRowHtml(strike, isExactMatch = false) {
     const item = strikeMap.get(strike) || {};
     const ce = item.CE || {};
     const pe = item.PE || {};
+
+    // Calculate Real-Time Delta for Calls and Puts using Black-Scholes
+    const ceDeltaRes = calculateDelta(underlyingValue, strike, ce.impliedVolatility, daysToExpiry);
+    const peDeltaRes = calculateDelta(underlyingValue, strike, pe.impliedVolatility, daysToExpiry);
+    const ceDeltaStr = ceDeltaRes.callDelta !== null ? (ceDeltaRes.callDelta > 0 ? '+' : '') + ceDeltaRes.callDelta.toFixed(2) : '-';
+    const peDeltaStr = peDeltaRes.putDelta !== null ? peDeltaRes.putDelta.toFixed(2) : '-';
 
     // Multiply OI, OI Change, and Volume by 65
     const ceOi = (Number(ce.openInterest) || 0) * LOT_MULTIPLIER;
@@ -540,7 +606,8 @@ function renderTable(payload) {
 
     return `
       <tr class="${rowClass}">
-        <!-- CALLS (CE): IV | OI Chg | OI | Volume | LTP | CHG OI% | CALL OI% -->
+        <!-- CALLS (CE): Delta | IV | OI Chg | OI | Volume | LTP | CHG OI% | CALL OI% -->
+        <td class="${ceClass} col-delta">${ceDeltaStr}</td>
         <td class="${ceClass} col-iv">${formatDecimal(ce.impliedVolatility)}</td>
         <td class="${ceClass} col-oichg">${renderRelativeCell(ceOiChg, maxCeOiChg, true, true)}</td>
         <td class="${ceClass} col-oi">${renderRelativeCell(ceOi, maxCeOI, true, false)}</td>
@@ -554,7 +621,7 @@ function renderTable(payload) {
           ${strikeDisplayContent}
         </td>
 
-        <!-- PUTS (PE) - Mirrored: PUT OI% | CHG OI% | LTP | Volume | OI | OI Chg | IV -->
+        <!-- PUTS (PE) - Mirrored: PUT OI% | CHG OI% | LTP | Volume | OI | OI Chg | IV | Delta -->
         <td class="${peClass} cell-oi-pct col-oi-pct"><strong>${peOiPctStr}</strong></td>
         <td class="${peClass} ${peOiChgPctClass} col-oichg-pct"><strong>${peOiChgPctStr}</strong></td>
         <td class="${peClass} col-ltp"><strong>${formatDecimal(pe.lastPrice)}</strong></td>
@@ -562,6 +629,7 @@ function renderTable(payload) {
         <td class="${peClass} col-oi">${renderRelativeCell(peOi, maxPeOI, false, false)}</td>
         <td class="${peClass} col-oichg">${renderRelativeCell(peOiChg, maxPeOiChg, false, true)}</td>
         <td class="${peClass} col-iv">${formatDecimal(pe.impliedVolatility)}</td>
+        <td class="${peClass} col-delta">${peDeltaStr}</td>
       </tr>
     `;
   }
@@ -574,7 +642,7 @@ function renderTable(payload) {
   // 2. Render Spot Baseline Divider Bar (Blue row with SPOT (prevClose diff), F (spot diff), and O, H, L, R)
   rowsHtml += `
     <tr id="spotDividerRow" class="spot-divider-row">
-      <td colspan="15">
+      <td colspan="17">
         <div class="spot-divider-content">
           <div class="spot-center-title">
             <span class="spot-price-badge">SPOT: ${formatIndianNumber(underlyingValue)} (${spotPrevCloseDiffStr})</span>
@@ -723,7 +791,8 @@ function renderTable(payload) {
     tableFoot.innerHTML = `
       <!-- Row 1: TOTAL SUMMARY -->
       <tr class="total-row">
-        <!-- CALLS (CE) TOTALS: IV | OI Chg | OI | Volume | LTP | CHG OI% | CALL OI% -->
+        <!-- CALLS (CE) TOTALS: Delta | IV | OI Chg | OI | Volume | LTP | CHG OI% | CALL OI% -->
+        <td class="total-ce col-delta">-</td>
         <td class="total-ce col-iv">-</td>
         <td class="total-ce col-oichg">
           <div class="total-cell-stacked">
@@ -753,7 +822,7 @@ function renderTable(payload) {
         <!-- STRIKE TOTAL LABEL -->
         <td class="total-strike col-strike">TOTAL (${visibleStrikes.length})</td>
 
-        <!-- PUTS (PE) TOTALS: PUT OI% | CHG OI% | LTP | Volume | OI | OI Chg | IV -->
+        <!-- PUTS (PE) TOTALS: PUT OI% | CHG OI% | LTP | Volume | OI | OI Chg | IV | Delta -->
         <td class="total-pe col-oi-pct">
           <div class="total-cell-stacked">
             <span class="total-line-pct">${peOiTotalPctStr}</span>
@@ -779,11 +848,13 @@ function renderTable(payload) {
           </div>
         </td>
         <td class="total-pe col-iv">-</td>
+        <td class="total-pe col-delta">-</td>
       </tr>
 
       <!-- Row 2: ITM & OTM BREAKDOWN (Realtime based on visible entries) -->
       <tr class="breakdown-row">
-        <!-- CALLS (CE) ITM / OTM: IV | OI Chg | OI | Volume | LTP | CHG OI% | CALL OI% -->
+        <!-- CALLS (CE) ITM / OTM: Delta | IV | OI Chg | OI | Volume | LTP | CHG OI% | CALL OI% -->
+        <td class="breakdown-ce col-delta">-</td>
         <td class="breakdown-ce col-iv">-</td>
         <td class="breakdown-ce col-oichg">
           <div class="breakdown-cell-stacked">
@@ -815,7 +886,7 @@ function renderTable(payload) {
         <!-- STRIKE BREAKDOWN LABEL -->
         <td class="breakdown-strike col-strike">ITM / OTM</td>
 
-        <!-- PUTS (PE) ITM / OTM: PUT OI% | CHG OI% | LTP | Volume | OI | OI Chg | IV -->
+        <!-- PUTS (PE) ITM / OTM: PUT OI% | CHG OI% | LTP | Volume | OI | OI Chg | IV | Delta -->
         <td class="breakdown-pe col-oi-pct">
           <div class="breakdown-cell-stacked">
             <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${itmPeOiPctStr}</span></div>
@@ -843,6 +914,7 @@ function renderTable(payload) {
           </div>
         </td>
         <td class="breakdown-pe col-iv">-</td>
+        <td class="breakdown-pe col-delta">-</td>
       </tr>
     `;
   }
