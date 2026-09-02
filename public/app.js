@@ -252,7 +252,9 @@ function renderTable(payload) {
   const selectedA = setA_Strikes.slice(0, count).sort((a, b) => b - a); // Display descending (highest on top)
   const selectedB = setB_Strikes.slice(0, count).sort((a, b) => b - a); // Display descending (closest to spot on top)
 
-  // Find max values for badge highlights across the visible set
+  const LOT_MULTIPLIER = 65;
+
+  // Find max values for badge highlights across the visible set (multiplied by 65)
   const visibleStrikes = [...selectedA, ...(exactMatchStrike ? [exactMatchStrike] : []), ...selectedB];
   let maxCeOI = 0;
   let maxCeVol = 0;
@@ -263,12 +265,16 @@ function renderTable(payload) {
     const r = strikeMap.get(s);
     if (r) {
       if (r.CE) {
-        if ((r.CE.openInterest || 0) > maxCeOI) maxCeOI = r.CE.openInterest;
-        if ((r.CE.totalTradedVolume || 0) > maxCeVol) maxCeVol = r.CE.totalTradedVolume;
+        const ceOi = (Number(r.CE.openInterest) || 0) * LOT_MULTIPLIER;
+        const ceVol = (Number(r.CE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
+        if (ceOi > maxCeOI) maxCeOI = ceOi;
+        if (ceVol > maxCeVol) maxCeVol = ceVol;
       }
       if (r.PE) {
-        if ((r.PE.openInterest || 0) > maxPeOI) maxPeOI = r.PE.openInterest;
-        if ((r.PE.totalTradedVolume || 0) > maxPeVol) maxPeVol = r.PE.totalTradedVolume;
+        const peOi = (Number(r.PE.openInterest) || 0) * LOT_MULTIPLIER;
+        const peVol = (Number(r.PE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
+        if (peOi > maxPeOI) maxPeOI = peOi;
+        if (peVol > maxPeVol) maxPeVol = peVol;
       }
     }
   });
@@ -282,6 +288,15 @@ function renderTable(payload) {
     const ce = item.CE || {};
     const pe = item.PE || {};
 
+    // Multiply OI, OI Change, and Volume by 65
+    const ceOi = (Number(ce.openInterest) || 0) * LOT_MULTIPLIER;
+    const ceOiChg = (Number(ce.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
+    const ceVol = (Number(ce.totalTradedVolume) || 0) * LOT_MULTIPLIER;
+
+    const peOi = (Number(pe.openInterest) || 0) * LOT_MULTIPLIER;
+    const peOiChg = (Number(pe.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
+    const peVol = (Number(pe.totalTradedVolume) || 0) * LOT_MULTIPLIER;
+
     const isCeItm = strike < underlyingValue;
     const isPeItm = strike > underlyingValue;
 
@@ -293,26 +308,24 @@ function renderTable(payload) {
     const rowClass = isExactMatch ? 'exact-match-row' : '';
 
     // OI Chg Color Classes
-    const ceOiChgClass = (ce.changeinOpenInterest < 0) ? 'text-negative' : (ce.changeinOpenInterest > 0 ? 'text-positive' : '');
-    const peOiChgClass = (pe.changeinOpenInterest < 0) ? 'text-negative' : (pe.changeinOpenInterest > 0 ? 'text-positive' : '');
+    const ceOiChgClass = (ceOiChg < 0) ? 'text-negative' : (ceOiChg > 0 ? 'text-positive' : '');
+    const peOiChgClass = (peOiChg < 0) ? 'text-negative' : (peOiChg > 0 ? 'text-positive' : '');
 
     // Max Badges
-    const ceOiBadge = (ce.openInterest && ce.openInterest === maxCeOI) ? 'badge-highest-ce' : '';
-    const ceVolBadge = (ce.totalTradedVolume && ce.totalTradedVolume === maxCeVol) ? 'badge-max-ce' : '';
-    const peOiBadge = (pe.openInterest && pe.openInterest === maxPeOI) ? 'badge-highest-pe' : '';
-    const peVolBadge = (pe.totalTradedVolume && pe.totalTradedVolume === maxPeVol) ? 'badge-max-pe' : '';
+    const ceOiBadge = (ceOi > 0 && ceOi === maxCeOI) ? 'badge-highest-ce' : '';
+    const ceVolBadge = (ceVol > 0 && ceVol === maxCeVol) ? 'badge-max-ce' : '';
+    const peOiBadge = (peOi > 0 && peOi === maxPeOI) ? 'badge-highest-pe' : '';
+    const peVolBadge = (peVol > 0 && peVol === maxPeVol) ? 'badge-max-pe' : '';
 
     // Calculate CALL OI% and PUT OI% (Percentage of their sum for this strike row)
-    const ceOiNum = Number(ce.openInterest) || 0;
-    const peOiNum = Number(pe.openInterest) || 0;
-    const totalOiSum = ceOiNum + peOiNum;
+    const totalOiSum = ceOi + peOi;
 
     let ceOiPctStr = '-';
     let peOiPctStr = '-';
 
     if (totalOiSum > 0) {
-      const cePct = (ceOiNum / totalOiSum) * 100;
-      const pePct = (peOiNum / totalOiSum) * 100;
+      const cePct = (ceOi / totalOiSum) * 100;
+      const pePct = (peOi / totalOiSum) * 100;
       ceOiPctStr = cePct.toFixed(1) + '%';
       peOiPctStr = pePct.toFixed(1) + '%';
     }
@@ -321,9 +334,9 @@ function renderTable(payload) {
       <tr class="${rowClass}">
         <!-- CALLS (CE) -->
         <td class="${ceClass}">${formatDecimal(ce.impliedVolatility)}</td>
-        <td class="${ceClass} ${ceOiChgClass}">${formatIndianNumber(ce.changeinOpenInterest)}</td>
-        <td class="${ceClass}"><span class="${ceVolBadge}">${formatIndianNumber(ce.totalTradedVolume)}</span></td>
-        <td class="${ceClass}"><span class="${ceOiBadge}">${formatIndianNumber(ce.openInterest)}</span></td>
+        <td class="${ceClass} ${ceOiChgClass}">${formatIndianNumber(ceOiChg)}</td>
+        <td class="${ceClass}"><span class="${ceVolBadge}">${formatIndianNumber(ceVol)}</span></td>
+        <td class="${ceClass}"><span class="${ceOiBadge}">${formatIndianNumber(ceOi)}</span></td>
         <td class="${ceClass}"><strong>${formatDecimal(ce.lastPrice)}</strong></td>
         <td class="${ceClass} cell-oi-pct"><strong>${ceOiPctStr}</strong></td>
 
@@ -335,9 +348,9 @@ function renderTable(payload) {
         <!-- PUTS (PE) - Mirrored from Center -->
         <td class="${peClass} cell-oi-pct"><strong>${peOiPctStr}</strong></td>
         <td class="${peClass}"><strong>${formatDecimal(pe.lastPrice)}</strong></td>
-        <td class="${peClass}"><span class="${peOiBadge}">${formatIndianNumber(pe.openInterest)}</span></td>
-        <td class="${peClass}"><span class="${peVolBadge}">${formatIndianNumber(pe.totalTradedVolume)}</span></td>
-        <td class="${peClass} ${peOiChgClass}">${formatIndianNumber(pe.changeinOpenInterest)}</td>
+        <td class="${peClass}"><span class="${peOiBadge}">${formatIndianNumber(peOi)}</span></td>
+        <td class="${peClass}"><span class="${peVolBadge}">${formatIndianNumber(peVol)}</span></td>
+        <td class="${peClass} ${peOiChgClass}">${formatIndianNumber(peOiChg)}</td>
         <td class="${peClass}">${formatDecimal(pe.impliedVolatility)}</td>
       </tr>
     `;
@@ -376,7 +389,7 @@ function renderTable(payload) {
 
   tableBody.innerHTML = rowsHtml;
 
-  // Calculate sum of OI and OI Change ONLY for the visible strikes displayed on the page
+  // Calculate sum of OI and OI Change ONLY for the visible strikes displayed on the page (multiplied by 65)
   let sumVisibleCeOi = 0;
   let sumVisibleCeOiChg = 0;
   let sumVisiblePeOi = 0;
@@ -401,12 +414,12 @@ function renderTable(payload) {
     const item = strikeMap.get(s);
     if (item) {
       if (item.CE) {
-        sumOtmCeOi += Number(item.CE.openInterest) || 0;
-        sumOtmCeOiChg += Number(item.CE.changeinOpenInterest) || 0;
+        sumOtmCeOi += (Number(item.CE.openInterest) || 0) * LOT_MULTIPLIER;
+        sumOtmCeOiChg += (Number(item.CE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
       }
       if (item.PE) {
-        sumItmPeOi += Number(item.PE.openInterest) || 0;
-        sumItmPeOiChg += Number(item.PE.changeinOpenInterest) || 0;
+        sumItmPeOi += (Number(item.PE.openInterest) || 0) * LOT_MULTIPLIER;
+        sumItmPeOiChg += (Number(item.PE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
       }
     }
   });
@@ -415,12 +428,12 @@ function renderTable(payload) {
     const item = strikeMap.get(s);
     if (item) {
       if (item.CE) {
-        sumItmCeOi += Number(item.CE.openInterest) || 0;
-        sumItmCeOiChg += Number(item.CE.changeinOpenInterest) || 0;
+        sumItmCeOi += (Number(item.CE.openInterest) || 0) * LOT_MULTIPLIER;
+        sumItmCeOiChg += (Number(item.CE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
       }
       if (item.PE) {
-        sumOtmPeOi += Number(item.PE.openInterest) || 0;
-        sumOtmPeOiChg += Number(item.PE.changeinOpenInterest) || 0;
+        sumOtmPeOi += (Number(item.PE.openInterest) || 0) * LOT_MULTIPLIER;
+        sumOtmPeOiChg += (Number(item.PE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
       }
     }
   });
@@ -430,12 +443,12 @@ function renderTable(payload) {
     const item = strikeMap.get(exactMatchStrike);
     if (item) {
       if (item.CE) {
-        sumItmCeOi += Number(item.CE.openInterest) || 0;
-        sumItmCeOiChg += Number(item.CE.changeinOpenInterest) || 0;
+        sumItmCeOi += (Number(item.CE.openInterest) || 0) * LOT_MULTIPLIER;
+        sumItmCeOiChg += (Number(item.CE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
       }
       if (item.PE) {
-        sumItmPeOi += Number(item.PE.openInterest) || 0;
-        sumItmPeOiChg += Number(item.PE.changeinOpenInterest) || 0;
+        sumItmPeOi += (Number(item.PE.openInterest) || 0) * LOT_MULTIPLIER;
+        sumItmPeOiChg += (Number(item.PE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
       }
     }
   }
