@@ -299,11 +299,11 @@ input[type="number"] {
 /* Option Chain Table - Fixed 100% Fit with Responsive Minimum Width */
 .oc-table {
   width: 100%;
-  min-width: 1100px;
+  min-width: 1300px;
   table-layout: fixed;
   border-collapse: separate;
   border-spacing: 0;
-  font-size: 0.72rem;
+  font-size: 0.70rem;
   text-align: right;
   white-space: nowrap;
 }
@@ -332,7 +332,7 @@ input[type="number"] {
   position: sticky;
   top: 0;
   z-index: 52;
-  font-size: 0.80rem;
+  font-size: 0.78rem;
   letter-spacing: 0.04em;
   padding: 3px 4px;
   height: 25px;
@@ -343,21 +343,21 @@ input[type="number"] {
   background-color: #b71c1c !important; /* Deep Red for Calls */
   color: #ffffff !important;
   text-align: center;
-  width: 46%;
+  width: 47.2%;
 }
 
 .th-pe {
   background-color: #1b5e20 !important; /* Deep Green for Puts */
   color: #ffffff !important;
   text-align: center;
-  width: 46%;
+  width: 47.2%;
 }
 
 .th-strike-title {
   background-color: #1e293b !important;
   color: #ffffff !important;
   text-align: center;
-  width: 8%;
+  width: 5.6%;
 }
 
 /* Sub Header Row - Floating Sticky directly below Super Header */
@@ -367,7 +367,7 @@ input[type="number"] {
   z-index: 51;
   background-color: #f8fafc !important;
   color: #334155 !important;
-  font-size: 0.65rem;
+  font-size: 0.63rem;
   text-transform: uppercase;
   border-bottom: 2px solid #94a3b8;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
@@ -380,58 +380,37 @@ input[type="number"] {
   text-align: center;
 }
 
-/* Proportional Column Widths (Calls: 46% | Strike: 8% | Puts: 46% = 100%) */
+/* Proportional Column Widths (Calls: 47.2% | Strike: 5.6% | Puts: 47.2% = 100%) */
 th.col-iv, td.col-iv {
-  width: 4%;
+  width: 3.8%;
 }
 
 th.col-oichg, td.col-oichg {
-  width: 7.5%;
+  width: 6.2%;
 }
 
 th.col-oi, td.col-oi {
-  width: 9.5%;
+  width: 11.5%;
 }
 
 th.col-vol, td.col-vol {
-  width: 10%;
+  width: 11.5%;
 }
 
 th.col-ltp, td.col-ltp {
-  width: 4.5%;
+  width: 4.2%;
 }
 
 th.col-oichg-pct, td.col-oichg-pct {
-  width: 5.5%;
+  width: 5.2%;
 }
 
 th.col-oi-pct, td.col-oi-pct {
-  width: 5%;
+  width: 4.8%;
 }
 
 th.col-strike, td.cell-strike, td.col-strike {
-  width: 8%;
-}
-
-.th-ce {
-  background-color: #b71c1c !important; /* Deep Red for Calls */
-  color: #ffffff !important;
-  text-align: center;
-  width: 46%;
-}
-
-.th-pe {
-  background-color: #1b5e20 !important; /* Deep Green for Puts */
-  color: #ffffff !important;
-  text-align: center;
-  width: 46%;
-}
-
-.th-strike-title {
-  background-color: #1e293b !important;
-  color: #ffffff !important;
-  text-align: center;
-  width: 8%;
+  width: 5.6%;
 }
 
 /* Floating Sticky Table Footer (Total Row matching Top Header colors) */
@@ -444,8 +423,8 @@ th.col-strike, td.cell-strike, td.col-strike {
 .total-row td {
   padding: 3px 2px;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 0.70rem;
-  letter-spacing: -0.025em;
+  font-size: 0.68rem;
+  letter-spacing: -0.03em;
   font-weight: 700;
   border-top: 2px solid #0f172a;
   border-right: 1px solid rgba(255, 255, 255, 0.15);
@@ -468,7 +447,7 @@ th.col-strike, td.cell-strike, td.col-strike {
   color: #38bdf8 !important; /* Sky Blue accent */
   text-align: center;
   font-weight: 800;
-  font-size: 0.74rem;
+  font-size: 0.72rem;
   letter-spacing: 0.01em;
   border-left: 2px solid #0f172a;
   border-right: 2px solid #0f172a;
@@ -483,10 +462,10 @@ th.col-strike, td.cell-strike, td.col-strike {
 
 /* Second Footer Row - ITM / OTM Breakdown */
 .breakdown-row td {
-  padding: 3px 2px;
+  padding: 2px 2px;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 0.67rem;
-  letter-spacing: -0.025em;
+  font-size: 0.65rem;
+  letter-spacing: -0.035em;
   font-weight: 700;
   border-top: 1px solid rgba(255, 255, 255, 0.2);
   border-right: 1px solid rgba(255, 255, 255, 0.15);
@@ -506,7 +485,7 @@ th.col-strike, td.cell-strike, td.col-strike {
   color: #facc15 !important; /* Gold accent */
   text-align: center;
   font-weight: 800;
-  font-size: 0.72rem;
+  font-size: 0.70rem;
   letter-spacing: 0.02em;
   border-left: 2px solid #0f172a;
   border-right: 2px solid #0f172a;
@@ -521,13 +500,15 @@ th.col-strike, td.cell-strike, td.col-strike {
 .tag-itm {
   color: #fef08a !important; /* Soft yellow matching ITM rows */
   font-weight: 800;
-  font-size: 0.65rem;
+  font-size: 0.58rem;
+  margin-right: 1px;
 }
 
 .tag-otm {
   color: #ffffff !important; /* Crisp white matching OTM rows */
   font-weight: 800;
-  font-size: 0.65rem;
+  font-size: 0.58rem;
+  margin-right: 1px;
 }
 
 .total-cell-stacked {
@@ -543,19 +524,19 @@ th.col-strike, td.cell-strike, td.col-strike {
 }
 
 .total-line-sum {
-  font-size: 0.67rem;
+  font-size: 0.65rem;
   font-weight: 700;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.035em;
   opacity: 0.95;
   white-space: nowrap;
   max-width: 100%;
 }
 
 .total-line-pct {
-  font-size: 0.67rem;
+  font-size: 0.65rem;
   font-weight: 800;
   color: #fef08a !important; /* Bright golden yellow on red/green headers */
-  letter-spacing: -0.02em;
+  letter-spacing: -0.025em;
   white-space: nowrap;
   max-width: 100%;
 }
@@ -573,25 +554,25 @@ th.col-iv, th.col-oichg, th.col-oi, th.col-vol, th.col-ltp, th.col-oi-pct, th.co
 
 /* Table Cells */
 .oc-table td {
-  padding: 2px 3px;
+  padding: 2px 2px;
   border: 1px solid #e2e8f0;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 0.72rem;
-  letter-spacing: -0.025em;
+  font-size: 0.70rem;
+  letter-spacing: -0.035em;
   overflow: hidden;
   text-overflow: clip;
   box-sizing: border-box;
 }
 
 td.col-vol {
-  font-size: 0.70rem;
+  font-size: 0.69rem;
   letter-spacing: -0.035em;
-  padding: 2px 1px;
+  padding: 2px 2px;
 }
 
 td.col-oi, td.col-oichg {
-  font-size: 0.70rem;
-  letter-spacing: -0.025em;
+  font-size: 0.69rem;
+  letter-spacing: -0.035em;
   padding: 2px 2px;
 }
 
@@ -602,7 +583,7 @@ td.col-oi, td.col-oichg {
   color: #64748b; /* Muted slate for intermediate strikes */
   border-left: 2px solid #cbd5e1;
   border-right: 2px solid #cbd5e1;
-  font-size: 0.75rem;
+  font-size: 0.74rem;
   letter-spacing: -0.01em;
 }
 
@@ -610,7 +591,7 @@ td.col-oi, td.col-oichg {
   font-weight: 800 !important;
   color: #0f172a !important; /* Deep dark bold text */
   background-color: #e2e8f0 !important; /* Distinct shaded background for round 100 strikes */
-  font-size: 0.78rem !important;
+  font-size: 0.76rem !important;
   border-left: 2px solid #94a3b8 !important;
   border-right: 2px solid #94a3b8 !important;
   letter-spacing: 0.01em;
