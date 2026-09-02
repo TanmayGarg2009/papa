@@ -344,21 +344,21 @@ input[type="number"] {
   background-color: #b71c1c !important; /* Deep Red for Calls */
   color: #ffffff !important;
   text-align: center;
-  width: 48%;
+  width: 47.5%;
 }
 
 .th-pe {
   background-color: #1b5e20 !important; /* Deep Green for Puts */
   color: #ffffff !important;
   text-align: center;
-  width: 48%;
+  width: 47.5%;
 }
 
 .th-strike-title {
   background-color: #1e293b !important;
   color: #ffffff !important;
   text-align: center;
-  width: 4%;
+  width: 5.0%;
 }
 
 /* Sub Header Row - Floating Sticky directly below Super Header */
@@ -381,20 +381,20 @@ input[type="number"] {
   text-align: center;
 }
 
-/* Proportional Column Widths (Calls: 48% | Strike: 4% | Puts: 48% = 100%) */
-/* Sized specifically according to character lengths in real-time */
+/* Proportional Column Widths (Calls: 47.5% | Strike: 5% | Puts: 47.5% = 100%) */
+/* Sized strictly according to character lengths in real-time */
 th.col-delta, td.col-delta {
-  width: 2.6%;
+  width: 2.2%;
   text-align: center;
 }
 
 th.col-iv, td.col-iv {
-  width: 2.4%;
+  width: 2.2%;
   text-align: center;
 }
 
 th.col-oichg, td.col-oichg {
-  width: 10.0%;
+  width: 10.5%;
   text-align: center;
 }
 
@@ -404,27 +404,27 @@ th.col-oi, td.col-oi {
 }
 
 th.col-vol, td.col-vol {
-  width: 10.0%;
+  width: 10.4%;
   text-align: center;
 }
 
 th.col-ltp, td.col-ltp {
-  width: 3.3%;
+  width: 3.0%;
   text-align: center;
 }
 
 th.col-oichg-pct, td.col-oichg-pct {
-  width: 3.8%;
+  width: 3.5%;
   text-align: center;
 }
 
 th.col-oi-pct, td.col-oi-pct {
-  width: 3.4%;
+  width: 3.2%;
   text-align: center;
 }
 
 th.col-strike, td.cell-strike, td.col-strike {
-  width: 4.0%;
+  width: 5.0%;
   text-align: center;
 }
 
