@@ -373,7 +373,7 @@ input[type="number"] {
   font-size: 0.68rem;
   font-weight: 800;
   letter-spacing: 0.01em;
-  margin-left: 5px;
+  margin: 0 2px;
   border: 1px solid rgba(255, 255, 255, 0.25);
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   vertical-align: middle;
@@ -389,9 +389,17 @@ input[type="number"] {
   font-size: 0.68rem;
   font-weight: 800;
   letter-spacing: 0.01em;
-  margin-left: 4px;
+  margin: 0 2px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   vertical-align: middle;
+}
+
+.th-pe .header-title-text {
+  margin-left: 6px;
+}
+
+.th-ce .header-title-text {
+  margin-right: 4px;
 }
 
 .badge-rf3, .badge-sf3 {
