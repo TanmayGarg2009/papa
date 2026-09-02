@@ -374,6 +374,13 @@ function renderTable(payload) {
       peOiPctStr = pePct.toFixed(1) + '%';
     }
 
+    // Strike bold formatting: Only multiples of 100 are shown in bold
+    const isMultipleOf100 = (Number(strike) % 100 === 0);
+    const formattedStrike = formatIndianNumber(strike);
+    const strikeDisplayContent = isExactMatch 
+      ? `<span class="golden-badge">${formattedStrike}</span>` 
+      : (isMultipleOf100 ? `<strong>${formattedStrike}</strong>` : formattedStrike);
+
     return `
       <tr class="${rowClass}">
         <!-- CALLS (CE) -->
@@ -384,9 +391,9 @@ function renderTable(payload) {
         <td class="${ceClass}"><strong>${formatDecimal(ce.lastPrice)}</strong></td>
         <td class="${ceClass} cell-oi-pct"><strong>${ceOiPctStr}</strong></td>
 
-        <!-- STRIKE PRICE (CENTER) -->
-        <td class="${strikeClass}">
-          ${isExactMatch ? `<span class="golden-badge">${formatIndianNumber(strike)}</span>` : `<strong>${formatIndianNumber(strike)}</strong>`}
+        <!-- STRIKE PRICE (CENTER) - Multiples of 100 in Bold -->
+        <td class="${strikeClass} ${isMultipleOf100 ? 'strike-bold' : ''}">
+          ${strikeDisplayContent}
         </td>
 
         <!-- PUTS (PE) - Mirrored from Center -->

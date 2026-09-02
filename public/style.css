@@ -456,11 +456,16 @@ th.col-iv, th.col-oichg, th.col-oi, th.col-vol, th.col-ltp, th.col-oi-pct {
 
 .oc-table td.cell-strike {
   text-align: center;
-  font-weight: 700;
+  font-weight: 400;
   background-color: #f1f5f9;
   color: #0f172a;
   border-left: 2px solid #cbd5e1;
   border-right: 2px solid #cbd5e1;
+}
+
+.oc-table td.cell-strike.strike-bold,
+.oc-table td.cell-strike strong {
+  font-weight: 800;
 }
 
 /* ITM (In-The-Money) Yellow Tint */
