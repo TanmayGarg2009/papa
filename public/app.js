@@ -367,7 +367,7 @@ function renderTable(payload) {
     if (r) {
       if (r.CE) {
         const ceOi = (Number(r.CE.openInterest) || 0) * LOT_MULTIPLIER;
-        const ceVol = (Number(r.CE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
+        const ceVol = (Number(ce.totalTradedVolume) || 0) * LOT_MULTIPLIER;
         if (ceOi > maxCeOI) maxCeOI = ceOi;
         if (ceVol > maxCeVol) maxCeVol = ceVol;
       }
@@ -516,7 +516,6 @@ function renderTable(payload) {
     <tr id="spotDividerRow" class="spot-divider-row">
       <td colspan="15">
         <div class="spot-divider-content">
-          <span class="spot-tag-left">▲ SET A (${selectedA.length} Strikes Above Baseline)</span>
           <div class="spot-center-title">
             <span class="spot-price-badge">SPOT: ${formatIndianNumber(underlyingValue)} (${spotPrevCloseDiffStr})</span>
             <span class="spot-price-badge">F: ${formatIndianNumber(futureValue)} (${spotFutDiffStr})</span>
@@ -527,7 +526,6 @@ function renderTable(payload) {
               <span class="spot-ohlc-item"><span class="spot-ohlc-label">R:</span> ${rangeStr}</span>
             </span>
           </div>
-          <span class="spot-tag-right">▼ SET B (${selectedB.length} Strikes Below Baseline)</span>
         </div>
       </td>
     </tr>
