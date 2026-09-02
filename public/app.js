@@ -2,7 +2,8 @@
 let currentSymbol = 'NIFTY';
 let currentExpiry = '01-Sep-2026';
 let strikeDepth = 20; // Default 20 above, 20 below
-let timerSecondsRemaining = 0;
+let refreshCooldownSeconds = 30; // Default fixed 30 seconds
+let timerSecondsRemaining = 30;
 let timerCountdownInterval = null;
 let lastFetchedData = null;
 
@@ -10,6 +11,7 @@ let lastFetchedData = null;
 const symbolSelect = document.getElementById('symbolSelect');
 const expirySelect = document.getElementById('expirySelect');
 const strikeCountInput = document.getElementById('strikeCountInput');
+const cooldownInput = document.getElementById('cooldownInput');
 const timerDisplay = document.getElementById('timerDisplay');
 const refreshBtn = document.getElementById('refreshBtn');
 const statusBadge = document.getElementById('statusBadge');
@@ -49,14 +51,6 @@ function formatDecimal(num, decimals = 2) {
   return Number(num).toFixed(decimals);
 }
 
-// Utility: Dynamic random interval generator strictly between 1 and 3 minutes (61s - 179s)
-function getNextRandomIntervalSeconds() {
-  const minSeconds = 61;  // > 1 minute (60s excluded)
-  const maxSeconds = 179; // < 3 minutes (180s excluded)
-  const randomSeconds = Math.floor(Math.random() * (maxSeconds - minSeconds + 1)) + minSeconds;
-  return randomSeconds;
-}
-
 // Toast Popup Notification
 function showToast(message, type = 'success') {
   const toast = document.createElement('div');
@@ -92,13 +86,15 @@ function showToast(message, type = 'success') {
   }, 3500);
 }
 
-// Start Random Countdown Timer
-function startRandomAutoRefreshTimer() {
+// Start Configurable Countdown Timer
+function startAutoRefreshTimer(resetToMax = true) {
   if (timerCountdownInterval) {
     clearInterval(timerCountdownInterval);
   }
 
-  timerSecondsRemaining = getNextRandomIntervalSeconds();
+  if (resetToMax) {
+    timerSecondsRemaining = refreshCooldownSeconds;
+  }
   updateTimerDisplay();
 
   timerCountdownInterval = setInterval(() => {
@@ -168,8 +164,8 @@ async function fetchOptionChain(isAutoRefresh = false) {
     noticeMessage.textContent = `Something went wrong: ${error.message}`;
     showToast('Something went wrong refreshing data', 'error');
   } finally {
-    // Re-schedule next random timer strictly between 1 and 3 minutes
-    startRandomAutoRefreshTimer();
+    // Re-schedule next timer based on configured cooldown
+    startAutoRefreshTimer(true);
   }
 }
 
@@ -626,6 +622,17 @@ strikeCountInput.addEventListener('input', (e) => {
     }
   }
 });
+
+if (cooldownInput) {
+  cooldownInput.addEventListener('input', (e) => {
+    const val = parseInt(e.target.value);
+    if (!isNaN(val) && val > 0) {
+      refreshCooldownSeconds = val;
+      // Reset remaining timer to newly set cooldown and update display immediately
+      startAutoRefreshTimer(true);
+    }
+  });
+}
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', () => {
