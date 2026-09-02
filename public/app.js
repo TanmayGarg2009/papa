@@ -554,14 +554,70 @@ function renderTable(payload) {
     }
   }
 
-  // Update R & S Badges in Super Headers
+  // Helper to retrieve or freeze 09:20 AM IST Fixed Levels (RF and SF)
+  function getOrUpdateFixedRS(symbol, currentR, currentS) {
+    const now = new Date();
+    const istString = now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
+    const istDate = new Date(istString);
+    const todayDateString = now.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+    const currentMinutes = istDate.getHours() * 60 + istDate.getMinutes();
+    const isPast920 = currentMinutes >= (9 * 60 + 20); // 9:20 AM IST = 560 mins
+
+    const storageKey = `papa_fixed_levels_${symbol}_${todayDateString}`;
+    let fixedLevels = null;
+    try {
+      const raw = localStorage.getItem(storageKey);
+      if (raw) {
+        fixedLevels = JSON.parse(raw);
+      }
+    } catch (e) {}
+
+    // If already locked today, return locked values
+    if (fixedLevels && fixedLevels.rf && fixedLevels.sf) {
+      return fixedLevels;
+    }
+
+    // If time is 09:20 AM or later and we have valid R & S, lock them permanently for the day
+    if (isPast920 && currentR && currentS) {
+      fixedLevels = {
+        date: todayDateString,
+        symbol: symbol,
+        rf: currentR,
+        sf: currentS,
+        lockedAt: '09:20 AM IST'
+      };
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(fixedLevels));
+      } catch (e) {}
+      return fixedLevels;
+    }
+
+    return fixedLevels;
+  }
+
+  const fixedRS = getOrUpdateFixedRS(currentSymbol, resistanceStrike, supportStrike);
+  const fixedRf = fixedRS?.rf || null;
+  const fixedSf = fixedRS?.sf || null;
+
+  // Update R, RF, S, SF Badges in Super Headers
   const badgeResistance = document.getElementById('badgeResistance');
+  const badgeRf = document.getElementById('badgeRf');
   const badgeSupport = document.getElementById('badgeSupport');
+  const badgeSf = document.getElementById('badgeSf');
+
   if (badgeResistance) {
     badgeResistance.textContent = resistanceStrike ? `R: ${formatIndianNumber(resistanceStrike)}` : 'R: -';
   }
+  if (badgeRf) {
+    badgeRf.textContent = fixedRf ? `RF: ${formatIndianNumber(fixedRf)}` : 'RF: --';
+    badgeRf.title = fixedRf ? `Resistance Fixed at 09:20 AM IST: ${formatIndianNumber(fixedRf)}` : 'Resistance (RF) locks at 09:20 AM IST';
+  }
   if (badgeSupport) {
     badgeSupport.textContent = supportStrike ? `S: ${formatIndianNumber(supportStrike)}` : 'S: -';
+  }
+  if (badgeSf) {
+    badgeSf.textContent = fixedSf ? `SF: ${formatIndianNumber(fixedSf)}` : 'SF: --';
+    badgeSf.title = fixedSf ? `Support Fixed at 09:20 AM IST: ${formatIndianNumber(fixedSf)}` : 'Support (SF) locks at 09:20 AM IST';
   }
 
   // Helper function to render 2-line stacked cell with relative percentage & highlight badges
