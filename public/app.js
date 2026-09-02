@@ -384,11 +384,11 @@ function renderTable(payload) {
 
     return `
       <tr class="${rowClass}">
-        <!-- CALLS (CE) -->
+        <!-- CALLS (CE): IV | OI Chg | OI | Volume | LTP | CALL OI% -->
         <td class="${ceClass}">${formatDecimal(ce.impliedVolatility)}</td>
         <td class="${ceClass} ${ceOiChgClass}">${formatIndianNumber(ceOiChg)}</td>
-        <td class="${ceClass}"><span class="${ceVolBadge}">${formatIndianNumber(ceVol)}</span></td>
         <td class="${ceClass}"><span class="${ceOiBadge}">${formatIndianNumber(ceOi)}</span></td>
+        <td class="${ceClass}"><span class="${ceVolBadge}">${formatIndianNumber(ceVol)}</span></td>
         <td class="${ceClass}"><strong>${formatDecimal(ce.lastPrice)}</strong></td>
         <td class="${ceClass} cell-oi-pct"><strong>${ceOiPctStr}</strong></td>
 
@@ -397,11 +397,11 @@ function renderTable(payload) {
           ${strikeDisplayContent}
         </td>
 
-        <!-- PUTS (PE) - Mirrored from Center -->
+        <!-- PUTS (PE) - Mirrored: PUT OI% | LTP | Volume | OI | OI Chg | IV -->
         <td class="${peClass} cell-oi-pct"><strong>${peOiPctStr}</strong></td>
         <td class="${peClass}"><strong>${formatDecimal(pe.lastPrice)}</strong></td>
-        <td class="${peClass}"><span class="${peOiBadge}">${formatIndianNumber(peOi)}</span></td>
         <td class="${peClass}"><span class="${peVolBadge}">${formatIndianNumber(peVol)}</span></td>
+        <td class="${peClass}"><span class="${peOiBadge}">${formatIndianNumber(peOi)}</span></td>
         <td class="${peClass} ${peOiChgClass}">${formatIndianNumber(peOiChg)}</td>
         <td class="${peClass}">${formatDecimal(pe.impliedVolatility)}</td>
       </tr>
@@ -547,7 +547,7 @@ function renderTable(payload) {
     tableFoot.innerHTML = `
       <!-- Row 1: TOTAL SUMMARY -->
       <tr class="total-row">
-        <!-- CALLS (CE) TOTALS: IV | OI Chg | Volume | OI | LTP | CALL OI% -->
+        <!-- CALLS (CE) TOTALS: IV | OI Chg | OI | Volume | LTP | CALL OI% -->
         <td class="total-ce">-</td>
         <td class="total-ce">
           <div class="total-cell-stacked">
@@ -555,13 +555,13 @@ function renderTable(payload) {
             <span class="total-line-pct">%: ${ceOiChgTotalPctStr}</span>
           </div>
         </td>
-        <td class="total-ce">-</td>
         <td class="total-ce">
           <div class="total-cell-stacked">
             <span class="total-line-sum">sum: ${formatIndianNumber(sumVisibleCeOi)}</span>
             <span class="total-line-pct">%: ${ceOiTotalPctStr}</span>
           </div>
         </td>
+        <td class="total-ce">-</td>
         <td class="total-ce">-</td>
         <td class="total-ce">
           <div class="total-cell-stacked">
@@ -572,12 +572,13 @@ function renderTable(payload) {
         <!-- STRIKE TOTAL LABEL -->
         <td class="total-strike">TOTAL (${visibleStrikes.length})</td>
 
-        <!-- PUTS (PE) TOTALS: PUT OI% | LTP | OI | Volume | OI Chg | IV -->
+        <!-- PUTS (PE) TOTALS: PUT OI% | LTP | Volume | OI | OI Chg | IV -->
         <td class="total-pe">
           <div class="total-cell-stacked">
             <span class="total-line-pct">${peOiTotalPctStr}</span>
           </div>
         </td>
+        <td class="total-pe">-</td>
         <td class="total-pe">-</td>
         <td class="total-pe">
           <div class="total-cell-stacked">
@@ -585,7 +586,6 @@ function renderTable(payload) {
             <span class="total-line-pct">%: ${peOiTotalPctStr}</span>
           </div>
         </td>
-        <td class="total-pe">-</td>
         <td class="total-pe">
           <div class="total-cell-stacked">
             <span class="total-line-sum">sum: ${formatIndianNumber(sumVisiblePeOiChg)}</span>
@@ -597,7 +597,7 @@ function renderTable(payload) {
 
       <!-- Row 2: ITM & OTM BREAKDOWN (Realtime based on visible entries) -->
       <tr class="breakdown-row">
-        <!-- CALLS (CE) ITM / OTM: IV | OI Chg | Volume | OI | LTP | CALL OI% -->
+        <!-- CALLS (CE) ITM / OTM: IV | OI Chg | OI | Volume | LTP | CALL OI% -->
         <td class="breakdown-ce">-</td>
         <td class="breakdown-ce">
           <div class="total-cell-stacked">
@@ -605,13 +605,13 @@ function renderTable(payload) {
             <span class="total-line-sum"><span class="tag-otm">OTM:</span> ${formatIndianNumber(sumOtmCeOiChg)}</span>
           </div>
         </td>
-        <td class="breakdown-ce">-</td>
         <td class="breakdown-ce">
           <div class="total-cell-stacked">
             <span class="total-line-sum"><span class="tag-itm">ITM Call:</span> ${formatIndianNumber(sumItmCeOi)}</span>
             <span class="total-line-sum"><span class="tag-otm">OTM Call:</span> ${formatIndianNumber(sumOtmCeOi)}</span>
           </div>
         </td>
+        <td class="breakdown-ce">-</td>
         <td class="breakdown-ce">-</td>
         <td class="breakdown-ce">
           <div class="total-cell-stacked">
@@ -623,7 +623,7 @@ function renderTable(payload) {
         <!-- STRIKE BREAKDOWN LABEL -->
         <td class="breakdown-strike">ITM / OTM</td>
 
-        <!-- PUTS (PE) ITM / OTM: PUT OI% | LTP | OI | Volume | OI Chg | IV -->
+        <!-- PUTS (PE) ITM / OTM: PUT OI% | LTP | Volume | OI | OI Chg | IV -->
         <td class="breakdown-pe">
           <div class="total-cell-stacked">
             <span class="total-line-pct"><span class="tag-itm">ITM:</span> ${itmPeOiPctStr}</span>
@@ -631,13 +631,13 @@ function renderTable(payload) {
           </div>
         </td>
         <td class="breakdown-pe">-</td>
+        <td class="breakdown-pe">-</td>
         <td class="breakdown-pe">
           <div class="total-cell-stacked">
             <span class="total-line-sum"><span class="tag-itm">ITM Put:</span> ${formatIndianNumber(sumItmPeOi)}</span>
             <span class="total-line-sum"><span class="tag-otm">OTM Put:</span> ${formatIndianNumber(sumOtmPeOi)}</span>
           </div>
         </td>
-        <td class="breakdown-pe">-</td>
         <td class="breakdown-pe">
           <div class="total-cell-stacked">
             <span class="total-line-sum"><span class="tag-itm">ITM:</span> ${formatIndianNumber(sumItmPeOiChg)}</span>
