@@ -344,21 +344,21 @@ input[type="number"] {
   background-color: #b71c1c !important; /* Deep Red for Calls */
   color: #ffffff !important;
   text-align: center;
-  width: 47.5%;
+  width: 47.4%;
 }
 
 .th-pe {
   background-color: #1b5e20 !important; /* Deep Green for Puts */
   color: #ffffff !important;
   text-align: center;
-  width: 47.5%;
+  width: 47.4%;
 }
 
 .th-strike-title {
   background-color: #1e293b !important;
   color: #ffffff !important;
   text-align: center;
-  width: 5.0%;
+  width: 5.2%;
 }
 
 /* Sub Header Row - Floating Sticky directly below Super Header */
@@ -381,50 +381,50 @@ input[type="number"] {
   text-align: center;
 }
 
-/* Proportional Column Widths (Calls: 47.5% | Strike: 5% | Puts: 47.5% = 100%) */
-/* Sized strictly according to character lengths in real-time */
+/* Proportional Column Widths (Calls: 47.4% | Strike: 5.2% | Puts: 47.4% = 100%) */
+/* Clean, comfortable breathing room for Delta/IV while giving maximum space to Volume/OI */
 th.col-delta, td.col-delta {
-  width: 2.2%;
+  width: 3.6%;
   text-align: center;
 }
 
 th.col-iv, td.col-iv {
-  width: 2.2%;
-  text-align: center;
-}
-
-th.col-oichg, td.col-oichg {
-  width: 10.5%;
-  text-align: center;
-}
-
-th.col-oi, td.col-oi {
-  width: 12.5%;
-  text-align: center;
-}
-
-th.col-vol, td.col-vol {
-  width: 10.4%;
-  text-align: center;
-}
-
-th.col-ltp, td.col-ltp {
-  width: 3.0%;
-  text-align: center;
-}
-
-th.col-oichg-pct, td.col-oichg-pct {
-  width: 3.5%;
-  text-align: center;
-}
-
-th.col-oi-pct, td.col-oi-pct {
   width: 3.2%;
   text-align: center;
 }
 
+th.col-oichg, td.col-oichg {
+  width: 9.2%;
+  text-align: center;
+}
+
+th.col-oi, td.col-oi {
+  width: 10.4%;
+  text-align: center;
+}
+
+th.col-vol, td.col-vol {
+  width: 9.0%;
+  text-align: center;
+}
+
+th.col-ltp, td.col-ltp {
+  width: 3.8%;
+  text-align: center;
+}
+
+th.col-oichg-pct, td.col-oichg-pct {
+  width: 4.2%;
+  text-align: center;
+}
+
+th.col-oi-pct, td.col-oi-pct {
+  width: 4.0%;
+  text-align: center;
+}
+
 th.col-strike, td.cell-strike, td.col-strike {
-  width: 5.0%;
+  width: 5.2%;
   text-align: center;
 }
 
