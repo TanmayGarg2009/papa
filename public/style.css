@@ -361,6 +361,24 @@ input[type="number"] {
   width: 5.2%;
 }
 
+.header-sr-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(0, 0, 0, 0.35);
+  color: #fef08a !important; /* Bright golden yellow text for high contrast */
+  padding: 1px 8px;
+  border-radius: 4px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  margin-left: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  vertical-align: middle;
+}
+
 /* Sub Header Row - Floating Sticky directly below Super Header */
 .sub-header th {
   position: sticky;

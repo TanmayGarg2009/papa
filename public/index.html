@@ -121,11 +121,17 @@
           <col style="width: 3.6%;"> <!-- Delta -->
         </colgroup>
         <thead>
-          <!-- Top Super Header (CE Red / Strike / PE Green) -->
+          <!-- Top Super Header (CE Red / Strike / PE Green) with R: & S: Badges -->
           <tr class="super-header">
-            <th colspan="8" class="th-ce">CALLS (CE)</th>
+            <th colspan="8" class="th-ce" id="superHeaderCe">
+              <span class="header-title-text">CALLS (CE)</span>
+              <span class="header-sr-badge" id="badgeResistance">R: --</span>
+            </th>
             <th class="th-strike-title">STRIKE</th>
-            <th colspan="8" class="th-pe">PUTS (PE)</th>
+            <th colspan="8" class="th-pe" id="superHeaderPe">
+              <span class="header-title-text">PUTS (PE)</span>
+              <span class="header-sr-badge" id="badgeSupport">S: --</span>
+            </th>
           </tr>
           <!-- Sub Column Headers -->
           <tr class="sub-header">

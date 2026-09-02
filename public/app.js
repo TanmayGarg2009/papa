@@ -476,6 +476,94 @@ function renderTable(payload) {
 
   const fallbackAtmIv = validIvs.length > 0 ? (validIvs.reduce((a, b) => a + b, 0) / validIvs.length) : 12.0;
 
+  // -------------------------------------------------------------
+  // Calculate Resistance (R) for CALLS (CE):
+  // Start from 1st ITM row (closest strike < spot). If any of the 3 (OI, OI Chg, Volume)
+  // is at 100% max, take that strike. If not, go UP into OTM (ascending from spot)
+  // until the first 100% max is found.
+  // -------------------------------------------------------------
+  let resistanceStrike = null;
+
+  // Check 1st ITM strike for Calls (or exact match if present)
+  const candidateCeItmStrikes = exactMatchStrike ? [exactMatchStrike, ...setB_Strikes] : setB_Strikes;
+  if (candidateCeItmStrikes.length > 0) {
+    const firstItmCe = candidateCeItmStrikes[0];
+    const item = strikeMap.get(firstItmCe);
+    if (item && item.CE) {
+      const oi = (Number(item.CE.openInterest) || 0) * LOT_MULTIPLIER;
+      const oic = (Number(item.CE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
+      const vol = (Number(item.CE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
+      if ((maxCeOI > 0 && oi === maxCeOI) || (maxCeOiChg > 0 && oic === maxCeOiChg) || (maxCeVol > 0 && vol === maxCeVol)) {
+        resistanceStrike = firstItmCe;
+      }
+    }
+  }
+
+  // If not at 1st ITM strike, scan UP into OTM strikes (ascending from spot upwards)
+  if (!resistanceStrike) {
+    for (const strike of setA_Strikes) {
+      const item = strikeMap.get(strike);
+      if (item && item.CE) {
+        const oi = (Number(item.CE.openInterest) || 0) * LOT_MULTIPLIER;
+        const oic = (Number(item.CE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
+        const vol = (Number(item.CE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
+        if ((maxCeOI > 0 && oi === maxCeOI) || (maxCeOiChg > 0 && oic === maxCeOiChg) || (maxCeVol > 0 && vol === maxCeVol)) {
+          resistanceStrike = strike;
+          break;
+        }
+      }
+    }
+  }
+
+  // -------------------------------------------------------------
+  // Calculate Support (S) for PUTS (PE):
+  // Start from 1st ITM row (closest strike > spot). If any of the 3 (OI, OI Chg, Volume)
+  // is at 100% max, take that strike. If not, go DOWN into OTM (descending from spot)
+  // until the first 100% max is found.
+  // -------------------------------------------------------------
+  let supportStrike = null;
+
+  // Check 1st ITM strike for Puts (or exact match if present)
+  const candidatePeItmStrikes = exactMatchStrike ? [exactMatchStrike, ...setA_Strikes] : setA_Strikes;
+  if (candidatePeItmStrikes.length > 0) {
+    const firstItmPe = candidatePeItmStrikes[0];
+    const item = strikeMap.get(firstItmPe);
+    if (item && item.PE) {
+      const oi = (Number(item.PE.openInterest) || 0) * LOT_MULTIPLIER;
+      const oic = (Number(item.PE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
+      const vol = (Number(item.PE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
+      if ((maxPeOI > 0 && oi === maxPeOI) || (maxPeOiChg > 0 && oic === maxPeOiChg) || (maxPeVol > 0 && vol === maxPeVol)) {
+        supportStrike = firstItmPe;
+      }
+    }
+  }
+
+  // If not at 1st ITM strike, scan DOWN into OTM strikes (descending from spot downwards)
+  if (!supportStrike) {
+    for (const strike of setB_Strikes) {
+      const item = strikeMap.get(strike);
+      if (item && item.PE) {
+        const oi = (Number(item.PE.openInterest) || 0) * LOT_MULTIPLIER;
+        const oic = (Number(item.PE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
+        const vol = (Number(item.PE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
+        if ((maxPeOI > 0 && oi === maxPeOI) || (maxPeOiChg > 0 && oic === maxPeOiChg) || (maxPeVol > 0 && vol === maxPeVol)) {
+          supportStrike = strike;
+          break;
+        }
+      }
+    }
+  }
+
+  // Update R & S Badges in Super Headers
+  const badgeResistance = document.getElementById('badgeResistance');
+  const badgeSupport = document.getElementById('badgeSupport');
+  if (badgeResistance) {
+    badgeResistance.textContent = resistanceStrike ? `R: ${formatIndianNumber(resistanceStrike)}` : 'R: -';
+  }
+  if (badgeSupport) {
+    badgeSupport.textContent = supportStrike ? `S: ${formatIndianNumber(supportStrike)}` : 'S: -';
+  }
+
   // Helper function to render 2-line stacked cell with relative percentage & highlight badges
   function renderRelativeCell(val, maxVal, isCe, isOiChg = false) {
     const formattedVal = formatIndianNumber(val);
