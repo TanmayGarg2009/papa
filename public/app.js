@@ -287,6 +287,13 @@ function updateExpiryDropdown(expiryDates) {
 function renderTable(payload) {
   let records = [];
   let underlyingValue = 24055.8;
+  let futureValue = null;
+
+  if (payload.futureValue) {
+    futureValue = Number(payload.futureValue);
+  } else if (payload.records && payload.records.futureValue) {
+    futureValue = Number(payload.records.futureValue);
+  }
 
   if (payload.filtered && payload.filtered.data) {
     records = payload.filtered.data;
@@ -302,6 +309,16 @@ function renderTable(payload) {
     underlyingValue = Number(payload.records.underlyingValue);
   } else if (records.length > 0 && records[0].CE && records[0].CE.underlyingValue) {
     underlyingValue = Number(records[0].CE.underlyingValue);
+  }
+
+  if (!futureValue) {
+    futureValue = underlyingValue;
+  }
+
+  // Update F: Value in the Column Header
+  const futBadgeEl = document.getElementById('futHeaderBadge');
+  if (futBadgeEl) {
+    futBadgeEl.textContent = `F: ${formatIndianNumber(futureValue)}`;
   }
 
   // Filter records by selected expiry if multiple are present
@@ -361,8 +378,8 @@ function renderTable(payload) {
         if (ceVol > maxCeVol) maxCeVol = ceVol;
       }
       if (r.PE) {
-        const peOi = (Number(r.PE.openInterest) || 0) * LOT_MULTIPLIER;
-        const peVol = (Number(r.PE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
+        const peOi = (Number(pe.openInterest) || 0) * LOT_MULTIPLIER;
+        const peVol = (Number(pe.totalTradedVolume) || 0) * LOT_MULTIPLIER;
         if (peOi > maxPeOI) maxPeOI = peOi;
         if (peVol > maxPeVol) maxPeVol = peVol;
       }
@@ -438,15 +455,19 @@ function renderTable(payload) {
     }
 
     // Strike bold formatting: Only multiples of 100 are shown in bold
+    // Subtract future price from strike price and show absolute value in bracket next to strike price
+    const absDiff = Math.abs(strike - futureValue);
+    const diffStr = (absDiff % 1 === 0) ? absDiff.toString() : absDiff.toFixed(1);
     const isMultipleOf100 = (Number(strike) % 100 === 0);
     const formattedStrike = formatIndianNumber(strike);
+    const strikeWithDiff = `${formattedStrike} (${diffStr})`;
     const strikeDisplayContent = isExactMatch 
-      ? `<span class="golden-badge">${formattedStrike}</span>` 
-      : (isMultipleOf100 ? `<strong>${formattedStrike}</strong>` : formattedStrike);
+      ? `<span class="golden-badge">${strikeWithDiff}</span>` 
+      : (isMultipleOf100 ? `<strong>${strikeWithDiff}</strong>` : strikeWithDiff);
 
     return `
       <tr class="${rowClass}">
-        <!-- CALLS (CE): IV | OI Chg | OI | Volume | LTP | Change in OI% | CALL OI% -->
+        <!-- CALLS (CE): IV | OI Chg | OI | Volume | LTP | CHG OI% | CALL OI% -->
         <td class="${ceClass}">${formatDecimal(ce.impliedVolatility)}</td>
         <td class="${ceClass} ${ceOiChgClass}">${formatIndianNumber(ceOiChg)}</td>
         <td class="${ceClass}"><span class="${ceOiBadge}">${formatIndianNumber(ceOi)}</span></td>
@@ -455,12 +476,12 @@ function renderTable(payload) {
         <td class="${ceClass} ${ceOiChgPctClass}"><strong>${ceOiChgPctStr}</strong></td>
         <td class="${ceClass} cell-oi-pct"><strong>${ceOiPctStr}</strong></td>
 
-        <!-- STRIKE PRICE (CENTER) - Multiples of 100 in Bold -->
+        <!-- STRIKE PRICE (CENTER) - Multiples of 100 in Bold + (|Strike - Future LTP|) in Brackets -->
         <td class="${strikeClass} ${isMultipleOf100 ? 'strike-bold' : ''}">
           ${strikeDisplayContent}
         </td>
 
-        <!-- PUTS (PE) - Mirrored: PUT OI% | Change in OI% | LTP | Volume | OI | OI Chg | IV -->
+        <!-- PUTS (PE) - Mirrored: PUT OI% | CHG OI% | LTP | Volume | OI | OI Chg | IV -->
         <td class="${peClass} cell-oi-pct"><strong>${peOiPctStr}</strong></td>
         <td class="${peClass} ${peOiChgPctClass}"><strong>${peOiChgPctStr}</strong></td>
         <td class="${peClass}"><strong>${formatDecimal(pe.lastPrice)}</strong></td>
@@ -477,15 +498,15 @@ function renderTable(payload) {
     rowsHtml += buildStrikeRowHtml(strike, false);
   });
 
-  // 2. Render Spot Baseline Divider Bar (Blue row separating Set A and Set B)
+  // 2. Render Spot Baseline Divider Bar (Blue row separating Set A and Set B, with SPOT and F: badge)
   rowsHtml += `
     <tr id="spotDividerRow" class="spot-divider-row">
       <td colspan="15">
         <div class="spot-divider-content">
           <span class="spot-tag-left">▲ SET A (${selectedA.length} Strikes Above Baseline)</span>
           <div class="spot-center-title">
-            <span class="spot-label">UNDERLYING SPOT</span>
-            <span class="spot-price-badge">${currentSymbol} : ${formatIndianNumber(underlyingValue)}</span>
+            <span class="spot-label">SPOT: ${formatIndianNumber(underlyingValue)}</span>
+            <span class="spot-price-badge">F: ${formatIndianNumber(futureValue)}</span>
           </div>
           <span class="spot-tag-right">▼ SET B (${selectedB.length} Strikes Below Baseline)</span>
         </div>
@@ -625,7 +646,7 @@ function renderTable(payload) {
     tableFoot.innerHTML = `
       <!-- Row 1: TOTAL SUMMARY -->
       <tr class="total-row">
-        <!-- CALLS (CE) TOTALS: IV | OI Chg | OI | Volume | LTP | Change in OI% | CALL OI% -->
+        <!-- CALLS (CE) TOTALS: IV | OI Chg | OI | Volume | LTP | CHG OI% | CALL OI% -->
         <td class="total-ce">-</td>
         <td class="total-ce">
           <div class="total-cell-stacked">
@@ -655,7 +676,7 @@ function renderTable(payload) {
         <!-- STRIKE TOTAL LABEL -->
         <td class="total-strike">TOTAL (${visibleStrikes.length})</td>
 
-        <!-- PUTS (PE) TOTALS: PUT OI% | Change in OI% | LTP | Volume | OI | OI Chg | IV -->
+        <!-- PUTS (PE) TOTALS: PUT OI% | CHG OI% | LTP | Volume | OI | OI Chg | IV -->
         <td class="total-pe">
           <div class="total-cell-stacked">
             <span class="total-line-pct">${peOiTotalPctStr}</span>
@@ -685,7 +706,7 @@ function renderTable(payload) {
 
       <!-- Row 2: ITM & OTM BREAKDOWN (Realtime based on visible entries) -->
       <tr class="breakdown-row">
-        <!-- CALLS (CE) ITM / OTM: IV | OI Chg | OI | Volume | LTP | Change in OI% | CALL OI% -->
+        <!-- CALLS (CE) ITM / OTM: IV | OI Chg | OI | Volume | LTP | CHG OI% | CALL OI% -->
         <td class="breakdown-ce">-</td>
         <td class="breakdown-ce">
           <div class="total-cell-stacked">
@@ -717,7 +738,7 @@ function renderTable(payload) {
         <!-- STRIKE BREAKDOWN LABEL -->
         <td class="breakdown-strike">ITM / OTM</td>
 
-        <!-- PUTS (PE) ITM / OTM: PUT OI% | Change in OI% | LTP | Volume | OI | OI Chg | IV -->
+        <!-- PUTS (PE) ITM / OTM: PUT OI% | CHG OI% | LTP | Volume | OI | OI Chg | IV -->
         <td class="breakdown-pe">
           <div class="total-cell-stacked">
             <span class="total-line-pct"><span class="tag-itm">ITM:</span> ${itmPeOiPctStr}</span>

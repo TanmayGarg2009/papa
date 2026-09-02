@@ -337,27 +337,6 @@ input[type="number"] {
   border-bottom: 1px solid rgba(0, 0, 0, 0.2);
 }
 
-.th-ce {
-  background-color: #b71c1c !important; /* Deep Red for Calls */
-  color: #ffffff !important;
-  text-align: center;
-  width: 46%;
-}
-
-.th-pe {
-  background-color: #1b5e20 !important; /* Deep Green for Puts */
-  color: #ffffff !important;
-  text-align: center;
-  width: 46%;
-}
-
-.th-strike-title {
-  background-color: #1e293b !important;
-  color: #ffffff !important;
-  text-align: center;
-  width: 8%;
-}
-
 /* Sub Header Row - Floating Sticky directly below Super Header */
 .sub-header th {
   position: sticky;
@@ -378,37 +357,80 @@ input[type="number"] {
   text-align: center;
 }
 
-/* Proportional Column Widths (Calls: 46% | Strike: 8% | Puts: 46% = 100%) */
+.strike-header-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  line-height: 1.1;
+}
+
+.fut-header-badge {
+  color: #38bdf8 !important;
+  font-size: 0.64rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.strike-header-title {
+  font-size: 0.65rem;
+  white-space: nowrap;
+}
+
+/* Proportional Column Widths (Calls: 44.8% | Strike: 10.4% | Puts: 44.8% = 100%) */
 th.col-iv, td.col-iv {
-  width: 5%;
+  width: 4.8%;
 }
 
 th.col-oichg, td.col-oichg {
-  width: 8%;
+  width: 7.8%;
 }
 
 th.col-oi, td.col-oi {
-  width: 8%;
+  width: 7.8%;
 }
 
 th.col-vol, td.col-vol {
-  width: 8%;
+  width: 7.8%;
 }
 
 th.col-ltp, td.col-ltp {
-  width: 5.5%;
+  width: 5.4%;
 }
 
 th.col-oichg-pct, td.col-oichg-pct {
-  width: 6%;
+  width: 5.8%;
 }
 
 th.col-oi-pct, td.col-oi-pct {
-  width: 5.5%;
+  width: 5.4%;
 }
 
 th.col-strike, td.cell-strike {
-  width: 8%;
+  width: 10.4%;
+}
+
+.th-ce {
+  background-color: #b71c1c !important; /* Deep Red for Calls */
+  color: #ffffff !important;
+  text-align: center;
+  width: 44.8%;
+}
+
+.th-pe {
+  background-color: #1b5e20 !important; /* Deep Green for Puts */
+  color: #ffffff !important;
+  text-align: center;
+  width: 44.8%;
+}
+
+.th-strike-title {
+  background-color: #1e293b !important;
+  color: #ffffff !important;
+  text-align: center;
+  width: 10.4%;
 }
 
 /* Floating Sticky Table Footer (Total Row matching Top Header colors) */

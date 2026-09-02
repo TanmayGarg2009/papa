@@ -115,6 +115,66 @@ async function fetchNSEOptionChain(symbol = 'NIFTY', expiry = '') {
   });
 }
 
+// Futures index mapping for liveEquity-derivatives
+const FUTURES_INDEX_MAP = {
+  'NIFTY': 'nse50_fut',
+  'BANKNIFTY': 'nifty_bank_fut',
+  'FINNIFTY': 'finnifty_fut',
+  'MIDCPNIFTY': 'nse50_fut'
+};
+
+// Fetch live futures contract from NSE
+async function fetchNSEFutures(symbol = 'NIFTY') {
+  const cookies = await getNSECookies();
+  const indexParam = FUTURES_INDEX_MAP[symbol] || 'nse50_fut';
+  
+  return new Promise((resolve) => {
+    const options = {
+      hostname: 'www.nseindia.com',
+      port: 443,
+      path: `/api/liveEquity-derivatives?index=${encodeURIComponent(indexParam)}`,
+      method: 'GET',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+        'Accept': 'application/json, text/plain, */*',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Referer': 'https://www.nseindia.com/market-data/equity-derivatives-watch',
+        'Cookie': cookies,
+        'Accept-Encoding': 'identity'
+      },
+      timeout: 4000
+    };
+
+    const req = https.request(options, (res) => {
+      if (res.statusCode !== 200) {
+        return resolve(null);
+      }
+      let rawData = '';
+      res.setEncoding('utf8');
+      res.on('data', chunk => rawData += chunk);
+      res.on('end', () => {
+        try {
+          const parsed = JSON.parse(rawData);
+          if (parsed && Array.isArray(parsed.data) && parsed.data.length > 0) {
+            resolve(parsed.data[0]); // Near-month future contract (latest LTP)
+          } else {
+            resolve(null);
+          }
+        } catch (e) {
+          resolve(null);
+        }
+      });
+    });
+
+    req.on('error', () => resolve(null));
+    req.on('timeout', () => {
+      req.destroy();
+      resolve(null);
+    });
+    req.end();
+  });
+}
+
 // In-memory option chain cache for post-4:00 PM data
 const optionChainCache = new Map();
 
@@ -159,13 +219,29 @@ app.get('/api/option-chain', async (req, res) => {
 
   // Otherwise, fetch live from NSE (during 7 AM - 4 PM IST, or initial cold cache populate)
   try {
-    const liveData = await fetchNSEOptionChain(symbol, expiry);
+    const [liveData, futureData] = await Promise.all([
+      fetchNSEOptionChain(symbol, expiry),
+      fetchNSEFutures(symbol)
+    ]);
+
     const hasRecords = liveData && liveData.records && Array.isArray(liveData.records.data) && liveData.records.data.length > 0;
     const hasFiltered = liveData && liveData.filtered && Array.isArray(liveData.filtered.data) && liveData.filtered.data.length > 0;
     const hasData = liveData && Array.isArray(liveData.data) && liveData.data.length > 0;
 
     if (hasRecords || hasFiltered || hasData) {
       const nowIso = new Date().toISOString();
+      
+      // Inject future contract LTP if available
+      if (futureData && futureData.lastPrice) {
+        const futLtp = Number(futureData.lastPrice);
+        liveData.futureValue = futLtp;
+        liveData.futureContract = futureData.contract || '';
+        if (liveData.records) {
+          liveData.records.futureValue = futLtp;
+          liveData.records.futureContract = futureData.contract || '';
+        }
+      }
+
       // Cache this latest snapshot
       optionChainCache.set(cacheKey, {
         data: liveData,
@@ -189,6 +265,14 @@ app.get('/api/option-chain', async (req, res) => {
     console.warn(`[Proxy Warning] ${error.message}. Serving fallback dataset.`);
     const fallbackData = generateFallbackOptionChain(symbol, expiry);
     const nowIso = new Date().toISOString();
+
+    // Fallback realistic future value (e.g. spot + 10-15 pts)
+    const spotVal = fallbackData.records?.underlyingValue || 24055.8;
+    fallbackData.futureValue = spotVal + 14.5;
+    if (fallbackData.records) {
+      fallbackData.records.futureValue = spotVal + 14.5;
+      fallbackData.records.futureContract = `${symbol} NEAR FUT`;
+    }
 
     if (!optionChainCache.has(cacheKey)) {
       optionChainCache.set(cacheKey, {
