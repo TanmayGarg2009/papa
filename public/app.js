@@ -250,7 +250,7 @@ async function fetchOptionChain(isAutoRefresh = false) {
 
     // DO NOT clear existing table data on network/fetch disconnection
     if (!lastFetchedData) {
-      tableBody.innerHTML = `<tr><td colspan="13" style="text-align:center; padding: 25px; color: #ef4444; font-weight: 600;">Data fetch failed: ${failureReason}. No previous data available.</td></tr>`;
+      tableBody.innerHTML = `<tr><td colspan="15" style="text-align:center; padding: 25px; color: #ef4444; font-weight: 600;">Data fetch failed: ${failureReason}. No previous data available.</td></tr>`;
     }
   } finally {
     // Re-schedule next timer based on configured cooldown
@@ -326,7 +326,7 @@ function renderTable(payload) {
 
   const allStrikes = Array.from(strikeMap.keys()).sort((a, b) => a - b);
   if (allStrikes.length === 0) {
-    tableBody.innerHTML = '<tr><td colspan="13" style="text-align:center; padding: 20px;">No option chain records found.</td></tr>';
+    tableBody.innerHTML = '<tr><td colspan="15" style="text-align:center; padding: 20px;">No option chain records found.</td></tr>';
     return;
   }
 
@@ -407,6 +407,23 @@ function renderTable(payload) {
     const peOiBadge = (peOi > 0 && peOi === maxPeOI) ? 'badge-highest-pe' : '';
     const peVolBadge = (peVol > 0 && peVol === maxPeVol) ? 'badge-max-pe' : '';
 
+    // Calculate Change in OI% (with respect to OI, with negative values allowed and styled in red)
+    let ceOiChgPctStr = '-';
+    let ceOiChgPctClass = '';
+    if (ceOi !== 0) {
+      const cePct = (ceOiChg / ceOi) * 100;
+      ceOiChgPctStr = (cePct > 0 ? '+' : '') + cePct.toFixed(1) + '%';
+      ceOiChgPctClass = (cePct < 0) ? 'text-negative' : (cePct > 0 ? 'text-positive' : '');
+    }
+
+    let peOiChgPctStr = '-';
+    let peOiChgPctClass = '';
+    if (peOi !== 0) {
+      const pePct = (peOiChg / peOi) * 100;
+      peOiChgPctStr = (pePct > 0 ? '+' : '') + pePct.toFixed(1) + '%';
+      peOiChgPctClass = (pePct < 0) ? 'text-negative' : (pePct > 0 ? 'text-positive' : '');
+    }
+
     // Calculate CALL OI% and PUT OI% (Percentage of their sum for this strike row)
     const totalOiSum = ceOi + peOi;
 
@@ -429,12 +446,13 @@ function renderTable(payload) {
 
     return `
       <tr class="${rowClass}">
-        <!-- CALLS (CE): IV | OI Chg | OI | Volume | LTP | CALL OI% -->
+        <!-- CALLS (CE): IV | OI Chg | OI | Volume | LTP | Change in OI% | CALL OI% -->
         <td class="${ceClass}">${formatDecimal(ce.impliedVolatility)}</td>
         <td class="${ceClass} ${ceOiChgClass}">${formatIndianNumber(ceOiChg)}</td>
         <td class="${ceClass}"><span class="${ceOiBadge}">${formatIndianNumber(ceOi)}</span></td>
         <td class="${ceClass}"><span class="${ceVolBadge}">${formatIndianNumber(ceVol)}</span></td>
         <td class="${ceClass}"><strong>${formatDecimal(ce.lastPrice)}</strong></td>
+        <td class="${ceClass} ${ceOiChgPctClass}"><strong>${ceOiChgPctStr}</strong></td>
         <td class="${ceClass} cell-oi-pct"><strong>${ceOiPctStr}</strong></td>
 
         <!-- STRIKE PRICE (CENTER) - Multiples of 100 in Bold -->
@@ -442,8 +460,9 @@ function renderTable(payload) {
           ${strikeDisplayContent}
         </td>
 
-        <!-- PUTS (PE) - Mirrored: PUT OI% | LTP | Volume | OI | OI Chg | IV -->
+        <!-- PUTS (PE) - Mirrored: PUT OI% | Change in OI% | LTP | Volume | OI | OI Chg | IV -->
         <td class="${peClass} cell-oi-pct"><strong>${peOiPctStr}</strong></td>
+        <td class="${peClass} ${peOiChgPctClass}"><strong>${peOiChgPctStr}</strong></td>
         <td class="${peClass}"><strong>${formatDecimal(pe.lastPrice)}</strong></td>
         <td class="${peClass}"><span class="${peVolBadge}">${formatIndianNumber(peVol)}</span></td>
         <td class="${peClass}"><span class="${peOiBadge}">${formatIndianNumber(peOi)}</span></td>
@@ -461,7 +480,7 @@ function renderTable(payload) {
   // 2. Render Spot Baseline Divider Bar (Blue row separating Set A and Set B)
   rowsHtml += `
     <tr id="spotDividerRow" class="spot-divider-row">
-      <td colspan="13">
+      <td colspan="15">
         <div class="spot-divider-content">
           <span class="spot-tag-left">▲ SET A (${selectedA.length} Strikes Above Baseline)</span>
           <div class="spot-center-title">
@@ -589,10 +608,24 @@ function renderTable(payload) {
 
   // Render Table Footer Rows (Row 1: OVERALL TOTALS, Row 2: ITM / OTM BREAKDOWN)
   if (tableFoot) {
+    const totalCeChgPctVal = sumVisibleCeOi !== 0 ? ((sumVisibleCeOiChg / sumVisibleCeOi) * 100) : 0;
+    const totalCeChgPctStr = sumVisibleCeOi !== 0 ? ((totalCeChgPctVal > 0 ? '+' : '') + totalCeChgPctVal.toFixed(1) + '%') : '-';
+    const totalCeChgClass = sumVisibleCeOi !== 0 ? (totalCeChgPctVal < 0 ? 'text-negative' : (totalCeChgPctVal > 0 ? 'text-positive' : '')) : '';
+
+    const totalPeChgPctVal = sumVisiblePeOi !== 0 ? ((sumVisiblePeOiChg / sumVisiblePeOi) * 100) : 0;
+    const totalPeChgPctStr = sumVisiblePeOi !== 0 ? ((totalPeChgPctVal > 0 ? '+' : '') + totalPeChgPctVal.toFixed(1) + '%') : '-';
+    const totalPeChgClass = sumVisiblePeOi !== 0 ? (totalPeChgPctVal < 0 ? 'text-negative' : (totalPeChgPctVal > 0 ? 'text-positive' : '')) : '';
+
+    const itmCeChgPctStr = sumItmCeOi !== 0 ? (((sumItmCeOiChg / sumItmCeOi) * 100 > 0 ? '+' : '') + ((sumItmCeOiChg / sumItmCeOi) * 100).toFixed(1) + '%') : '-';
+    const otmCeChgPctStr = sumOtmCeOi !== 0 ? (((sumOtmCeOiChg / sumOtmCeOi) * 100 > 0 ? '+' : '') + ((sumOtmCeOiChg / sumOtmCeOi) * 100).toFixed(1) + '%') : '-';
+
+    const itmPeChgPctStr = sumItmPeOi !== 0 ? (((sumItmPeOiChg / sumItmPeOi) * 100 > 0 ? '+' : '') + ((sumItmPeOiChg / sumItmPeOi) * 100).toFixed(1) + '%') : '-';
+    const otmPeChgPctStr = sumOtmPeOi !== 0 ? (((sumOtmPeOiChg / sumOtmPeOi) * 100 > 0 ? '+' : '') + ((sumOtmPeOiChg / sumOtmPeOi) * 100).toFixed(1) + '%') : '-';
+
     tableFoot.innerHTML = `
       <!-- Row 1: TOTAL SUMMARY -->
       <tr class="total-row">
-        <!-- CALLS (CE) TOTALS: IV | OI Chg | OI | Volume | LTP | CALL OI% -->
+        <!-- CALLS (CE) TOTALS: IV | OI Chg | OI | Volume | LTP | Change in OI% | CALL OI% -->
         <td class="total-ce">-</td>
         <td class="total-ce">
           <div class="total-cell-stacked">
@@ -610,6 +643,11 @@ function renderTable(payload) {
         <td class="total-ce">-</td>
         <td class="total-ce">
           <div class="total-cell-stacked">
+            <span class="total-line-sum ${totalCeChgClass}"><strong>${totalCeChgPctStr}</strong></span>
+          </div>
+        </td>
+        <td class="total-ce">
+          <div class="total-cell-stacked">
             <span class="total-line-pct">${ceOiTotalPctStr}</span>
           </div>
         </td>
@@ -617,10 +655,15 @@ function renderTable(payload) {
         <!-- STRIKE TOTAL LABEL -->
         <td class="total-strike">TOTAL (${visibleStrikes.length})</td>
 
-        <!-- PUTS (PE) TOTALS: PUT OI% | LTP | Volume | OI | OI Chg | IV -->
+        <!-- PUTS (PE) TOTALS: PUT OI% | Change in OI% | LTP | Volume | OI | OI Chg | IV -->
         <td class="total-pe">
           <div class="total-cell-stacked">
             <span class="total-line-pct">${peOiTotalPctStr}</span>
+          </div>
+        </td>
+        <td class="total-pe">
+          <div class="total-cell-stacked">
+            <span class="total-line-sum ${totalPeChgClass}"><strong>${totalPeChgPctStr}</strong></span>
           </div>
         </td>
         <td class="total-pe">-</td>
@@ -642,7 +685,7 @@ function renderTable(payload) {
 
       <!-- Row 2: ITM & OTM BREAKDOWN (Realtime based on visible entries) -->
       <tr class="breakdown-row">
-        <!-- CALLS (CE) ITM / OTM: IV | OI Chg | OI | Volume | LTP | CALL OI% -->
+        <!-- CALLS (CE) ITM / OTM: IV | OI Chg | OI | Volume | LTP | Change in OI% | CALL OI% -->
         <td class="breakdown-ce">-</td>
         <td class="breakdown-ce">
           <div class="total-cell-stacked">
@@ -660,6 +703,12 @@ function renderTable(payload) {
         <td class="breakdown-ce">-</td>
         <td class="breakdown-ce">
           <div class="total-cell-stacked">
+            <span class="total-line-sum"><span class="tag-itm">ITM:</span> ${itmCeChgPctStr}</span>
+            <span class="total-line-sum"><span class="tag-otm">OTM:</span> ${otmCeChgPctStr}</span>
+          </div>
+        </td>
+        <td class="breakdown-ce">
+          <div class="total-cell-stacked">
             <span class="total-line-pct"><span class="tag-itm">ITM:</span> ${itmCeOiPctStr}</span>
             <span class="total-line-pct"><span class="tag-otm">OTM:</span> ${otmCeOiPctStr}</span>
           </div>
@@ -668,11 +717,17 @@ function renderTable(payload) {
         <!-- STRIKE BREAKDOWN LABEL -->
         <td class="breakdown-strike">ITM / OTM</td>
 
-        <!-- PUTS (PE) ITM / OTM: PUT OI% | LTP | Volume | OI | OI Chg | IV -->
+        <!-- PUTS (PE) ITM / OTM: PUT OI% | Change in OI% | LTP | Volume | OI | OI Chg | IV -->
         <td class="breakdown-pe">
           <div class="total-cell-stacked">
             <span class="total-line-pct"><span class="tag-itm">ITM:</span> ${itmPeOiPctStr}</span>
             <span class="total-line-pct"><span class="tag-otm">OTM:</span> ${otmPeOiPctStr}</span>
+          </div>
+        </td>
+        <td class="breakdown-pe">
+          <div class="total-cell-stacked">
+            <span class="total-line-sum"><span class="tag-itm">ITM:</span> ${itmPeChgPctStr}</span>
+            <span class="total-line-sum"><span class="tag-otm">OTM:</span> ${otmPeChgPctStr}</span>
           </div>
         </td>
         <td class="breakdown-pe">-</td>

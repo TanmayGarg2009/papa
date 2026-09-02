@@ -445,7 +445,7 @@ input[type="number"] {
 }
 
 /* Specific Column Header Alignments */
-th.col-iv, th.col-oichg, th.col-oi, th.col-vol, th.col-ltp, th.col-oi-pct {
+th.col-iv, th.col-oichg, th.col-oi, th.col-vol, th.col-ltp, th.col-oi-pct, th.col-oichg-pct {
   text-align: right;
 }
 
