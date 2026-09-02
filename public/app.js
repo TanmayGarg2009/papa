@@ -6,12 +6,14 @@ let refreshCooldownSeconds = 30; // Default fixed 30 seconds
 let timerSecondsRemaining = 30;
 let timerCountdownInterval = null;
 let lastFetchedData = null;
+let lastSuccessfulFetchTime = null;
 
 // DOM Elements
 const symbolSelect = document.getElementById('symbolSelect');
 const expirySelect = document.getElementById('expirySelect');
 const strikeCountInput = document.getElementById('strikeCountInput');
 const cooldownInput = document.getElementById('cooldownInput');
+const lastUpdatedDisplay = document.getElementById('lastUpdatedDisplay');
 const timerDisplay = document.getElementById('timerDisplay');
 const refreshBtn = document.getElementById('refreshBtn');
 const statusBadge = document.getElementById('statusBadge');
@@ -51,7 +53,23 @@ function formatDecimal(num, decimals = 2) {
   return Number(num).toFixed(decimals);
 }
 
-// Toast Popup Notification
+// Utility: Format date & time in Standard Indian Time (IST) with second precision
+function formatIndianDateTime(dateObj = new Date()) {
+  if (!dateObj) return '-';
+  const options = {
+    timeZone: 'Asia/Kolkata',
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true
+  };
+  return new Intl.DateTimeFormat('en-IN', options).format(dateObj) + ' IST';
+}
+
+// Toast Popup Notification (with Indian Standard Time)
 function showToast(message, type = 'success') {
   const toast = document.createElement('div');
   toast.className = `toast toast-${type}`;
@@ -60,7 +78,13 @@ function showToast(message, type = 'success') {
   if (type === 'warning') icon = '⚠️';
   if (type === 'error') icon = '❌';
 
-  const timeStr = new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  const timeStr = new Date().toLocaleTimeString('en-IN', {
+    timeZone: 'Asia/Kolkata',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true
+  }) + ' IST';
 
   toast.innerHTML = `
     <span class="toast-icon">${icon}</span>
@@ -75,7 +99,8 @@ function showToast(message, type = 'success') {
     toast.classList.add('show');
   });
 
-  // Auto remove after 3.5 seconds
+  // Auto remove after 4.5 seconds for errors, 3.5s for normal
+  const duration = (type === 'error') ? 5000 : 3500;
   setTimeout(() => {
     toast.classList.remove('show');
     setTimeout(() => {
@@ -83,7 +108,7 @@ function showToast(message, type = 'success') {
         toast.parentNode.removeChild(toast);
       }
     }, 250);
-  }, 3500);
+  }, duration);
 }
 
 // Start Configurable Countdown Timer
@@ -125,14 +150,20 @@ async function fetchOptionChain(isAutoRefresh = false) {
     const response = await fetch(url);
     
     if (!response.ok) {
-      throw new Error(`HTTP error ${response.status}`);
+      throw new Error(`Server returned HTTP ${response.status} (${response.statusText || 'Error'})`);
     }
 
     const result = await response.json();
 
     if (result.success && result.data) {
       lastFetchedData = result.data;
+      lastSuccessfulFetchTime = new Date();
       
+      // Update Indian Standard Time (IST) display with date and second
+      if (lastUpdatedDisplay) {
+        lastUpdatedDisplay.textContent = formatIndianDateTime(lastSuccessfulFetchTime);
+      }
+
       // Update Expiry Dropdown if available in records
       if (result.data.records && result.data.records.expiryDates) {
         updateExpiryDropdown(result.data.records.expiryDates);
@@ -148,21 +179,34 @@ async function fetchOptionChain(isAutoRefresh = false) {
         statusBadge.className = 'status-badge fallback';
         statusText.textContent = 'Fallback Data';
         noticeBanner.classList.remove('hidden');
-        noticeMessage.textContent = result.error || 'Something went wrong fetching live data from NSE. Showing fallback data.';
+        noticeMessage.textContent = result.error || 'NSE live fetch failed. Showing cached fallback data.';
         showToast('Data Refreshed (Fallback Dataset)', 'warning');
       }
 
       renderTable(result.data);
     } else {
-      throw new Error(result.error || 'Invalid data structure received');
+      throw new Error(result.error || 'Invalid or empty data payload received');
     }
   } catch (error) {
     console.error('Fetch error:', error);
-    statusBadge.className = 'status-badge fallback';
-    statusText.textContent = 'Error / Offline';
+    const failureReason = error.message || 'Network disconnected or server unavailable';
+    
+    statusBadge.className = 'status-badge error';
+    statusText.textContent = 'Fetch Failed';
+
+    const lastTimeStr = lastSuccessfulFetchTime ? formatIndianDateTime(lastSuccessfulFetchTime) : 'Never';
+
+    // Show side toast error notification with failure reason
+    showToast(`Data fetch failed: ${failureReason}`, 'error');
+
+    // Show top banner with persistent explanation and last active data time
     noticeBanner.classList.remove('hidden');
-    noticeMessage.textContent = `Something went wrong: ${error.message}`;
-    showToast('Something went wrong refreshing data', 'error');
+    noticeMessage.textContent = `Data fetch failed (${failureReason}). Preserving last fetched data from ${lastTimeStr}.`;
+
+    // DO NOT clear existing table data on network/fetch disconnection
+    if (!lastFetchedData) {
+      tableBody.innerHTML = `<tr><td colspan="13" style="text-align:center; padding: 25px; color: #ef4444; font-weight: 600;">Data fetch failed: ${failureReason}. No previous data available.</td></tr>`;
+    }
   } finally {
     // Re-schedule next timer based on configured cooldown
     startAutoRefreshTimer(true);

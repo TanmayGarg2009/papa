@@ -132,6 +132,32 @@ input[type="number"] {
   transform: translateY(1px);
 }
 
+/* Timestamp Display */
+.timestamp-box {
+  background-color: #1e293b;
+  border: 1px solid #334155;
+  padding: 5px 14px;
+  border-radius: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.timestamp-label {
+  font-size: 0.65rem;
+  color: #94a3b8;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+
+.timestamp-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #38bdf8;
+  white-space: nowrap;
+}
+
 /* Status Badge */
 .status-badge {
   display: flex;
@@ -168,6 +194,15 @@ input[type="number"] {
 .status-badge.fallback {
   color: #fb923c;
   border-color: #9a3412;
+}
+
+.status-badge.error .status-dot {
+  background-color: #ef4444;
+}
+
+.status-badge.error {
+  color: #f87171;
+  border-color: #991b1b;
 }
 
 /* Fallback Notice Banner */
