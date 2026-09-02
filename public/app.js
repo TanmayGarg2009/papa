@@ -330,6 +330,12 @@ function renderTable(payload) {
     futureValue = underlyingValue;
   }
 
+  // Update F: Value in the Column Header
+  const futBadgeEl = document.getElementById('futHeaderBadge');
+  if (futBadgeEl) {
+    futBadgeEl.textContent = `F: ${formatIndianNumber(futureValue)}`;
+  }
+
   // Filter records by selected expiry if multiple are present
   const currentExpiryValue = expirySelect.value || currentExpiry;
   let filteredRecords = records.filter(r => {
@@ -382,7 +388,7 @@ function renderTable(payload) {
     if (r) {
       if (r.CE) {
         const ceOi = (Number(r.CE.openInterest) || 0) * LOT_MULTIPLIER;
-        const ceVol = (Number(r.CE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
+        const ceVol = (Number(ce.totalTradedVolume) || 0) * LOT_MULTIPLIER;
         if (ceOi > maxCeOI) maxCeOI = ceOi;
         if (ceVol > maxCeVol) maxCeVol = ceVol;
       }
@@ -496,27 +502,27 @@ function renderTable(payload) {
     return `
       <tr class="${rowClass}">
         <!-- CALLS (CE): IV | OI Chg | OI | Volume | LTP | CHG OI% | CALL OI% -->
-        <td class="${ceClass}">${formatDecimal(ce.impliedVolatility)}</td>
-        <td class="${ceClass} ${ceOiChgClass}">${formatIndianNumber(ceOiChg)}</td>
-        <td class="${ceClass}"><span class="${ceOiBadge}">${formatIndianNumber(ceOi)}</span></td>
-        <td class="${ceClass}"><span class="${ceVolBadge}">${formatIndianNumber(ceVol)}</span></td>
-        <td class="${ceClass}"><strong>${formatDecimal(ce.lastPrice)}</strong></td>
-        <td class="${ceClass} ${ceOiChgPctClass}"><strong>${ceOiChgPctStr}</strong></td>
-        <td class="${ceClass} cell-oi-pct"><strong>${ceOiPctStr}</strong></td>
+        <td class="${ceClass} col-iv">${formatDecimal(ce.impliedVolatility)}</td>
+        <td class="${ceClass} ${ceOiChgClass} col-oichg">${formatIndianNumber(ceOiChg)}</td>
+        <td class="${ceClass} col-oi"><span class="${ceOiBadge}">${formatIndianNumber(ceOi)}</span></td>
+        <td class="${ceClass} col-vol"><span class="${ceVolBadge}">${formatIndianNumber(ceVol)}</span></td>
+        <td class="${ceClass} col-ltp"><strong>${formatDecimal(ce.lastPrice)}</strong></td>
+        <td class="${ceClass} ${ceOiChgPctClass} col-oichg-pct"><strong>${ceOiChgPctStr}</strong></td>
+        <td class="${ceClass} cell-oi-pct col-oi-pct"><strong>${ceOiPctStr}</strong></td>
 
         <!-- STRIKE PRICE (CENTER) - Multiples of 100 in Bold -->
-        <td class="${strikeClass} ${isMultipleOf100 ? 'strike-bold' : ''}">
+        <td class="${strikeClass} ${isMultipleOf100 ? 'strike-bold' : ''} col-strike">
           ${strikeDisplayContent}
         </td>
 
         <!-- PUTS (PE) - Mirrored: PUT OI% | CHG OI% | LTP | Volume | OI | OI Chg | IV -->
-        <td class="${peClass} cell-oi-pct"><strong>${peOiPctStr}</strong></td>
-        <td class="${peClass} ${peOiChgPctClass}"><strong>${peOiChgPctStr}</strong></td>
-        <td class="${peClass}"><strong>${formatDecimal(pe.lastPrice)}</strong></td>
-        <td class="${peClass}"><span class="${peVolBadge}">${formatIndianNumber(peVol)}</span></td>
-        <td class="${peClass}"><span class="${peOiBadge}">${formatIndianNumber(peOi)}</span></td>
-        <td class="${peClass} ${peOiChgClass}">${formatIndianNumber(peOiChg)}</td>
-        <td class="${peClass}">${formatDecimal(pe.impliedVolatility)}</td>
+        <td class="${peClass} cell-oi-pct col-oi-pct"><strong>${peOiPctStr}</strong></td>
+        <td class="${peClass} ${peOiChgPctClass} col-oichg-pct"><strong>${peOiChgPctStr}</strong></td>
+        <td class="${peClass} col-ltp"><strong>${formatDecimal(pe.lastPrice)}</strong></td>
+        <td class="${peClass} col-vol"><span class="${peVolBadge}">${formatIndianNumber(peVol)}</span></td>
+        <td class="${peClass} col-oi"><span class="${peOiBadge}">${formatIndianNumber(peOi)}</span></td>
+        <td class="${peClass} ${peOiChgClass} col-oichg">${formatIndianNumber(peOiChg)}</td>
+        <td class="${peClass} col-iv">${formatDecimal(pe.impliedVolatility)}</td>
       </tr>
     `;
   }
@@ -679,88 +685,81 @@ function renderTable(payload) {
       <!-- Row 1: TOTAL SUMMARY -->
       <tr class="total-row">
         <!-- CALLS (CE) TOTALS: IV | OI Chg | OI | Volume | LTP | CHG OI% | CALL OI% -->
-        <td class="total-ce">-</td>
-        <td class="total-ce">
+        <td class="total-ce col-iv">-</td>
+        <td class="total-ce col-oichg">
           <div class="total-cell-stacked">
-            <span class="total-line-sum">sum: ${formatIndianNumber(sumVisibleCeOiChg)}</span>
-            <span class="total-line-pct">%: ${ceOiChgTotalPctStr}</span>
+            <span class="total-line-pct">${ceOiChgTotalPctStr}</span>
           </div>
         </td>
-        <td class="total-ce">
+        <td class="total-ce col-oi">
           <div class="total-cell-stacked">
-            <span class="total-line-sum">sum: ${formatIndianNumber(sumVisibleCeOi)}</span>
-            <span class="total-line-pct">%: ${ceOiTotalPctStr}</span>
+            <span class="total-line-sum">${formatIndianNumber(sumVisibleCeOi)}</span>
+            <span class="total-line-pct">${ceOiTotalPctStr}</span>
           </div>
         </td>
-        <td class="total-ce">-</td>
-        <td class="total-ce">-</td>
-        <td class="total-ce">
+        <td class="total-ce col-vol">-</td>
+        <td class="total-ce col-ltp">-</td>
+        <td class="total-ce col-oichg-pct">
           <div class="total-cell-stacked">
             <span class="total-line-sum ${totalCeChgClass}"><strong>${totalCeChgPctStr}</strong></span>
           </div>
         </td>
-        <td class="total-ce">
+        <td class="total-ce col-oi-pct">
           <div class="total-cell-stacked">
             <span class="total-line-pct">${ceOiTotalPctStr}</span>
           </div>
         </td>
 
         <!-- STRIKE TOTAL LABEL -->
-        <td class="total-strike">TOTAL (${visibleStrikes.length})</td>
+        <td class="total-strike col-strike">TOTAL (${visibleStrikes.length})</td>
 
         <!-- PUTS (PE) TOTALS: PUT OI% | CHG OI% | LTP | Volume | OI | OI Chg | IV -->
-        <td class="total-pe">
+        <td class="total-pe col-oi-pct">
           <div class="total-cell-stacked">
             <span class="total-line-pct">${peOiTotalPctStr}</span>
           </div>
         </td>
-        <td class="total-pe">
+        <td class="total-pe col-oichg-pct">
           <div class="total-cell-stacked">
             <span class="total-line-sum ${totalPeChgClass}"><strong>${totalPeChgPctStr}</strong></span>
           </div>
         </td>
-        <td class="total-pe">-</td>
-        <td class="total-pe">-</td>
-        <td class="total-pe">
+        <td class="total-pe col-ltp">-</td>
+        <td class="total-pe col-vol">-</td>
+        <td class="total-pe col-oi">
           <div class="total-cell-stacked">
-            <span class="total-line-sum">sum: ${formatIndianNumber(sumVisiblePeOi)}</span>
-            <span class="total-line-pct">%: ${peOiTotalPctStr}</span>
+            <span class="total-line-sum">${formatIndianNumber(sumVisiblePeOi)}</span>
+            <span class="total-line-pct">${peOiTotalPctStr}</span>
           </div>
         </td>
-        <td class="total-pe">
+        <td class="total-pe col-oichg">
           <div class="total-cell-stacked">
-            <span class="total-line-sum">sum: ${formatIndianNumber(sumVisiblePeOiChg)}</span>
-            <span class="total-line-pct">%: ${peOiChgTotalPctStr}</span>
+            <span class="total-line-pct">${peOiChgTotalPctStr}</span>
           </div>
         </td>
-        <td class="total-pe">-</td>
+        <td class="total-pe col-iv">-</td>
       </tr>
 
       <!-- Row 2: ITM & OTM BREAKDOWN (Realtime based on visible entries) -->
       <tr class="breakdown-row">
         <!-- CALLS (CE) ITM / OTM: IV | OI Chg | OI | Volume | LTP | CHG OI% | CALL OI% -->
-        <td class="breakdown-ce">-</td>
-        <td class="breakdown-ce">
+        <td class="breakdown-ce col-iv">-</td>
+        <td class="breakdown-ce col-oichg">-</td>
+        <td class="breakdown-ce col-oi">
           <div class="total-cell-stacked">
-            <span class="total-line-sum"><span class="tag-itm">ITM:</span> ${formatIndianNumber(sumItmCeOiChg)}</span>
-            <span class="total-line-sum"><span class="tag-otm">OTM:</span> ${formatIndianNumber(sumOtmCeOiChg)}</span>
+            <span class="total-line-sum"><span class="tag-itm">ITM:</span> ${formatIndianNumber(sumItmCeOi)}</span>
+            <span class="total-line-sum"><span class="tag-otm">OTM:</span> ${formatIndianNumber(sumOtmCeOi)}</span>
           </div>
         </td>
-        <td class="breakdown-ce">
-          <div class="total-cell-stacked">
-            <span class="total-line-sum"><span class="tag-itm">ITM Call:</span> ${formatIndianNumber(sumItmCeOi)}</span>
-            <span class="total-line-sum"><span class="tag-otm">OTM Call:</span> ${formatIndianNumber(sumOtmCeOi)}</span>
-          </div>
-        </td>
-        <td class="breakdown-ce">-</td>
-        <td class="breakdown-ce">-</td>
-        <td class="breakdown-ce">
+        <td class="breakdown-ce col-vol">-</td>
+        <td class="breakdown-ce col-ltp">-</td>
+        <td class="breakdown-ce col-oichg-pct">
           <div class="total-cell-stacked">
             <span class="total-line-sum"><span class="tag-itm">ITM:</span> ${itmCeChgPctStr}</span>
             <span class="total-line-sum"><span class="tag-otm">OTM:</span> ${otmCeChgPctStr}</span>
           </div>
         </td>
-        <td class="breakdown-ce">
+        <td class="breakdown-ce col-oi-pct">
           <div class="total-cell-stacked">
             <span class="total-line-pct"><span class="tag-itm">ITM:</span> ${itmCeOiPctStr}</span>
             <span class="total-line-pct"><span class="tag-otm">OTM:</span> ${otmCeOiPctStr}</span>
@@ -768,36 +767,31 @@ function renderTable(payload) {
         </td>
 
         <!-- STRIKE BREAKDOWN LABEL -->
-        <td class="breakdown-strike">ITM / OTM</td>
+        <td class="breakdown-strike col-strike">ITM / OTM</td>
 
         <!-- PUTS (PE) ITM / OTM: PUT OI% | CHG OI% | LTP | Volume | OI | OI Chg | IV -->
-        <td class="breakdown-pe">
+        <td class="breakdown-pe col-oi-pct">
           <div class="total-cell-stacked">
             <span class="total-line-pct"><span class="tag-itm">ITM:</span> ${itmPeOiPctStr}</span>
             <span class="total-line-pct"><span class="tag-otm">OTM:</span> ${otmPeOiPctStr}</span>
           </div>
         </td>
-        <td class="breakdown-pe">
+        <td class="breakdown-pe col-oichg-pct">
           <div class="total-cell-stacked">
             <span class="total-line-sum"><span class="tag-itm">ITM:</span> ${itmPeChgPctStr}</span>
             <span class="total-line-sum"><span class="tag-otm">OTM:</span> ${otmPeChgPctStr}</span>
           </div>
         </td>
-        <td class="breakdown-pe">-</td>
-        <td class="breakdown-pe">-</td>
-        <td class="breakdown-pe">
+        <td class="breakdown-pe col-ltp">-</td>
+        <td class="breakdown-pe col-vol">-</td>
+        <td class="breakdown-pe col-oi">
           <div class="total-cell-stacked">
-            <span class="total-line-sum"><span class="tag-itm">ITM Put:</span> ${formatIndianNumber(sumItmPeOi)}</span>
-            <span class="total-line-sum"><span class="tag-otm">OTM Put:</span> ${formatIndianNumber(sumOtmPeOi)}</span>
+            <span class="total-line-sum"><span class="tag-itm">ITM:</span> ${formatIndianNumber(sumItmPeOi)}</span>
+            <span class="total-line-sum"><span class="tag-otm">OTM:</span> ${formatIndianNumber(sumOtmPeOi)}</span>
           </div>
         </td>
-        <td class="breakdown-pe">
-          <div class="total-cell-stacked">
-            <span class="total-line-sum"><span class="tag-itm">ITM:</span> ${formatIndianNumber(sumItmPeOiChg)}</span>
-            <span class="total-line-sum"><span class="tag-otm">OTM:</span> ${formatIndianNumber(sumOtmPeOiChg)}</span>
-          </div>
-        </td>
-        <td class="breakdown-pe">-</td>
+        <td class="breakdown-pe col-oichg">-</td>
+        <td class="breakdown-pe col-iv">-</td>
       </tr>
     `;
   }
