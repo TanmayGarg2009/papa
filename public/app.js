@@ -388,7 +388,7 @@ function renderTable(payload) {
     if (r) {
       if (r.CE) {
         const ceOi = (Number(r.CE.openInterest) || 0) * LOT_MULTIPLIER;
-        const ceVol = (Number(ce.totalTradedVolume) || 0) * LOT_MULTIPLIER;
+        const ceVol = (Number(r.CE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
         if (ceOi > maxCeOI) maxCeOI = ceOi;
         if (ceVol > maxCeVol) maxCeVol = ceVol;
       }
