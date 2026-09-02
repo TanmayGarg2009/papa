@@ -169,8 +169,14 @@ async function fetchOptionChain(isAutoRefresh = false) {
         updateExpiryDropdown(result.data.records.expiryDates);
       }
 
-      // Check Live vs Fallback status
-      if (result.live) {
+      // Check Live vs Cached vs Fallback status
+      if (result.cached || result.marketClosed) {
+        statusBadge.className = 'status-badge cached';
+        statusText.textContent = 'Cached (4 PM)';
+        noticeBanner.classList.remove('hidden');
+        noticeMessage.textContent = 'Market Closed (After 4:00 PM IST). Using cached closing data until 7:00 AM IST.';
+        showToast('Using Post-4 PM Cached Data (Market Closed)', 'success');
+      } else if (result.live) {
         statusBadge.className = 'status-badge live';
         statusText.textContent = 'Live NSE';
         noticeBanner.classList.add('hidden');

@@ -115,11 +115,49 @@ async function fetchNSEOptionChain(symbol = 'NIFTY', expiry = '') {
   });
 }
 
+// In-memory option chain cache for post-4:00 PM data
+const optionChainCache = new Map();
+
+// Helper: Check if current time in Indian Standard Time (IST) is within 7:00 AM - 4:00 PM
+function getISTDateTime() {
+  const now = new Date();
+  const istString = now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
+  return new Date(istString);
+}
+
+function isMarketFetchHours() {
+  const istDate = getISTDateTime();
+  const hours = istDate.getHours();
+  const minutes = istDate.getMinutes();
+  const timeInMinutes = hours * 60 + minutes;
+  // Active window: 7:00 AM (420 min) to 4:00 PM / 16:00 (960 min)
+  return timeInMinutes >= 420 && timeInMinutes < 960;
+}
+
 // API endpoint for Option Chain
 app.get('/api/option-chain', async (req, res) => {
   const symbol = req.query.symbol || 'NIFTY';
   const expiry = req.query.expiry || '08-Sep-2026';
+  const forceLive = req.query.force === 'true';
+  const cacheKey = `${symbol}_${expiry}`;
+  const isLiveHours = isMarketFetchHours();
 
+  // If outside 7:00 AM - 4:00 PM IST and cache exists, serve cached data immediately
+  if (!isLiveHours && !forceLive && optionChainCache.has(cacheKey)) {
+    const cachedEntry = optionChainCache.get(cacheKey);
+    return res.json({
+      success: true,
+      live: false,
+      cached: true,
+      marketClosed: true,
+      message: 'Serving post-4:00 PM cached data (Market closed until 7:00 AM IST)',
+      timestamp: cachedEntry.timestamp,
+      cachedAt: cachedEntry.cachedAt,
+      data: cachedEntry.data
+    });
+  }
+
+  // Otherwise, fetch live from NSE (during 7 AM - 4 PM IST, or initial cold cache populate)
   try {
     const liveData = await fetchNSEOptionChain(symbol, expiry);
     const hasRecords = liveData && liveData.records && Array.isArray(liveData.records.data) && liveData.records.data.length > 0;
@@ -127,12 +165,21 @@ app.get('/api/option-chain', async (req, res) => {
     const hasData = liveData && Array.isArray(liveData.data) && liveData.data.length > 0;
 
     if (hasRecords || hasFiltered || hasData) {
+      const nowIso = new Date().toISOString();
+      // Cache this latest snapshot
+      optionChainCache.set(cacheKey, {
+        data: liveData,
+        timestamp: nowIso,
+        cachedAt: nowIso
+      });
+
       return res.json({
         success: true,
-        live: true,
-        fallback: false,
-        message: 'Live data retrieved from NSE',
-        timestamp: new Date().toISOString(),
+        live: isLiveHours,
+        cached: !isLiveHours,
+        marketClosed: !isLiveHours,
+        message: isLiveHours ? 'Live data retrieved from NSE' : 'Cached post-4:00 PM data',
+        timestamp: nowIso,
         data: liveData
       });
     } else {
@@ -141,12 +188,24 @@ app.get('/api/option-chain', async (req, res) => {
   } catch (error) {
     console.warn(`[Proxy Warning] ${error.message}. Serving fallback dataset.`);
     const fallbackData = generateFallbackOptionChain(symbol, expiry);
+    const nowIso = new Date().toISOString();
+
+    if (!optionChainCache.has(cacheKey)) {
+      optionChainCache.set(cacheKey, {
+        data: fallbackData,
+        timestamp: nowIso,
+        cachedAt: nowIso
+      });
+    }
+
     return res.json({
       success: true,
       live: false,
       fallback: true,
+      cached: !isLiveHours,
+      marketClosed: !isLiveHours,
       error: `Live fetch notice: ${error.message}`,
-      timestamp: new Date().toISOString(),
+      timestamp: nowIso,
       data: fallbackData
     });
   }

@@ -205,6 +205,15 @@ input[type="number"] {
   border-color: #991b1b;
 }
 
+.status-badge.cached .status-dot {
+  background-color: #38bdf8;
+}
+
+.status-badge.cached {
+  color: #38bdf8;
+  border-color: #0369a1;
+}
+
 /* Fallback Notice Banner */
 .notice-banner {
   flex-shrink: 0;
