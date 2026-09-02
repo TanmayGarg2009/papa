@@ -6,7 +6,7 @@
   <title>NSE Option Chain | Live Analytics</title>
   <link rel="stylesheet" href="style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
@@ -15,7 +15,7 @@
   <header class="app-header">
     <div class="header-left">
       <div class="brand-title">
-        <span class="brand-badge">NSE</span>
+        <span id="brandBadge" class="brand-badge">65•NIFTY</span>
         <span class="brand-text">Option Chain</span>
       </div>
       
@@ -90,7 +90,7 @@
     <span id="noticeMessage" class="notice-text">Something went wrong fetching live data from NSE. Showing fallback data.</span>
   </div>
 
-  <!-- Main Container -->
+  <!-- Main Content Area -->
   <main class="main-content">
     
     <!-- Option Chain Table Container -->

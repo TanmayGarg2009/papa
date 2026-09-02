@@ -330,10 +330,14 @@ function renderTable(payload) {
     futureValue = underlyingValue;
   }
 
-  // Update F: Value in the Column Header
+  // Update F: Value and 65 Multiplier in Badges
   const futBadgeEl = document.getElementById('futHeaderBadge');
   if (futBadgeEl) {
     futBadgeEl.textContent = `F: ${formatIndianNumber(futureValue)}`;
+  }
+  const brandBadgeEl = document.getElementById('brandBadge');
+  if (brandBadgeEl) {
+    brandBadgeEl.textContent = `65•${currentSymbol}`;
   }
 
   // Filter records by selected expiry if multiple are present
