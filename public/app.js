@@ -400,6 +400,12 @@ function renderTable(payload) {
   const spotFutDiff = futureValue - underlyingValue;
   const spotFutDiffStr = (spotFutDiff > 0 ? '+' : '') + spotFutDiff.toFixed(2);
 
+  // Range calculation (R = High - Low)
+  const highVal = Number(indexInfo.high) || 0;
+  const lowVal = Number(indexInfo.low) || 0;
+  const rangeVal = highVal - lowVal;
+  const rangeStr = (rangeVal % 1 === 0) ? rangeVal.toString() : rangeVal.toFixed(2);
+
   // Render Row Helper Function
   function buildStrikeRowHtml(strike, isExactMatch = false) {
     const item = strikeMap.get(strike) || {};
@@ -449,7 +455,7 @@ function renderTable(payload) {
     if (peOi !== 0) {
       const pePct = (peOiChg / peOi) * 100;
       peOiChgPctStr = (pePct > 0 ? '+' : '') + pePct.toFixed(1) + '%';
-      peOiChgPctClass = (pePct < 0) ? 'text-negative' : (pePct > 0 ? 'text-positive' : '');
+      peOiChgPctClass = (pePct < 0) ? 'text-negative' : (peOiChg > 0 ? 'text-positive' : '');
     }
 
     // Calculate CALL OI% and PUT OI% (Percentage of their sum for this strike row)
@@ -505,7 +511,7 @@ function renderTable(payload) {
     rowsHtml += buildStrikeRowHtml(strike, false);
   });
 
-  // 2. Render Spot Baseline Divider Bar (Blue row with SPOT (prevClose diff), F (spot diff), and OPEN, HIGH, LOW)
+  // 2. Render Spot Baseline Divider Bar (Blue row with SPOT (prevClose diff), F (spot diff), and O, H, L, R)
   rowsHtml += `
     <tr id="spotDividerRow" class="spot-divider-row">
       <td colspan="15">
@@ -515,9 +521,10 @@ function renderTable(payload) {
             <span class="spot-price-badge">SPOT: ${formatIndianNumber(underlyingValue)} (${spotPrevCloseDiffStr})</span>
             <span class="spot-price-badge">F: ${formatIndianNumber(futureValue)} (${spotFutDiffStr})</span>
             <span class="spot-ohlc-badge">
-              <span class="spot-ohlc-item"><span class="spot-ohlc-label">OPEN:</span> ${formatIndianNumber(indexInfo.open)}</span>
-              <span class="spot-ohlc-item"><span class="spot-ohlc-label">HIGH:</span> ${formatIndianNumber(indexInfo.high)}</span>
-              <span class="spot-ohlc-item"><span class="spot-ohlc-label">LOW:</span> ${formatIndianNumber(indexInfo.low)}</span>
+              <span class="spot-ohlc-item"><span class="spot-ohlc-label">O:</span> ${formatIndianNumber(indexInfo.open)}</span>
+              <span class="spot-ohlc-item"><span class="spot-ohlc-label">H:</span> ${formatIndianNumber(indexInfo.high)}</span>
+              <span class="spot-ohlc-item"><span class="spot-ohlc-label">L:</span> ${formatIndianNumber(indexInfo.low)}</span>
+              <span class="spot-ohlc-item"><span class="spot-ohlc-label">R:</span> ${rangeStr}</span>
             </span>
           </div>
           <span class="spot-tag-right">▼ SET B (${selectedB.length} Strikes Below Baseline)</span>
