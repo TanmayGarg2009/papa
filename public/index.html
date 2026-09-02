@@ -34,7 +34,7 @@
       <div class="control-group">
         <label for="expirySelect">Expiry Date</label>
         <select id="expirySelect" class="styled-select">
-          <option value="01-Sep-2026" selected>01-Sep-2026</option>
+          <option value="" selected>Loading Expiries...</option>
         </select>
       </div>
 
@@ -128,7 +128,14 @@
         
         <!-- Table Body -->
         <tbody id="tableBody">
-          <!-- Populated dynamically via app.js -->
+          <tr>
+            <td colspan="13" style="text-align:center; padding: 40px 20px; color: #475569; font-size: 0.95rem; font-weight: 600;">
+              <div style="display:inline-flex; align-items:center; gap:10px;">
+                <span style="display:inline-block; width:16px; height:16px; border:2px solid #3b82f6; border-top-color:transparent; border-radius:50%; animation: spin 0.8s linear infinite;"></span>
+                <span>Connecting and fetching Option Chain data...</span>
+              </div>
+            </td>
+          </tr>
         </tbody>
 
         <!-- Table Footer for Sums -->

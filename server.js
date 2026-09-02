@@ -33,7 +33,7 @@ async function getNSECookies() {
         'Accept-Language': 'en-US,en;q=0.9',
         'Accept-Encoding': 'identity'
       },
-      timeout: 8000
+      timeout: 3500
     };
 
     const req = https.request(options, (res) => {
@@ -78,7 +78,7 @@ async function fetchNSEOptionChain(symbol = 'NIFTY', expiry = '') {
         'Cookie': cookies,
         'Accept-Encoding': 'identity'
       },
-      timeout: 9000
+      timeout: 4000
     };
 
     const req = https.request(options, (res) => {
@@ -118,11 +118,15 @@ async function fetchNSEOptionChain(symbol = 'NIFTY', expiry = '') {
 // API endpoint for Option Chain
 app.get('/api/option-chain', async (req, res) => {
   const symbol = req.query.symbol || 'NIFTY';
-  const expiry = req.query.expiry || '01-Sep-2026';
+  const expiry = req.query.expiry || '08-Sep-2026';
 
   try {
     const liveData = await fetchNSEOptionChain(symbol, expiry);
-    if (liveData && (liveData.records || liveData.filtered || liveData.data)) {
+    const hasRecords = liveData && liveData.records && Array.isArray(liveData.records.data) && liveData.records.data.length > 0;
+    const hasFiltered = liveData && liveData.filtered && Array.isArray(liveData.filtered.data) && liveData.filtered.data.length > 0;
+    const hasData = liveData && Array.isArray(liveData.data) && liveData.data.length > 0;
+
+    if (hasRecords || hasFiltered || hasData) {
       return res.json({
         success: true,
         live: true,
@@ -132,7 +136,7 @@ app.get('/api/option-chain', async (req, res) => {
         data: liveData
       });
     } else {
-      throw new Error('Incomplete data received from NSE');
+      throw new Error('NSE returned an empty dataset for this index/expiry');
     }
   } catch (error) {
     console.warn(`[Proxy Warning] ${error.message}. Serving fallback dataset.`);
@@ -141,7 +145,7 @@ app.get('/api/option-chain', async (req, res) => {
       success: true,
       live: false,
       fallback: true,
-      error: `Something went wrong fetching live data: ${error.message}`,
+      error: `Live fetch notice: ${error.message}`,
       timestamp: new Date().toISOString(),
       data: fallbackData
     });

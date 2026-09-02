@@ -456,16 +456,28 @@ th.col-iv, th.col-oichg, th.col-oi, th.col-vol, th.col-ltp, th.col-oi-pct {
 
 .oc-table td.cell-strike {
   text-align: center;
-  font-weight: 400;
-  background-color: #f1f5f9;
-  color: #0f172a;
+  font-weight: 500;
+  background-color: #f8fafc;
+  color: #64748b; /* Muted slate for intermediate strikes */
   border-left: 2px solid #cbd5e1;
   border-right: 2px solid #cbd5e1;
+  font-size: 0.82rem;
+  letter-spacing: -0.01em;
 }
 
-.oc-table td.cell-strike.strike-bold,
-.oc-table td.cell-strike strong {
-  font-weight: 800;
+.oc-table td.cell-strike.strike-bold {
+  font-weight: 800 !important;
+  color: #0f172a !important; /* Deep dark bold text */
+  background-color: #e2e8f0 !important; /* Distinct shaded background for round 100 strikes */
+  font-size: 0.88rem !important;
+  border-left: 2px solid #94a3b8 !important;
+  border-right: 2px solid #94a3b8 !important;
+  letter-spacing: 0.02em;
+}
+
+.oc-table td.cell-strike.strike-bold strong {
+  font-weight: 800 !important;
+  color: #0f172a !important;
 }
 
 /* ITM (In-The-Money) Yellow Tint */
@@ -679,4 +691,9 @@ th.col-iv, th.col-oichg, th.col-oi, th.col-vol, th.col-ltp, th.col-oi-pct {
   color: #94a3b8;
   margin-left: auto;
   font-family: 'JetBrains Mono', monospace;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
 }

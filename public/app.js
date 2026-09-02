@@ -1,6 +1,6 @@
 // State
 let currentSymbol = 'NIFTY';
-let currentExpiry = '01-Sep-2026';
+let currentExpiry = '';
 let strikeDepth = 20; // Default 20 above, 20 below
 let refreshCooldownSeconds = 30; // Default fixed 30 seconds
 let timerSecondsRemaining = 30;
@@ -227,10 +227,11 @@ function updateExpiryDropdown(expiryDates) {
     expirySelect.appendChild(opt);
   });
 
-  if (expiryDates.includes(previousValue)) {
-    expirySelect.value = previousValue;
-  } else if (expiryDates.includes(currentExpiry)) {
+  if (currentExpiry && expiryDates.includes(currentExpiry)) {
     expirySelect.value = currentExpiry;
+  } else if (previousValue && expiryDates.includes(previousValue)) {
+    expirySelect.value = previousValue;
+    currentExpiry = previousValue;
   } else {
     currentExpiry = expiryDates[0];
     expirySelect.value = currentExpiry;
@@ -698,7 +699,11 @@ if (cooldownInput) {
   });
 }
 
-// Initialize on page load
-document.addEventListener('DOMContentLoaded', () => {
+// Initialize immediately on page load
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', () => {
+    fetchOptionChain(false);
+  });
+} else {
   fetchOptionChain(false);
-});
+}
