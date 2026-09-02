@@ -463,9 +463,9 @@ function renderTable(payload) {
         if (Number(r.CE.impliedVolatility) > 0) validIvs.push(Number(r.CE.impliedVolatility));
       }
       if (r.PE) {
-        const peOi = (Number(r.PE.openInterest) || 0) * LOT_MULTIPLIER;
-        const peOiChg = (Number(r.PE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
-        const peVol = (Number(r.PE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
+        const peOi = (Number(pe.openInterest) || 0) * LOT_MULTIPLIER;
+        const peOiChg = (Number(pe.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
+        const peVol = (Number(pe.totalTradedVolume) || 0) * LOT_MULTIPLIER;
         if (peOi > maxPeOI) maxPeOI = peOi;
         if (peVol > maxPeVol) maxPeVol = peVol;
         if (peOiChg > maxPeOiChg) maxPeOiChg = peOiChg;
@@ -630,19 +630,19 @@ function renderTable(payload) {
       }
     } catch (e) {}
 
-    // If already locked today, return locked values
-    if (fixedLevels && fixedLevels.rf3 && fixedLevels.sf3) {
+    // 1. If already locked today at or after 9:20 AM, return locked values
+    if (fixedLevels && (fixedLevels.rf3 || fixedLevels.rf2) && (fixedLevels.sf3 || fixedLevels.sf2)) {
       return fixedLevels;
     }
 
-    // If time is 09:20 AM or later and we have valid levels, lock them permanently for the day
-    if (isPast920 && r3 && s3) {
+    // 2. If current time is 09:20 AM or later and we have valid levels, lock them permanently for today
+    if (isPast920 && (r3 || r2) && (s3 || s2)) {
       fixedLevels = {
         date: todayDateString,
         symbol: symbol,
-        rf3: r3,
+        rf3: r3 || r2,
         rf2: r2 || r3,
-        sf3: s3,
+        sf3: s3 || s2,
         sf2: s2 || s3,
         lockedAt: '09:20 AM IST'
       };
@@ -652,14 +652,36 @@ function renderTable(payload) {
       return fixedLevels;
     }
 
-    return fixedLevels;
+    // 3. If before 09:20 AM today or during night/off-hours, check if there's any recent locked value for this symbol
+    try {
+      for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (key && key.startsWith(`papa_fixed_levels_v2_${symbol}_`)) {
+          const cached = JSON.parse(localStorage.getItem(key));
+          if (cached && (cached.rf3 || cached.rf2) && (cached.sf3 || cached.sf2)) {
+            return cached;
+          }
+        }
+      }
+    } catch (e) {}
+
+    // 4. Live calculated fallback: Return current calculated levels so badges are NEVER empty
+    return {
+      date: todayDateString,
+      symbol: symbol,
+      rf3: r3 || r2,
+      rf2: r2 || r3,
+      sf3: s3 || s2,
+      sf2: s2 || s3,
+      lockedAt: 'Calculated'
+    };
   }
 
   const fixedRS = getOrUpdateFixedRS(currentSymbol, resistanceStrike3, resistanceStrike2, supportStrike3, supportStrike2);
-  const fixedRf3 = fixedRS?.rf3 || null;
-  const fixedRf2 = fixedRS?.rf2 || null;
-  const fixedSf3 = fixedRS?.sf3 || null;
-  const fixedSf2 = fixedRS?.sf2 || null;
+  const displayRf3 = fixedRS?.rf3 || resistanceStrike3 || resistanceStrike2;
+  const displayRf2 = fixedRS?.rf2 || resistanceStrike2 || resistanceStrike3;
+  const displaySf3 = fixedRS?.sf3 || supportStrike3 || supportStrike2;
+  const displaySf2 = fixedRS?.sf2 || supportStrike2 || supportStrike3;
 
   // Update R, RF3, RF2, S, SF3, SF2 Badges in Super Headers
   const badgeResistance = document.getElementById('badgeResistance');
@@ -673,23 +695,23 @@ function renderTable(payload) {
     badgeResistance.textContent = resistanceStrike3 ? `R: ${formatIndianNumber(resistanceStrike3)}` : 'R: -';
   }
   if (badgeRf3) {
-    badgeRf3.textContent = fixedRf3 ? `RF3: ${formatIndianNumber(fixedRf3)}` : 'RF3: --';
-    badgeRf3.title = fixedRf3 ? `Resistance Fixed at 09:20 AM (3 Params: OI, OI Chg, Vol): ${formatIndianNumber(fixedRf3)}` : 'RF3 (3-param) locks at 09:20 AM IST';
+    badgeRf3.textContent = displayRf3 ? `RF3: ${formatIndianNumber(displayRf3)}` : 'RF3: -';
+    badgeRf3.title = displayRf3 ? `Resistance Fixed (3 Params: OI, OI Chg, Vol): ${formatIndianNumber(displayRf3)}` : 'RF3 (3-param)';
   }
   if (badgeRf2) {
-    badgeRf2.textContent = fixedRf2 ? `RF2: ${formatIndianNumber(fixedRf2)}` : 'RF2: --';
-    badgeRf2.title = fixedRf2 ? `Resistance Fixed at 09:20 AM (2 Params: OI, Vol): ${formatIndianNumber(fixedRf2)}` : 'RF2 (2-param) locks at 09:20 AM IST';
+    badgeRf2.textContent = displayRf2 ? `RF2: ${formatIndianNumber(displayRf2)}` : 'RF2: -';
+    badgeRf2.title = displayRf2 ? `Resistance Fixed (2 Params: OI, Vol): ${formatIndianNumber(displayRf2)}` : 'RF2 (2-param)';
   }
   if (badgeSupport) {
     badgeSupport.textContent = supportStrike3 ? `S: ${formatIndianNumber(supportStrike3)}` : 'S: -';
   }
   if (badgeSf3) {
-    badgeSf3.textContent = fixedSf3 ? `SF3: ${formatIndianNumber(fixedSf3)}` : 'SF3: --';
-    badgeSf3.title = fixedSf3 ? `Support Fixed at 09:20 AM (3 Params: OI, OI Chg, Vol): ${formatIndianNumber(fixedSf3)}` : 'SF3 (3-param) locks at 09:20 AM IST';
+    badgeSf3.textContent = displaySf3 ? `SF3: ${formatIndianNumber(displaySf3)}` : 'SF3: -';
+    badgeSf3.title = displaySf3 ? `Support Fixed (3 Params: OI, OI Chg, Vol): ${formatIndianNumber(displaySf3)}` : 'SF3 (3-param)';
   }
   if (badgeSf2) {
-    badgeSf2.textContent = fixedSf2 ? `SF2: ${formatIndianNumber(fixedSf2)}` : 'SF2: --';
-    badgeSf2.title = fixedSf2 ? `Support Fixed at 09:20 AM (2 Params: OI, Vol): ${formatIndianNumber(fixedSf2)}` : 'SF2 (2-param) locks at 09:20 AM IST';
+    badgeSf2.textContent = displaySf2 ? `SF2: ${formatIndianNumber(displaySf2)}` : 'SF2: -';
+    badgeSf2.title = displaySf2 ? `Support Fixed (2 Params: OI, Vol): ${formatIndianNumber(displaySf2)}` : 'SF2 (2-param)';
   }
 
   // Helper function to render 2-line stacked cell with relative percentage & highlight badges
