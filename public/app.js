@@ -87,7 +87,7 @@ function normalCdf(x) {
 }
 
 // Black-Scholes Delta Calculator
-function calculateDelta(spot, strike, ivPct, daysToExpiry, r = 0.068) {
+function calculateDelta(spot, strike, ivPct, daysToExpiry, r = 0.07) {
   if (!spot || !strike || !ivPct || ivPct <= 0 || daysToExpiry <= 0) {
     return { callDelta: null, putDelta: null };
   }
@@ -458,9 +458,9 @@ function renderTable(payload) {
         if (ceOiChg > maxCeOiChg) maxCeOiChg = ceOiChg;
       }
       if (r.PE) {
-        const peOi = (Number(r.PE.openInterest) || 0) * LOT_MULTIPLIER;
-        const peOiChg = (Number(r.PE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
-        const peVol = (Number(r.PE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
+        const peOi = (Number(pe.openInterest) || 0) * LOT_MULTIPLIER;
+        const peOiChg = (Number(pe.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
+        const peVol = (Number(pe.totalTradedVolume) || 0) * LOT_MULTIPLIER;
         if (peOi > maxPeOI) maxPeOI = peOi;
         if (peVol > maxPeVol) maxPeVol = peVol;
         if (peOiChg > maxPeOiChg) maxPeOiChg = peOiChg;
