@@ -297,6 +297,7 @@ input[type="number"] {
 }
 
 /* Option Chain Table - Fixed 100% Fit with Responsive Minimum Width */
+/* Option Chain Table - Fixed 100% Fit with Responsive Minimum Width */
 .oc-table {
   width: 100%;
   min-width: 1300px;
@@ -699,7 +700,6 @@ td.col-oi, td.col-oichg {
   padding: 1px 3px;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
   justify-content: center;
   width: 100%;
   box-sizing: border-box;
@@ -710,6 +710,8 @@ td.col-oi, td.col-oichg {
   font-weight: 800;
   font-size: 0.70rem;
   line-height: 1.15;
+  text-align: right;
+  width: 100%;
 }
 
 .cell-highlight-max-ce .cell-val-sub {
@@ -717,6 +719,8 @@ td.col-oi, td.col-oichg {
   font-weight: 700;
   font-size: 0.60rem;
   line-height: 1.1;
+  text-align: center !important; /* Centered horizontally */
+  width: 100%;
 }
 
 .cell-highlight-max-pe {
@@ -726,7 +730,6 @@ td.col-oi, td.col-oichg {
   padding: 1px 3px;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
   justify-content: center;
   width: 100%;
   box-sizing: border-box;
@@ -737,6 +740,8 @@ td.col-oi, td.col-oichg {
   font-weight: 800;
   font-size: 0.70rem;
   line-height: 1.15;
+  text-align: right;
+  width: 100%;
 }
 
 .cell-highlight-max-pe .cell-val-sub {
@@ -744,6 +749,8 @@ td.col-oi, td.col-oichg {
   font-weight: 700;
   font-size: 0.60rem;
   line-height: 1.1;
+  text-align: center !important; /* Centered horizontally */
+  width: 100%;
 }
 
 .cell-highlight-high {
@@ -753,7 +760,6 @@ td.col-oi, td.col-oichg {
   padding: 1px 3px;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
   justify-content: center;
   width: 100%;
   box-sizing: border-box;
@@ -764,6 +770,8 @@ td.col-oi, td.col-oichg {
   font-weight: 800;
   font-size: 0.70rem;
   line-height: 1.15;
+  text-align: right;
+  width: 100%;
 }
 
 .cell-highlight-high .cell-val-sub {
@@ -771,12 +779,13 @@ td.col-oi, td.col-oichg {
   font-weight: 700;
   font-size: 0.60rem;
   line-height: 1.1;
+  text-align: center !important; /* Centered horizontally */
+  width: 100%;
 }
 
 .cell-stacked-num {
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
   justify-content: center;
   width: 100%;
   line-height: 1.15;
@@ -786,13 +795,17 @@ td.col-oi, td.col-oichg {
 .cell-val-main {
   font-size: 0.70rem;
   font-weight: 600;
+  text-align: right;
+  width: 100%;
   white-space: nowrap;
 }
 
 .cell-val-sub {
   font-size: 0.60rem;
-  font-weight: 500;
+  font-weight: 600;
   color: #64748b;
+  text-align: center !important; /* Centered horizontally */
+  width: 100%;
   white-space: nowrap;
 }
 
