@@ -1,9 +1,24 @@
+// Storage keys for persisting user preferences
+const STORAGE_KEY_STRIKES = 'papa_strike_count';
+const STORAGE_KEY_COOLDOWN = 'papa_refresh_cooldown';
+
+// Load stored preferences or fallback to defaults
+let savedStrikeDepth = null;
+try {
+  savedStrikeDepth = parseInt(localStorage.getItem(STORAGE_KEY_STRIKES));
+} catch (e) {}
+let strikeDepth = (!isNaN(savedStrikeDepth) && savedStrikeDepth > 0) ? savedStrikeDepth : 10; // Default 10 above, 10 below
+
+let savedCooldown = null;
+try {
+  savedCooldown = parseInt(localStorage.getItem(STORAGE_KEY_COOLDOWN));
+} catch (e) {}
+let refreshCooldownSeconds = (!isNaN(savedCooldown) && savedCooldown > 0) ? savedCooldown : 30; // Default fixed 30 seconds
+let timerSecondsRemaining = refreshCooldownSeconds;
+
 // State
 let currentSymbol = 'NIFTY';
 let currentExpiry = '';
-let strikeDepth = 20; // Default 20 above, 20 below
-let refreshCooldownSeconds = 30; // Default fixed 30 seconds
-let timerSecondsRemaining = 30;
 let timerCountdownInterval = null;
 let lastFetchedData = null;
 let lastSuccessfulFetchTime = null;
@@ -367,7 +382,7 @@ function renderTable(payload) {
     if (r) {
       if (r.CE) {
         const ceOi = (Number(r.CE.openInterest) || 0) * LOT_MULTIPLIER;
-        const ceVol = (Number(ce.totalTradedVolume) || 0) * LOT_MULTIPLIER;
+        const ceVol = (Number(r.CE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
         if (ceOi > maxCeOI) maxCeOI = ceOi;
         if (ceVol > maxCeVol) maxCeVol = ceVol;
       }
@@ -816,10 +831,21 @@ expirySelect.addEventListener('change', (e) => {
   fetchOptionChain(false);
 });
 
+// Apply restored values to input fields
+if (strikeCountInput) {
+  strikeCountInput.value = strikeDepth;
+}
+if (cooldownInput) {
+  cooldownInput.value = refreshCooldownSeconds;
+}
+
 strikeCountInput.addEventListener('input', (e) => {
   const val = parseInt(e.target.value);
   if (!isNaN(val) && val > 0) {
     strikeDepth = val;
+    try {
+      localStorage.setItem(STORAGE_KEY_STRIKES, val.toString());
+    } catch (err) {}
     if (lastFetchedData) {
       renderTable(lastFetchedData);
     }
@@ -831,6 +857,9 @@ if (cooldownInput) {
     const val = parseInt(e.target.value);
     if (!isNaN(val) && val > 0) {
       refreshCooldownSeconds = val;
+      try {
+        localStorage.setItem(STORAGE_KEY_COOLDOWN, val.toString());
+      } catch (err) {}
       // Reset remaining timer to newly set cooldown and update display immediately
       startAutoRefreshTimer(true);
     }
@@ -840,8 +869,12 @@ if (cooldownInput) {
 // Initialize immediately on page load
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
+    if (strikeCountInput) strikeCountInput.value = strikeDepth;
+    if (cooldownInput) cooldownInput.value = refreshCooldownSeconds;
     fetchOptionChain(false);
   });
 } else {
+  if (strikeCountInput) strikeCountInput.value = strikeDepth;
+  if (cooldownInput) cooldownInput.value = refreshCooldownSeconds;
   fetchOptionChain(false);
 }
