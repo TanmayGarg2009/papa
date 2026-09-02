@@ -688,6 +688,7 @@ function renderTable(payload) {
         <td class="total-ce col-iv">-</td>
         <td class="total-ce col-oichg">
           <div class="total-cell-stacked">
+            <span class="total-line-sum">${formatIndianNumber(sumVisibleCeOiChg)}</span>
             <span class="total-line-pct">${ceOiChgTotalPctStr}</span>
           </div>
         </td>
@@ -734,6 +735,7 @@ function renderTable(payload) {
         </td>
         <td class="total-pe col-oichg">
           <div class="total-cell-stacked">
+            <span class="total-line-sum">${formatIndianNumber(sumVisiblePeOiChg)}</span>
             <span class="total-line-pct">${peOiChgTotalPctStr}</span>
           </div>
         </td>
@@ -744,25 +746,30 @@ function renderTable(payload) {
       <tr class="breakdown-row">
         <!-- CALLS (CE) ITM / OTM: IV | OI Chg | OI | Volume | LTP | CHG OI% | CALL OI% -->
         <td class="breakdown-ce col-iv">-</td>
-        <td class="breakdown-ce col-oichg">-</td>
+        <td class="breakdown-ce col-oichg">
+          <div class="breakdown-cell-stacked">
+            <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${formatIndianNumber(sumItmCeOiChg)}</span></div>
+            <div class="breakdown-line"><span class="tag-otm">OTM</span><span class="val-otm">${formatIndianNumber(sumOtmCeOiChg)}</span></div>
+          </div>
+        </td>
         <td class="breakdown-ce col-oi">
-          <div class="total-cell-stacked">
-            <span class="total-line-sum"><span class="tag-itm">ITM:</span> ${formatIndianNumber(sumItmCeOi)}</span>
-            <span class="total-line-sum"><span class="tag-otm">OTM:</span> ${formatIndianNumber(sumOtmCeOi)}</span>
+          <div class="breakdown-cell-stacked">
+            <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${formatIndianNumber(sumItmCeOi)}</span></div>
+            <div class="breakdown-line"><span class="tag-otm">OTM</span><span class="val-otm">${formatIndianNumber(sumOtmCeOi)}</span></div>
           </div>
         </td>
         <td class="breakdown-ce col-vol">-</td>
         <td class="breakdown-ce col-ltp">-</td>
         <td class="breakdown-ce col-oichg-pct">
-          <div class="total-cell-stacked">
-            <span class="total-line-sum"><span class="tag-itm">ITM:</span> ${itmCeChgPctStr}</span>
-            <span class="total-line-sum"><span class="tag-otm">OTM:</span> ${otmCeChgPctStr}</span>
+          <div class="breakdown-cell-stacked">
+            <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${itmCeChgPctStr}</span></div>
+            <div class="breakdown-line"><span class="tag-otm">OTM</span><span class="val-otm">${otmCeChgPctStr}</span></div>
           </div>
         </td>
         <td class="breakdown-ce col-oi-pct">
-          <div class="total-cell-stacked">
-            <span class="total-line-pct"><span class="tag-itm">ITM:</span> ${itmCeOiPctStr}</span>
-            <span class="total-line-pct"><span class="tag-otm">OTM:</span> ${otmCeOiPctStr}</span>
+          <div class="breakdown-cell-stacked">
+            <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${itmCeOiPctStr}</span></div>
+            <div class="breakdown-line"><span class="tag-otm">OTM</span><span class="val-otm">${otmCeOiPctStr}</span></div>
           </div>
         </td>
 
@@ -771,26 +778,31 @@ function renderTable(payload) {
 
         <!-- PUTS (PE) ITM / OTM: PUT OI% | CHG OI% | LTP | Volume | OI | OI Chg | IV -->
         <td class="breakdown-pe col-oi-pct">
-          <div class="total-cell-stacked">
-            <span class="total-line-pct"><span class="tag-itm">ITM:</span> ${itmPeOiPctStr}</span>
-            <span class="total-line-pct"><span class="tag-otm">OTM:</span> ${otmPeOiPctStr}</span>
+          <div class="breakdown-cell-stacked">
+            <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${itmPeOiPctStr}</span></div>
+            <div class="breakdown-line"><span class="tag-otm">OTM</span><span class="val-otm">${otmPeOiPctStr}</span></div>
           </div>
         </td>
         <td class="breakdown-pe col-oichg-pct">
-          <div class="total-cell-stacked">
-            <span class="total-line-sum"><span class="tag-itm">ITM:</span> ${itmPeChgPctStr}</span>
-            <span class="total-line-sum"><span class="tag-otm">OTM:</span> ${otmPeChgPctStr}</span>
+          <div class="breakdown-cell-stacked">
+            <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${itmPeChgPctStr}</span></div>
+            <div class="breakdown-line"><span class="tag-otm">OTM</span><span class="val-otm">${otmPeChgPctStr}</span></div>
           </div>
         </td>
         <td class="breakdown-pe col-ltp">-</td>
         <td class="breakdown-pe col-vol">-</td>
         <td class="breakdown-pe col-oi">
-          <div class="total-cell-stacked">
-            <span class="total-line-sum"><span class="tag-itm">ITM:</span> ${formatIndianNumber(sumItmPeOi)}</span>
-            <span class="total-line-sum"><span class="tag-otm">OTM:</span> ${formatIndianNumber(sumOtmPeOi)}</span>
+          <div class="breakdown-cell-stacked">
+            <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${formatIndianNumber(sumItmPeOi)}</span></div>
+            <div class="breakdown-line"><span class="tag-otm">OTM</span><span class="val-otm">${formatIndianNumber(sumOtmPeOi)}</span></div>
           </div>
         </td>
-        <td class="breakdown-pe col-oichg">-</td>
+        <td class="breakdown-pe col-oichg">
+          <div class="breakdown-cell-stacked">
+            <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${formatIndianNumber(sumItmPeOiChg)}</span></div>
+            <div class="breakdown-line"><span class="tag-otm">OTM</span><span class="val-otm">${formatIndianNumber(sumOtmPeOiChg)}</span></div>
+          </div>
+        </td>
         <td class="breakdown-pe col-iv">-</td>
       </tr>
     `;

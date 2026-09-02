@@ -343,21 +343,21 @@ input[type="number"] {
   background-color: #b71c1c !important; /* Deep Red for Calls */
   color: #ffffff !important;
   text-align: center;
-  width: 47.2%;
+  width: 47%;
 }
 
 .th-pe {
   background-color: #1b5e20 !important; /* Deep Green for Puts */
   color: #ffffff !important;
   text-align: center;
-  width: 47.2%;
+  width: 47%;
 }
 
 .th-strike-title {
   background-color: #1e293b !important;
   color: #ffffff !important;
   text-align: center;
-  width: 5.6%;
+  width: 6%;
 }
 
 /* Sub Header Row - Floating Sticky directly below Super Header */
@@ -380,37 +380,37 @@ input[type="number"] {
   text-align: center;
 }
 
-/* Proportional Column Widths (Calls: 47.2% | Strike: 5.6% | Puts: 47.2% = 100%) */
+/* Proportional Column Widths (Calls: 47% | Strike: 6% | Puts: 47% = 100%) */
 th.col-iv, td.col-iv {
-  width: 3.8%;
+  width: 3.2%;
 }
 
 th.col-oichg, td.col-oichg {
-  width: 6.2%;
+  width: 9.5%;
 }
 
 th.col-oi, td.col-oi {
-  width: 11.5%;
+  width: 13.5%;
 }
 
 th.col-vol, td.col-vol {
-  width: 11.5%;
+  width: 8.5%;
 }
 
 th.col-ltp, td.col-ltp {
-  width: 4.2%;
+  width: 3.5%;
 }
 
 th.col-oichg-pct, td.col-oichg-pct {
-  width: 5.2%;
+  width: 4.5%;
 }
 
 th.col-oi-pct, td.col-oi-pct {
-  width: 4.8%;
+  width: 4.3%;
 }
 
 th.col-strike, td.cell-strike, td.col-strike {
-  width: 5.6%;
+  width: 6%;
 }
 
 /* Floating Sticky Table Footer (Total Row matching Top Header colors) */
@@ -501,14 +501,57 @@ th.col-strike, td.cell-strike, td.col-strike {
   color: #fef08a !important; /* Soft yellow matching ITM rows */
   font-weight: 800;
   font-size: 0.58rem;
-  margin-right: 1px;
+  letter-spacing: 0.02em;
+  text-align: left;
+  flex-shrink: 0;
 }
 
 .tag-otm {
   color: #ffffff !important; /* Crisp white matching OTM rows */
   font-weight: 800;
   font-size: 0.58rem;
-  margin-right: 1px;
+  letter-spacing: 0.02em;
+  text-align: left;
+  flex-shrink: 0;
+}
+
+.val-itm {
+  color: #fef08a !important;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  text-align: right;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.val-otm {
+  color: #ffffff !important;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: -0.035em;
+  text-align: right;
+  white-space: nowrap;
+  flex: 1;
+}
+
+.breakdown-cell-stacked {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1px;
+  width: 100%;
+  line-height: 1.15;
+  box-sizing: border-box;
+}
+
+.breakdown-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 3px;
+  white-space: nowrap;
 }
 
 .total-cell-stacked {
@@ -631,6 +674,17 @@ td.col-oi, td.col-oichg {
 .text-positive {
   color: #15803d; /* Green for positive */
   font-weight: 600;
+}
+
+/* Footer High-Contrast Overrides on Red/Green Headers */
+.total-row .text-positive, .breakdown-row .text-positive {
+  color: #86efac !important; /* Bright crisp mint green - ultra readable on red and green */
+  font-weight: 800;
+}
+
+.total-row .text-negative, .breakdown-row .text-negative {
+  color: #fca5a5 !important; /* Bright crisp pastel red - ultra readable on red and green */
+  font-weight: 800;
 }
 
 .text-muted {
