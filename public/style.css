@@ -10,69 +10,82 @@ html, body {
   color: #1e293b;
 }
 
-/* Header & Controls */
+/* Header & Controls - Compact Single Line (75% to 120%+ zoom) */
 .app-header {
   flex-shrink: 0;
   background-color: #0f172a;
   color: #f8fafc;
-  padding: 10px 20px;
+  padding: 6px 12px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 16px;
+  flex-wrap: nowrap;
+  gap: 10px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
   z-index: 100;
+  overflow-x: auto;
+  scrollbar-width: thin;
 }
 
 .header-left, .header-right {
   display: flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 16px;
+  flex-wrap: nowrap;
+  gap: 8px;
+  flex-shrink: 0;
 }
 
 .brand-title {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   font-weight: 700;
-  font-size: 1.1rem;
+  font-size: 0.92rem;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .brand-badge {
   background-color: #2563eb;
   color: white;
-  padding: 3px 8px;
+  padding: 2px 6px;
   border-radius: 4px;
-  font-size: 0.75rem;
+  font-size: 0.68rem;
   letter-spacing: 0.05em;
   font-weight: 800;
+}
+
+.brand-text {
+  white-space: nowrap;
 }
 
 .control-group {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 1px;
+  flex-shrink: 0;
 }
 
 .control-group label {
-  font-size: 0.7rem;
+  font-size: 0.58rem;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.04em;
   color: #94a3b8;
   font-weight: 600;
+  white-space: nowrap;
 }
 
 .styled-select, input[type="number"] {
   background-color: #1e293b;
   border: 1px solid #334155;
   color: #f8fafc;
-  padding: 6px 12px;
-  border-radius: 6px;
-  font-size: 0.85rem;
+  padding: 3px 8px;
+  border-radius: 5px;
+  font-size: 0.78rem;
   font-weight: 600;
   outline: none;
+  height: 27px;
+  box-sizing: border-box;
 }
 
 .styled-select:focus, input[type="number"]:focus {
@@ -80,7 +93,7 @@ html, body {
 }
 
 input[type="number"] {
-  width: 90px;
+  width: 58px;
   text-align: center;
 }
 
@@ -88,25 +101,33 @@ input[type="number"] {
 .timer-box {
   background-color: #1e293b;
   border: 1px solid #334155;
-  padding: 5px 14px;
-  border-radius: 6px;
+  padding: 2px 8px;
+  border-radius: 5px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  height: 27px;
+  box-sizing: border-box;
 }
 
 .timer-label {
-  font-size: 0.65rem;
+  font-size: 0.52rem;
   color: #94a3b8;
   text-transform: uppercase;
   font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .timer-value {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 0.95rem;
+  font-size: 0.74rem;
   font-weight: 700;
   color: #38bdf8;
+  line-height: 1.1;
+  white-space: nowrap;
 }
 
 /* Refresh Button */
@@ -114,14 +135,18 @@ input[type="number"] {
   background-color: #2563eb;
   color: #ffffff;
   border: none;
-  padding: 7px 14px;
-  border-radius: 6px;
+  padding: 3px 10px;
+  border-radius: 5px;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 6px;
-  font-size: 0.85rem;
+  gap: 5px;
+  font-size: 0.76rem;
   font-weight: 600;
+  flex-shrink: 0;
+  height: 27px;
+  box-sizing: border-box;
+  white-space: nowrap;
 }
 
 .btn-refresh:hover {
@@ -136,46 +161,58 @@ input[type="number"] {
 .timestamp-box {
   background-color: #1e293b;
   border: 1px solid #334155;
-  padding: 5px 14px;
-  border-radius: 6px;
+  padding: 2px 8px;
+  border-radius: 5px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  height: 27px;
+  box-sizing: border-box;
 }
 
 .timestamp-label {
-  font-size: 0.65rem;
+  font-size: 0.52rem;
   color: #94a3b8;
   text-transform: uppercase;
   font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .timestamp-value {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 0.85rem;
+  font-size: 0.72rem;
   font-weight: 700;
   color: #38bdf8;
   white-space: nowrap;
+  line-height: 1.1;
 }
 
 /* Status Badge */
 .status-badge {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border-radius: 20px;
-  font-size: 0.75rem;
+  gap: 5px;
+  padding: 3px 8px;
+  border-radius: 15px;
+  font-size: 0.7rem;
   font-weight: 600;
   background-color: #1e293b;
   border: 1px solid #334155;
+  flex-shrink: 0;
+  height: 27px;
+  box-sizing: border-box;
+  white-space: nowrap;
 }
 
 .status-dot {
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background-color: #eab308;
+  flex-shrink: 0;
 }
 
 .status-badge.live .status-dot {
