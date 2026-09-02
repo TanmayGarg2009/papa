@@ -380,26 +380,71 @@ function renderTable(payload) {
   const visibleStrikes = [...selectedA, ...(exactMatchStrike ? [exactMatchStrike] : []), ...selectedB];
   let maxCeOI = 0;
   let maxCeVol = 0;
+  let maxCeOiChg = 0;
   let maxPeOI = 0;
   let maxPeVol = 0;
+  let maxPeOiChg = 0;
 
   visibleStrikes.forEach(s => {
     const r = strikeMap.get(s);
     if (r) {
       if (r.CE) {
         const ceOi = (Number(r.CE.openInterest) || 0) * LOT_MULTIPLIER;
+        const ceOiChg = (Number(r.CE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
         const ceVol = (Number(r.CE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
         if (ceOi > maxCeOI) maxCeOI = ceOi;
         if (ceVol > maxCeVol) maxCeVol = ceVol;
+        if (ceOiChg > maxCeOiChg) maxCeOiChg = ceOiChg;
       }
       if (r.PE) {
         const peOi = (Number(r.PE.openInterest) || 0) * LOT_MULTIPLIER;
+        const peOiChg = (Number(r.PE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
         const peVol = (Number(r.PE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
         if (peOi > maxPeOI) maxPeOI = peOi;
         if (peVol > maxPeVol) maxPeVol = peVol;
+        if (peOiChg > maxPeOiChg) maxPeOiChg = peOiChg;
       }
     }
   });
+
+  // Helper function to render 2-line stacked cell with relative percentage & highlight badges
+  function renderRelativeCell(val, maxVal, isCe, isOiChg = false) {
+    const formattedVal = formatIndianNumber(val);
+    const isMax = (val > 0 && maxVal > 0 && val === maxVal);
+    let relPct = 0;
+    let formattedPct = '-';
+
+    if (maxVal > 0 && val > 0) {
+      relPct = (val / maxVal) * 100;
+      formattedPct = isMax ? '100%' : (relPct.toFixed(1) + '%');
+    } else if (isOiChg && val < 0) {
+      formattedPct = '0.0%';
+    } else if (val === 0) {
+      formattedPct = '0.0%';
+    }
+
+    if (isMax && val > 0) {
+      const maxClass = isCe ? 'cell-highlight-max-ce' : 'cell-highlight-max-pe';
+      return `<div class="${maxClass}"><span class="cell-val-main">${formattedVal}</span><span class="cell-val-sub">100%</span></div>`;
+    }
+
+    if (relPct >= 75) {
+      return `<div class="cell-highlight-high"><span class="cell-val-main">${formattedVal}</span><span class="cell-val-sub">${formattedPct}</span></div>`;
+    }
+
+    let valColorClass = '';
+    let pctColorClass = '';
+    if (isOiChg) {
+      if (val < 0) {
+        valColorClass = 'text-negative';
+        pctColorClass = 'text-negative';
+      } else if (val > 0) {
+        valColorClass = 'text-positive';
+      }
+    }
+
+    return `<div class="cell-stacked-num"><span class="cell-val-main ${valColorClass}">${formattedVal}</span><span class="cell-val-sub ${pctColorClass}">${formattedPct}</span></div>`;
+  }
 
   // Build HTML
   let rowsHtml = '';
@@ -452,16 +497,6 @@ function renderTable(payload) {
     const strikeClass = isExactMatch ? 'exact-match-strike' : 'cell-strike';
     const rowClass = isExactMatch ? 'exact-match-row' : '';
 
-    // OI Chg Color Classes
-    const ceOiChgClass = (ceOiChg < 0) ? 'text-negative' : (ceOiChg > 0 ? 'text-positive' : '');
-    const peOiChgClass = (peOiChg < 0) ? 'text-negative' : (peOiChg > 0 ? 'text-positive' : '');
-
-    // Max Badges
-    const ceOiBadge = (ceOi > 0 && ceOi === maxCeOI) ? 'badge-highest-ce' : '';
-    const ceVolBadge = (ceVol > 0 && ceVol === maxCeVol) ? 'badge-max-ce' : '';
-    const peOiBadge = (peOi > 0 && peOi === maxPeOI) ? 'badge-highest-pe' : '';
-    const peVolBadge = (peVol > 0 && peVol === maxPeVol) ? 'badge-max-pe' : '';
-
     // Calculate Change in OI% (with respect to OI, with negative values allowed and styled in red)
     let ceOiChgPctStr = '-';
     let ceOiChgPctClass = '';
@@ -503,9 +538,9 @@ function renderTable(payload) {
       <tr class="${rowClass}">
         <!-- CALLS (CE): IV | OI Chg | OI | Volume | LTP | CHG OI% | CALL OI% -->
         <td class="${ceClass} col-iv">${formatDecimal(ce.impliedVolatility)}</td>
-        <td class="${ceClass} ${ceOiChgClass} col-oichg">${formatIndianNumber(ceOiChg)}</td>
-        <td class="${ceClass} col-oi"><span class="${ceOiBadge}">${formatIndianNumber(ceOi)}</span></td>
-        <td class="${ceClass} col-vol"><span class="${ceVolBadge}">${formatIndianNumber(ceVol)}</span></td>
+        <td class="${ceClass} col-oichg">${renderRelativeCell(ceOiChg, maxCeOiChg, true, true)}</td>
+        <td class="${ceClass} col-oi">${renderRelativeCell(ceOi, maxCeOI, true, false)}</td>
+        <td class="${ceClass} col-vol">${renderRelativeCell(ceVol, maxCeVol, true, false)}</td>
         <td class="${ceClass} col-ltp"><strong>${formatDecimal(ce.lastPrice)}</strong></td>
         <td class="${ceClass} ${ceOiChgPctClass} col-oichg-pct"><strong>${ceOiChgPctStr}</strong></td>
         <td class="${ceClass} cell-oi-pct col-oi-pct"><strong>${ceOiPctStr}</strong></td>
@@ -519,9 +554,9 @@ function renderTable(payload) {
         <td class="${peClass} cell-oi-pct col-oi-pct"><strong>${peOiPctStr}</strong></td>
         <td class="${peClass} ${peOiChgPctClass} col-oichg-pct"><strong>${peOiChgPctStr}</strong></td>
         <td class="${peClass} col-ltp"><strong>${formatDecimal(pe.lastPrice)}</strong></td>
-        <td class="${peClass} col-vol"><span class="${peVolBadge}">${formatIndianNumber(peVol)}</span></td>
-        <td class="${peClass} col-oi"><span class="${peOiBadge}">${formatIndianNumber(peOi)}</span></td>
-        <td class="${peClass} ${peOiChgClass} col-oichg">${formatIndianNumber(peOiChg)}</td>
+        <td class="${peClass} col-vol">${renderRelativeCell(peVol, maxPeVol, false, false)}</td>
+        <td class="${peClass} col-oi">${renderRelativeCell(peOi, maxPeOI, false, false)}</td>
+        <td class="${peClass} col-oichg">${renderRelativeCell(peOiChg, maxPeOiChg, false, true)}</td>
         <td class="${peClass} col-iv">${formatDecimal(pe.impliedVolatility)}</td>
       </tr>
     `;

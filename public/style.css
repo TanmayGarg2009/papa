@@ -691,45 +691,109 @@ td.col-oi, td.col-oichg {
   color: #64748b;
 }
 
-/* High OI / Volume Badges (matching AOC highlight style) */
-.badge-max-ce {
-  background-color: #fee2e2;
-  color: #991b1b;
-  font-weight: 700;
-  border-radius: 2px;
+/* High OI / Volume / OI Chg Highlights (matching AOC style from screenshot) */
+.cell-highlight-max-ce {
+  background-color: #b91c1c !important; /* Solid Red Box for 100% Max Calls */
+  color: #ffffff !important;
+  border-radius: 3px;
   padding: 1px 3px;
-  display: inline-block;
-  font-size: 0.72rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-.badge-max-pe {
-  background-color: #dcfce7;
-  color: #166534;
-  font-weight: 700;
-  border-radius: 2px;
-  padding: 1px 3px;
-  display: inline-block;
-  font-size: 0.72rem;
+.cell-highlight-max-ce .cell-val-main {
+  color: #ffffff !important;
+  font-weight: 800;
+  font-size: 0.70rem;
+  line-height: 1.15;
 }
 
-.badge-highest-ce {
-  background-color: #b91c1c;
+.cell-highlight-max-ce .cell-val-sub {
   color: #ffffff !important;
   font-weight: 700;
-  border-radius: 2px;
-  padding: 1px 3px;
-  display: inline-block;
-  font-size: 0.72rem;
+  font-size: 0.60rem;
+  line-height: 1.1;
 }
 
-.badge-highest-pe {
-  background-color: #15803d;
+.cell-highlight-max-pe {
+  background-color: #15803d !important; /* Solid Green Box for 100% Max Puts */
+  color: #ffffff !important;
+  border-radius: 3px;
+  padding: 1px 3px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.cell-highlight-max-pe .cell-val-main {
+  color: #ffffff !important;
+  font-weight: 800;
+  font-size: 0.70rem;
+  line-height: 1.15;
+}
+
+.cell-highlight-max-pe .cell-val-sub {
   color: #ffffff !important;
   font-weight: 700;
-  border-radius: 2px;
+  font-size: 0.60rem;
+  line-height: 1.1;
+}
+
+.cell-highlight-high {
+  background-color: #fde047 !important; /* Solid Yellow Box for >= 75% relative */
+  color: #0f172a !important;
+  border-radius: 3px;
   padding: 1px 3px;
-  display: inline-block;
-  font-size: 0.72rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.cell-highlight-high .cell-val-main {
+  color: #0f172a !important;
+  font-weight: 800;
+  font-size: 0.70rem;
+  line-height: 1.15;
+}
+
+.cell-highlight-high .cell-val-sub {
+  color: #1e293b !important;
+  font-weight: 700;
+  font-size: 0.60rem;
+  line-height: 1.1;
+}
+
+.cell-stacked-num {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  width: 100%;
+  line-height: 1.15;
+  box-sizing: border-box;
+}
+
+.cell-val-main {
+  font-size: 0.70rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.cell-val-sub {
+  font-size: 0.60rem;
+  font-weight: 500;
+  color: #64748b;
+  white-space: nowrap;
 }
 
 /* Golden Highlight Row / Strike for Exact Match */
