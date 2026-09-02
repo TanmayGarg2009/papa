@@ -111,10 +111,39 @@ function showToast(message, type = 'success') {
   }, duration);
 }
 
-// Start Configurable Countdown Timer
+// Helper: Check if current time in Indian Standard Time (IST) is within 7:00 AM - 4:00 PM
+function isMarketActiveHoursIST() {
+  const now = new Date();
+  const istString = now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
+  const istDate = new Date(istString);
+  const hours = istDate.getHours();
+  const minutes = istDate.getMinutes();
+  const timeInMinutes = hours * 60 + minutes;
+  // Active window: 7:00 AM (420 min) to 4:00 PM / 16:00 (960 min)
+  return timeInMinutes >= 420 && timeInMinutes < 960;
+}
+
+// Start Configurable Countdown Timer (Runs 7:00 AM - 4:00 PM IST; Pauses after 4:00 PM)
 function startAutoRefreshTimer(resetToMax = true) {
   if (timerCountdownInterval) {
     clearInterval(timerCountdownInterval);
+    timerCountdownInterval = null;
+  }
+
+  // After 4:00 PM IST until 7:00 AM IST: No auto-refresh (uses cached data, manual refresh only)
+  if (!isMarketActiveHoursIST()) {
+    if (timerDisplay) {
+      timerDisplay.textContent = 'Paused (Resumes 7 AM)';
+    }
+    // Background watcher to automatically resume auto-refresh when morning 7:00 AM IST arrives
+    timerCountdownInterval = setInterval(() => {
+      if (isMarketActiveHoursIST()) {
+        clearInterval(timerCountdownInterval);
+        startAutoRefreshTimer(true);
+        fetchOptionChain(true); // First morning auto-refresh
+      }
+    }, 15000);
+    return;
   }
 
   if (resetToMax) {
@@ -123,6 +152,13 @@ function startAutoRefreshTimer(resetToMax = true) {
   updateTimerDisplay();
 
   timerCountdownInterval = setInterval(() => {
+    // If time passes 4:00 PM IST during countdown, pause auto-refresh
+    if (!isMarketActiveHoursIST()) {
+      clearInterval(timerCountdownInterval);
+      startAutoRefreshTimer(false);
+      return;
+    }
+
     timerSecondsRemaining--;
     updateTimerDisplay();
 
@@ -134,6 +170,10 @@ function startAutoRefreshTimer(resetToMax = true) {
 }
 
 function updateTimerDisplay() {
+  if (!isMarketActiveHoursIST()) {
+    timerDisplay.textContent = 'Paused (Resumes 7 AM)';
+    return;
+  }
   const mins = Math.floor(timerSecondsRemaining / 60);
   const secs = timerSecondsRemaining % 60;
   const formatted = `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
