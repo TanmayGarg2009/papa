@@ -1050,9 +1050,9 @@ function renderTable(payload) {
           <td class="${ceClass} col-oichg">${renderRelativeCell(ceOiChg, maxCeOiChg, true, true)}</td>
           <td class="${ceClass} col-oi">${renderRelativeCell(ceOi, maxCeOI, true, false)}</td>
           <td class="${ceClass} col-vol">${renderRelativeCell(ceVol, maxCeVol, true, false)}</td>
-          <td class="${ceClass} col-ltp"><strong>${formatDecimal(ce.lastPrice)}</strong></td>
-          <td class="${ceClass} ${ceOiChgPctClass} col-oichg-pct"><strong>${ceOiChgPctStr}</strong></td>
-          <td class="${ceClass} cell-oi-pct col-oi-pct"><strong>${ceOiPctStr}</strong></td>
+          <td class="${ceClass} col-ltp">${formatDecimal(ce.lastPrice)}</td>
+          <td class="${ceClass} ${ceOiChgPctClass} col-oichg-pct">${ceOiChgPctStr}</td>
+          <td class="${ceClass} cell-oi-pct col-oi-pct">${ceOiPctStr}</td>
 
           <!-- STRIKE PRICE (CENTER) - Multiples of 100 in Bold -->
           <td class="${strikeClass} ${isMultipleOf100 ? 'strike-bold' : ''} col-strike">
@@ -1060,9 +1060,9 @@ function renderTable(payload) {
           </td>
 
           <!-- PUTS (PE) - Mirrored: PUT OI% | CHG OI% | LTP | Volume | OI | OI Chg | IV | Delta -->
-          <td class="${peClass} cell-oi-pct col-oi-pct"><strong>${peOiPctStr}</strong></td>
-          <td class="${peClass} ${peOiChgPctClass} col-oichg-pct"><strong>${peOiChgPctStr}</strong></td>
-          <td class="${peClass} col-ltp"><strong>${formatDecimal(pe.lastPrice)}</strong></td>
+          <td class="${peClass} cell-oi-pct col-oi-pct">${peOiPctStr}</td>
+          <td class="${peClass} ${peOiChgPctClass} col-oichg-pct">${peOiChgPctStr}</td>
+          <td class="${peClass} col-ltp">${formatDecimal(pe.lastPrice)}</td>
           <td class="${peClass} col-vol">${renderRelativeCell(peVol, maxPeVol, false, false)}</td>
           <td class="${peClass} col-oi">${renderRelativeCell(peOi, maxPeOI, false, false)}</td>
           <td class="${peClass} col-oichg">${renderRelativeCell(peOiChg, maxPeOiChg, false, true)}</td>

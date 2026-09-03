@@ -510,9 +510,9 @@ input[type="number"] {
    Table Body Rows & Cell Types
    ========================================================================== */
 
-/* ITM (In-The-Money) Delicate Pale Warm Yellow vs OTM (Crisp Pure White) */
+/* ITM (In-The-Money) Very Pale Delicate Warm Yellow vs OTM (Crisp Pure White) */
 .ce-itm, .pe-itm {
-  background-color: #fff9db !important; /* Delicate, soft pale warm yellow - clearly differentiable from white */
+  background-color: #fefce8 !important; /* Very pale, delicate, soft warm yellow cream */
   color: #0f172a;
 }
 
@@ -521,11 +521,11 @@ input[type="number"] {
   color: #0f172a;
 }
 
-/* Strike Column in Center - Bold Charcoal Anchor */
+/* Strike Column in Center - Normal Weight for regular strikes, Bold for round 100 strikes */
 .cell-strike {
   background-color: #f8fafc !important;
-  color: #0f172a !important;
-  font-weight: 700;
+  color: #475569 !important;
+  font-weight: 500;
   font-size: 0.84rem;
   text-align: center;
   border-left: 2px solid #cbd5e1 !important;
@@ -533,7 +533,7 @@ input[type="number"] {
 }
 
 .strike-bold {
-  background-color: #f1f5f9 !important; /* Subtle shaded background for round 100 strikes */
+  background-color: #f1f5f9 !important; /* Shaded background for round 100 strikes */
   color: #0f172a !important;
   font-weight: 800 !important;
   font-size: 0.85rem !important;
@@ -758,35 +758,42 @@ td.col-vol, td.col-oi, td.col-oichg {
 
 td.col-delta {
   font-size: 0.78rem;
-  font-weight: 600;
-  color: #334155;
+  font-weight: 500;
+  color: #475569;
 }
 
 td.col-iv {
   font-size: 0.78rem;
-  font-weight: 600;
-  color: #475569;
+  font-weight: 400;
+  color: #64748b;
 }
 
 td.col-ltp {
   font-size: 0.82rem;
-  font-weight: 700;
+  font-weight: 600;
   color: #0f172a;
 }
 
 td.col-oi-pct, td.col-oichg-pct {
   font-size: 0.78rem;
+  font-weight: 500;
+}
+
+.cell-oi-pct {
+  font-weight: 500;
+  color: #0f172a;
+  text-align: center;
 }
 
 /* Relative Value Highlighting */
 .text-positive {
   color: #15803d !important; /* Green */
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .text-negative {
   color: #dc2626 !important; /* Bold Red */
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .cell-highlight-max-ce {
@@ -855,10 +862,11 @@ td.col-oi-pct, td.col-oichg-pct {
   width: 100%;
 }
 
+/* >= 75% Box: Darker/Richer Sunflower Gold to contrast against pale yellow background */
 .cell-highlight-high {
-  background-color: #fef08a !important; /* Soft warm gold box for >= 75% relative */
+  background-color: #fde047 !important; /* Vivid sunflower gold */
   color: #0f172a !important;
-  border: 1px solid #facc15 !important;
+  border: 1px solid #d97706 !important; /* Warm amber border */
   border-radius: 4px;
   padding: 1px 3px;
   display: flex;
@@ -868,6 +876,7 @@ td.col-oi-pct, td.col-oichg-pct {
   width: 92%;
   margin: 0 auto;
   box-sizing: border-box;
+  box-shadow: 0 1px 2px rgba(217, 119, 6, 0.2);
 }
 
 .cell-highlight-high .cell-val-main {
@@ -880,7 +889,7 @@ td.col-oi-pct, td.col-oichg-pct {
 }
 
 .cell-highlight-high .cell-val-sub {
-  color: #713f12 !important; /* Dark golden brown for contrast */
+  color: #78350f !important; /* Deep amber-brown for contrast */
   font-weight: 700;
   font-size: 0.68rem;
   line-height: 1.1;
@@ -898,18 +907,20 @@ td.col-oi-pct, td.col-oichg-pct {
   box-sizing: border-box;
 }
 
+/* Standard Numbers: Clean medium weight (500), NOT bold (700) */
 .cell-val-main {
   font-size: 0.8125rem; /* ~13px */
-  font-weight: 700;
+  font-weight: 500;
   color: #0f172a;
   text-align: center !important;
   width: 100%;
   white-space: nowrap;
 }
 
+/* Sub percentages: Clean normal weight (400) */
 .cell-val-sub {
   font-size: 0.68rem; /* ~11px */
-  font-weight: 600;
+  font-weight: 400;
   color: #64748b;
   text-align: center !important;
   width: 100%;
