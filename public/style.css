@@ -61,172 +61,211 @@ body {
   overflow: hidden;
 }
 
-/* ==========================================================================
-   Header & Controls
-   ========================================================================== */
-
+/* Header & Controls - Compact Single Line (Strictly 1 Line, No Wrapping) */
 .app-header {
-  background-color: var(--bg-header);
-  border-bottom: 1px solid var(--border-color);
-  padding: 6px 14px;
+  flex-shrink: 0;
+  background-color: #0f172a;
+  color: #f8fafc;
+  padding: 3px 8px;
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-  z-index: 100;
+  justify-content: space-between;
+  flex-wrap: nowrap !important;
+  gap: 6px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  z-index: 100;
+  overflow-x: auto;
+  white-space: nowrap !important;
+  height: 36px;
+  min-height: 36px;
+  max-height: 36px;
+  scrollbar-width: none;
+  box-sizing: border-box;
+}
+
+.app-header::-webkit-scrollbar {
+  display: none;
 }
 
 .header-left, .header-right {
   display: flex;
   align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap !important;
+  gap: 6px;
+  flex-shrink: 0;
+  white-space: nowrap !important;
 }
 
 .brand-title {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-right: 6px;
+  gap: 5px;
+  font-weight: 700;
+  font-size: 0.85rem;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .brand-badge {
-  background: linear-gradient(135deg, #2563eb, #3b82f6);
-  color: #ffffff;
-  font-family: var(--font-mono);
-  font-size: 0.72rem;
-  font-weight: 700;
-  padding: 2px 7px;
+  background-color: #2563eb;
+  color: white;
+  padding: 2px 5px;
   border-radius: 4px;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  font-size: 0.65rem;
+  letter-spacing: 0.04em;
+  font-weight: 800;
 }
 
 .brand-text {
-  font-size: 0.92rem;
-  font-weight: 800;
-  letter-spacing: -0.02em;
-  color: var(--text-primary);
+  white-space: nowrap;
 }
 
 .control-group {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
+  flex-shrink: 0;
 }
 
 .control-group label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text-secondary);
+  font-size: 0.60rem;
   text-transform: uppercase;
   letter-spacing: 0.03em;
+  color: #94a3b8;
+  font-weight: 700;
   white-space: nowrap;
 }
 
-.styled-select {
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border-color);
-  color: var(--text-primary);
-  padding: 4px 8px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  font-family: var(--font-mono);
+.styled-select, input[type="number"] {
+  background-color: #1e293b;
+  border: 1px solid #334155;
+  color: #f8fafc;
+  padding: 2px 5px;
   border-radius: 4px;
-  cursor: pointer;
+  font-size: 0.74rem;
+  font-weight: 600;
   outline: none;
-  transition: border-color 0.15s ease;
+  height: 24px;
+  box-sizing: border-box;
 }
 
-.styled-select:focus {
-  border-color: var(--accent-primary);
+.styled-select:focus, input[type="number"]:focus {
+  border-color: #3b82f6;
 }
 
-.input-with-stepper input {
-  background-color: var(--bg-surface);
-  border: 1px solid var(--border-color);
-  color: var(--text-primary);
-  width: 58px;
-  padding: 4px 6px;
-  font-size: 0.8rem;
-  font-weight: 600;
-  font-family: var(--font-mono);
-  border-radius: 4px;
+input[type="number"] {
+  width: 50px;
   text-align: center;
-  outline: none;
 }
 
-.input-with-stepper input:focus {
-  border-color: var(--accent-primary);
-}
-
-.timestamp-box, .timer-box {
-  background-color: rgba(30, 41, 59, 0.6);
-  border: 1px solid var(--border-color);
-  padding: 3px 8px;
+/* Timer Display */
+.timer-box {
+  background-color: #1e293b;
+  border: 1px solid #334155;
+  padding: 1px 6px;
   border-radius: 4px;
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  height: 24px;
+  box-sizing: border-box;
 }
 
-.timestamp-label, .timer-label {
-  font-size: 0.62rem;
-  font-weight: 600;
-  color: var(--text-muted);
+.timer-label {
+  font-size: 0.50rem;
+  color: #94a3b8;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
-}
-
-.timestamp-value, .timer-value {
-  font-family: var(--font-mono);
-  font-size: 0.76rem;
   font-weight: 700;
-  color: var(--text-primary);
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .timer-value {
-  color: var(--accent-cyan);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.70rem;
+  font-weight: 700;
+  color: #38bdf8;
+  line-height: 1.1;
+  white-space: nowrap;
 }
 
+/* Refresh Button */
 .btn-refresh {
-  background: linear-gradient(135deg, #1e40af, #2563eb);
+  background-color: #2563eb;
   color: #ffffff;
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  padding: 5px 10px;
+  border: none;
+  padding: 2px 8px;
   border-radius: 4px;
-  font-size: 0.76rem;
-  font-weight: 600;
   cursor: pointer;
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 5px;
-  transition: all 0.15s ease;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  flex-shrink: 0;
+  height: 24px;
+  box-sizing: border-box;
+  white-space: nowrap;
 }
 
 .btn-refresh:hover {
-  background: linear-gradient(135deg, #1d4ed8, #3b82f6);
-  transform: translateY(-1px);
+  background-color: #1d4ed8;
 }
 
 .btn-refresh:active {
-  transform: translateY(0);
+  transform: translateY(1px);
 }
 
-.status-badge {
-  display: inline-flex;
+/* Timestamp Display */
+.timestamp-box {
+  background-color: #1e293b;
+  border: 1px solid #334155;
+  padding: 1px 6px;
+  border-radius: 4px;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 5px;
-  background-color: rgba(30, 41, 59, 0.8);
-  border: 1px solid var(--border-color);
-  padding: 3px 8px;
-  border-radius: 12px;
-  font-size: 0.72rem;
+  justify-content: center;
+  flex-shrink: 0;
+  height: 24px;
+  box-sizing: border-box;
+}
+
+.timestamp-label {
+  font-size: 0.50rem;
+  color: #94a3b8;
+  text-transform: uppercase;
   font-weight: 700;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.timestamp-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #38bdf8;
+  white-space: nowrap;
+  line-height: 1.1;
+}
+
+/* Status Badge */
+.status-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 6px;
+  border-radius: 12px;
+  font-size: 0.68rem;
+  font-weight: 600;
+  background-color: #1e293b;
+  border: 1px solid #334155;
+  flex-shrink: 0;
+  height: 24px;
+  box-sizing: border-box;
+  white-space: nowrap;
 }
 
 .status-dot {

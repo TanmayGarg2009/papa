@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NSE Option Chain | Live Analytics</title>
-  <link rel="stylesheet" href="style.css?v=2.5">
+  <link rel="stylesheet" href="style.css?v=2.6">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -32,7 +32,7 @@
 
       <!-- Expiry Selector -->
       <div class="control-group">
-        <label for="expirySelect">Expiry Date</label>
+        <label for="expirySelect">Expiry</label>
         <select id="expirySelect" class="styled-select">
           <option value="" selected>Loading Expiries...</option>
         </select>
@@ -40,7 +40,7 @@
 
       <!-- Strike Count Input -->
       <div class="control-group">
-        <label for="strikeCountInput">Strikes Above / Below</label>
+        <label for="strikeCountInput">Strikes ±</label>
         <div class="input-with-stepper">
           <input type="number" id="strikeCountInput" min="1" max="100" value="10">
         </div>
@@ -48,7 +48,7 @@
 
       <!-- Cooldown Input -->
       <div class="control-group">
-        <label for="cooldownInput">Cooldown (Sec)</label>
+        <label for="cooldownInput">Cooldown (s)</label>
         <div class="input-with-stepper">
           <input type="number" id="cooldownInput" min="1" max="3600" value="30">
         </div>
@@ -188,6 +188,6 @@
   <!-- Floating Corner Toast Notification -->
   <div id="toastContainer" class="toast-container"></div>
 
-  <script src="app.js?v=2.5"></script>
+  <script src="app.js?v=2.6"></script>
 </body>
 </html>
