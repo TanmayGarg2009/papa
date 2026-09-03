@@ -859,9 +859,13 @@ function renderTable(payload) {
 
       let valColorClass = '';
       let pctColorClass = '';
-      if (isOiChg && val < 0) {
-        valColorClass = 'text-negative';
-        pctColorClass = 'text-negative';
+      if (isOiChg) {
+        if (val < 0) {
+          valColorClass = 'text-negative';
+          pctColorClass = 'text-negative';
+        } else if (val > 0) {
+          valColorClass = 'text-positive';
+        }
       }
 
       return `<div class="cell-stacked-num"><span class="cell-val-main ${valColorClass}">${formattedVal}</span><span class="cell-val-sub ${pctColorClass}">${formattedPct}</span></div>`;
@@ -1114,149 +1118,51 @@ function renderTable(payload) {
 
     tableBody.innerHTML = rowsHtml;
 
-    // Calculate sum and averages across ALL columns for the visible strikes displayed on the page
+    // Calculate sum of OI and OI Change ONLY for the visible strikes displayed on the page (multiplied by 65)
     let sumVisibleCeOi = 0;
     let sumVisibleCeOiChg = 0;
-    let sumVisibleCeVol = 0;
-    let sumVisibleCeDelta = 0;
-    let countCeDelta = 0;
-    let sumVisibleCeIv = 0;
-    let countCeIv = 0;
-    let sumVisibleCeLtp = 0;
-    let countCeLtp = 0;
-
-    let sumItmCeOi = 0;
-    let sumItmCeOiChg = 0;
-    let sumItmCeVol = 0;
-    let sumItmCeDelta = 0;
-    let countItmCeDelta = 0;
-    let sumItmCeIv = 0;
-    let countItmCeIv = 0;
-    let sumItmCeLtp = 0;
-    let countItmCeLtp = 0;
-
-    let sumOtmCeOi = 0;
-    let sumOtmCeOiChg = 0;
-    let sumOtmCeVol = 0;
-    let sumOtmCeDelta = 0;
-    let countOtmCeDelta = 0;
-    let sumOtmCeIv = 0;
-    let countOtmCeIv = 0;
-    let sumOtmCeLtp = 0;
-    let countOtmCeLtp = 0;
-
     let sumVisiblePeOi = 0;
     let sumVisiblePeOiChg = 0;
-    let sumVisiblePeVol = 0;
-    let sumVisiblePeDelta = 0;
-    let countPeDelta = 0;
-    let sumVisiblePeIv = 0;
-    let countPeIv = 0;
-    let sumVisiblePeLtp = 0;
-    let countPeLtp = 0;
+
+    // Breakdown calculations:
+    // ITM Call (Yellow Call side) = Set B strikes (< spot)
+    // OTM Call (White Call side) = Set A strikes (> spot)
+    // ITM Put (Yellow Put side) = Set A strikes (> spot)
+    // OTM Put (White Put side) = Set B strikes (< spot)
+    let sumItmCeOi = 0;
+    let sumItmCeOiChg = 0;
+    let sumOtmCeOi = 0;
+    let sumOtmCeOiChg = 0;
 
     let sumItmPeOi = 0;
     let sumItmPeOiChg = 0;
-    let sumItmPeVol = 0;
-    let sumItmPeDelta = 0;
-    let countItmPeDelta = 0;
-    let sumItmPeIv = 0;
-    let countItmPeIv = 0;
-    let sumItmPeLtp = 0;
-    let countItmPeLtp = 0;
-
     let sumOtmPeOi = 0;
     let sumOtmPeOiChg = 0;
-    let sumOtmPeVol = 0;
-    let sumOtmPeDelta = 0;
-    let countOtmPeDelta = 0;
-    let sumOtmPeIv = 0;
-    let countOtmPeIv = 0;
-    let sumOtmPeLtp = 0;
-    let countOtmPeLtp = 0;
 
-    // Process Set A (Strikes > Spot) -> OTM Calls, ITM Puts
     selectedA.forEach(s => {
       const item = strikeMap.get(s);
       if (item) {
         if (item.CE) {
           sumOtmCeOi += (Number(item.CE.openInterest) || 0) * LOT_MULTIPLIER;
           sumOtmCeOiChg += (Number(item.CE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
-          sumOtmCeVol += (Number(item.CE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
-          if (Number(item.CE.lastPrice) > 0) {
-            sumOtmCeLtp += Number(item.CE.lastPrice);
-            countOtmCeLtp++;
-          }
-          if (Number(item.CE.impliedVolatility) > 0) {
-            sumOtmCeIv += Number(item.CE.impliedVolatility);
-            countOtmCeIv++;
-          }
-          const deltaRes = calculateDelta(underlyingValue, s, Number(item.CE.impliedVolatility) || fallbackAtmIv, daysToExpiry, 0.068);
-          if (deltaRes.callDelta !== null) {
-            sumOtmCeDelta += deltaRes.callDelta;
-            countOtmCeDelta++;
-          }
         }
         if (item.PE) {
           sumItmPeOi += (Number(item.PE.openInterest) || 0) * LOT_MULTIPLIER;
           sumItmPeOiChg += (Number(item.PE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
-          sumItmPeVol += (Number(item.PE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
-          if (Number(item.PE.lastPrice) > 0) {
-            sumItmPeLtp += Number(item.PE.lastPrice);
-            countItmPeLtp++;
-          }
-          if (Number(item.PE.impliedVolatility) > 0) {
-            sumItmPeIv += Number(item.PE.impliedVolatility);
-            countItmPeIv++;
-          }
-          const deltaRes = calculateDelta(underlyingValue, s, Number(item.PE.impliedVolatility) || fallbackAtmIv, daysToExpiry, 0.068);
-          if (deltaRes.putDelta !== null) {
-            sumItmPeDelta += deltaRes.putDelta;
-            countItmPeDelta++;
-          }
         }
       }
     });
 
-    // Process Set B (Strikes < Spot) -> ITM Calls, OTM Puts
     selectedB.forEach(s => {
       const item = strikeMap.get(s);
       if (item) {
         if (item.CE) {
           sumItmCeOi += (Number(item.CE.openInterest) || 0) * LOT_MULTIPLIER;
           sumItmCeOiChg += (Number(item.CE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
-          sumItmCeVol += (Number(item.CE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
-          if (Number(item.CE.lastPrice) > 0) {
-            sumItmCeLtp += Number(item.CE.lastPrice);
-            countItmCeLtp++;
-          }
-          if (Number(item.CE.impliedVolatility) > 0) {
-            sumItmCeIv += Number(item.CE.impliedVolatility);
-            countItmCeIv++;
-          }
-          const deltaRes = calculateDelta(underlyingValue, s, Number(item.CE.impliedVolatility) || fallbackAtmIv, daysToExpiry, 0.068);
-          if (deltaRes.callDelta !== null) {
-            sumItmCeDelta += deltaRes.callDelta;
-            countItmCeDelta++;
-          }
         }
         if (item.PE) {
           sumOtmPeOi += (Number(item.PE.openInterest) || 0) * LOT_MULTIPLIER;
           sumOtmPeOiChg += (Number(item.PE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
-          sumOtmPeVol += (Number(item.PE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
-          if (Number(item.PE.lastPrice) > 0) {
-            sumOtmPeLtp += Number(item.PE.lastPrice);
-            countOtmPeLtp++;
-          }
-          if (Number(item.PE.impliedVolatility) > 0) {
-            sumOtmPeIv += Number(item.PE.impliedVolatility);
-            countOtmPeIv++;
-          }
-          const deltaRes = calculateDelta(underlyingValue, s, Number(item.PE.impliedVolatility) || fallbackAtmIv, daysToExpiry, 0.068);
-          if (deltaRes.putDelta !== null) {
-            sumOtmPeDelta += deltaRes.putDelta;
-            countOtmPeDelta++;
-          }
         }
       }
     });
@@ -1268,87 +1174,18 @@ function renderTable(payload) {
         if (item.CE) {
           sumItmCeOi += (Number(item.CE.openInterest) || 0) * LOT_MULTIPLIER;
           sumItmCeOiChg += (Number(item.CE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
-          sumItmCeVol += (Number(item.CE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
-          if (Number(item.CE.lastPrice) > 0) {
-            sumItmCeLtp += Number(item.CE.lastPrice);
-            countItmCeLtp++;
-          }
-          if (Number(item.CE.impliedVolatility) > 0) {
-            sumItmCeIv += Number(item.CE.impliedVolatility);
-            countItmCeIv++;
-          }
-          const deltaRes = calculateDelta(underlyingValue, exactMatchStrike, Number(item.CE.impliedVolatility) || fallbackAtmIv, daysToExpiry, 0.068);
-          if (deltaRes.callDelta !== null) {
-            sumItmCeDelta += deltaRes.callDelta;
-            countItmCeDelta++;
-          }
         }
         if (item.PE) {
           sumItmPeOi += (Number(item.PE.openInterest) || 0) * LOT_MULTIPLIER;
           sumItmPeOiChg += (Number(item.PE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
-          sumItmPeVol += (Number(item.PE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
-          if (Number(item.PE.lastPrice) > 0) {
-            sumItmPeLtp += Number(item.PE.lastPrice);
-            countItmPeLtp++;
-          }
-          if (Number(item.PE.impliedVolatility) > 0) {
-            sumItmPeIv += Number(item.PE.impliedVolatility);
-            countItmPeIv++;
-          }
-          const deltaRes = calculateDelta(underlyingValue, exactMatchStrike, Number(item.PE.impliedVolatility) || fallbackAtmIv, daysToExpiry, 0.068);
-          if (deltaRes.putDelta !== null) {
-            sumItmPeDelta += deltaRes.putDelta;
-            countItmPeDelta++;
-          }
         }
       }
     }
 
     sumVisibleCeOi = sumItmCeOi + sumOtmCeOi;
     sumVisibleCeOiChg = sumItmCeOiChg + sumOtmCeOiChg;
-    sumVisibleCeVol = sumItmCeVol + sumOtmCeVol;
-
     sumVisiblePeOi = sumItmPeOi + sumOtmPeOi;
     sumVisiblePeOiChg = sumItmPeOiChg + sumOtmPeOiChg;
-    sumVisiblePeVol = sumItmPeVol + sumOtmPeVol;
-
-    // Averages for Calls
-    const countTotalCeDelta = countItmCeDelta + countOtmCeDelta;
-    const avgCeDelta = countTotalCeDelta > 0 ? (sumItmCeDelta + sumOtmCeDelta) / countTotalCeDelta : 0;
-    const avgCeDeltaStr = (avgCeDelta > 0 ? '+' : '') + avgCeDelta.toFixed(2);
-    const itmCeDeltaStr = countItmCeDelta > 0 ? ((sumItmCeDelta / countItmCeDelta) > 0 ? '+' : '') + (sumItmCeDelta / countItmCeDelta).toFixed(2) : '-';
-    const otmCeDeltaStr = countOtmCeDelta > 0 ? ((sumOtmCeDelta / countOtmCeDelta) > 0 ? '+' : '') + (sumOtmCeDelta / countOtmCeDelta).toFixed(2) : '-';
-
-    const countTotalCeIv = countItmCeIv + countOtmCeIv;
-    const avgCeIv = countTotalCeIv > 0 ? (sumItmCeIv + sumOtmCeIv) / countTotalCeIv : 0;
-    const avgCeIvStr = avgCeIv > 0 ? avgCeIv.toFixed(1) : '-';
-    const itmCeIvStr = countItmCeIv > 0 ? (sumItmCeIv / countItmCeIv).toFixed(1) : '-';
-    const otmCeIvStr = countOtmCeIv > 0 ? (sumOtmCeIv / countOtmCeIv).toFixed(1) : '-';
-
-    const countTotalCeLtp = countItmCeLtp + countOtmCeLtp;
-    const avgCeLtp = countTotalCeLtp > 0 ? (sumItmCeLtp + sumOtmCeLtp) / countTotalCeLtp : 0;
-    const avgCeLtpStr = avgCeLtp > 0 ? avgCeLtp.toFixed(2) : '-';
-    const itmCeLtpStr = countItmCeLtp > 0 ? (sumItmCeLtp / countItmCeLtp).toFixed(2) : '-';
-    const otmCeLtpStr = countOtmCeLtp > 0 ? (sumOtmCeLtp / countOtmCeLtp).toFixed(2) : '-';
-
-    // Averages for Puts
-    const countTotalPeDelta = countItmPeDelta + countOtmPeDelta;
-    const avgPeDelta = countTotalPeDelta > 0 ? (sumItmPeDelta + sumOtmPeDelta) / countTotalPeDelta : 0;
-    const avgPeDeltaStr = avgPeDelta.toFixed(2);
-    const itmPeDeltaStr = countItmPeDelta > 0 ? (sumItmPeDelta / countItmPeDelta).toFixed(2) : '-';
-    const otmPeDeltaStr = countOtmPeDelta > 0 ? (sumOtmPeDelta / countOtmPeDelta).toFixed(2) : '-';
-
-    const countTotalPeIv = countItmPeIv + countOtmPeIv;
-    const avgPeIv = countTotalPeIv > 0 ? (sumItmPeIv + sumOtmPeIv) / countTotalPeIv : 0;
-    const avgPeIvStr = avgPeIv > 0 ? avgPeIv.toFixed(1) : '-';
-    const itmPeIvStr = countItmPeIv > 0 ? (sumItmPeIv / countItmPeIv).toFixed(1) : '-';
-    const otmPeIvStr = countOtmPeIv > 0 ? (sumOtmPeIv / countOtmPeIv).toFixed(1) : '-';
-
-    const countTotalPeLtp = countItmPeLtp + countOtmPeLtp;
-    const avgPeLtp = countTotalPeLtp > 0 ? (sumItmPeLtp + sumOtmPeLtp) / countTotalPeLtp : 0;
-    const avgPeLtpStr = avgPeLtp > 0 ? avgPeLtp.toFixed(2) : '-';
-    const itmPeLtpStr = countItmPeLtp > 0 ? (sumItmPeLtp / countItmPeLtp).toFixed(2) : '-';
-    const otmPeLtpStr = countOtmPeLtp > 0 ? (sumOtmPeLtp / countOtmPeLtp).toFixed(2) : '-';
 
     // Calculate percentages for overall totals
     const totalVisibleOiSum = sumVisibleCeOi + sumVisiblePeOi;
@@ -1365,14 +1202,6 @@ function renderTable(payload) {
     if (absTotalOiChgSum > 0) {
       ceOiChgTotalPctStr = ((Math.abs(sumVisibleCeOiChg) / absTotalOiChgSum) * 100).toFixed(1) + '%';
       peOiChgTotalPctStr = ((Math.abs(sumVisiblePeOiChg) / absTotalOiChgSum) * 100).toFixed(1) + '%';
-    }
-
-    const totalVisibleVolSum = sumVisibleCeVol + sumVisiblePeVol;
-    let ceVolTotalPctStr = '-';
-    let peVolTotalPctStr = '-';
-    if (totalVisibleVolSum > 0) {
-      ceVolTotalPctStr = ((sumVisibleCeVol / totalVisibleVolSum) * 100).toFixed(1) + '%';
-      peVolTotalPctStr = ((sumVisiblePeVol / totalVisibleVolSum) * 100).toFixed(1) + '%';
     }
 
     // Calculate percentages for ITM vs OTM within Calls and Puts
@@ -1407,21 +1236,11 @@ function renderTable(payload) {
       const otmPeChgPctStr = sumOtmPeOi !== 0 ? (((sumOtmPeOiChg / sumOtmPeOi) * 100 > 0 ? '+' : '') + ((sumOtmPeOiChg / sumOtmPeOi) * 100).toFixed(1) + '%') : '-';
 
       tableFoot.innerHTML = `
-        <!-- Row 1: TOTAL SUMMARY (All 17 Columns Populated) -->
+        <!-- Row 1: TOTAL SUMMARY -->
         <tr class="total-row">
           <!-- CALLS (CE) TOTALS: Delta | IV | OI Chg | OI | Volume | LTP | CHG OI% | CALL OI% -->
-          <td class="total-ce col-delta">
-            <div class="total-cell-stacked">
-              <span class="total-line-sum">${avgCeDeltaStr}</span>
-              <span class="total-line-pct">Avg</span>
-            </div>
-          </td>
-          <td class="total-ce col-iv">
-            <div class="total-cell-stacked">
-              <span class="total-line-sum">${avgCeIvStr}</span>
-              <span class="total-line-pct">Avg</span>
-            </div>
-          </td>
+          <td class="total-ce col-delta">-</td>
+          <td class="total-ce col-iv">-</td>
           <td class="total-ce col-oichg">
             <div class="total-cell-stacked">
               <span class="total-line-sum">${formatIndianNumber(sumVisibleCeOiChg)}</span>
@@ -1434,28 +1253,16 @@ function renderTable(payload) {
               <span class="total-line-pct">${ceOiTotalPctStr}</span>
             </div>
           </td>
-          <td class="total-ce col-vol">
-            <div class="total-cell-stacked">
-              <span class="total-line-sum">${formatIndianNumber(sumVisibleCeVol)}</span>
-              <span class="total-line-pct">${ceVolTotalPctStr}</span>
-            </div>
-          </td>
-          <td class="total-ce col-ltp">
-            <div class="total-cell-stacked">
-              <span class="total-line-sum">${avgCeLtpStr}</span>
-              <span class="total-line-pct">Avg</span>
-            </div>
-          </td>
+          <td class="total-ce col-vol">-</td>
+          <td class="total-ce col-ltp">-</td>
           <td class="total-ce col-oichg-pct">
             <div class="total-cell-stacked">
               <span class="total-line-sum ${totalCeChgClass}"><strong>${totalCeChgPctStr}</strong></span>
-              <span class="total-line-pct">Net%</span>
             </div>
           </td>
           <td class="total-ce col-oi-pct">
             <div class="total-cell-stacked">
-              <span class="total-line-sum"><strong>${ceOiTotalPctStr}</strong></span>
-              <span class="total-line-pct">Share</span>
+              <span class="total-line-pct">${ceOiTotalPctStr}</span>
             </div>
           </td>
 
@@ -1465,28 +1272,16 @@ function renderTable(payload) {
           <!-- PUTS (PE) TOTALS: PUT OI% | CHG OI% | LTP | Volume | OI | OI Chg | IV | Delta -->
           <td class="total-pe col-oi-pct">
             <div class="total-cell-stacked">
-              <span class="total-line-sum"><strong>${peOiTotalPctStr}</strong></span>
-              <span class="total-line-pct">Share</span>
+              <span class="total-line-pct">${peOiTotalPctStr}</span>
             </div>
           </td>
           <td class="total-pe col-oichg-pct">
             <div class="total-cell-stacked">
               <span class="total-line-sum ${totalPeChgClass}"><strong>${totalPeChgPctStr}</strong></span>
-              <span class="total-line-pct">Net%</span>
             </div>
           </td>
-          <td class="total-pe col-ltp">
-            <div class="total-cell-stacked">
-              <span class="total-line-sum">${avgPeLtpStr}</span>
-              <span class="total-line-pct">Avg</span>
-            </div>
-          </td>
-          <td class="total-pe col-vol">
-            <div class="total-cell-stacked">
-              <span class="total-line-sum">${formatIndianNumber(sumVisiblePeVol)}</span>
-              <span class="total-line-pct">${peVolTotalPctStr}</span>
-            </div>
-          </td>
+          <td class="total-pe col-ltp">-</td>
+          <td class="total-pe col-vol">-</td>
           <td class="total-pe col-oi">
             <div class="total-cell-stacked">
               <span class="total-line-sum">${formatIndianNumber(sumVisiblePeOi)}</span>
@@ -1499,35 +1294,15 @@ function renderTable(payload) {
               <span class="total-line-pct">${peOiChgTotalPctStr}</span>
             </div>
           </td>
-          <td class="total-pe col-iv">
-            <div class="total-cell-stacked">
-              <span class="total-line-sum">${avgPeIvStr}</span>
-              <span class="total-line-pct">Avg</span>
-            </div>
-          </td>
-          <td class="total-pe col-delta">
-            <div class="total-cell-stacked">
-              <span class="total-line-sum">${avgPeDeltaStr}</span>
-              <span class="total-line-pct">Avg</span>
-            </div>
-          </td>
+          <td class="total-pe col-iv">-</td>
+          <td class="total-pe col-delta">-</td>
         </tr>
 
-        <!-- Row 2: ITM & OTM BREAKDOWN (All 17 Columns Populated) -->
+        <!-- Row 2: ITM & OTM BREAKDOWN (Realtime based on visible entries) -->
         <tr class="breakdown-row">
           <!-- CALLS (CE) ITM / OTM: Delta | IV | OI Chg | OI | Volume | LTP | CHG OI% | CALL OI% -->
-          <td class="breakdown-ce col-delta">
-            <div class="breakdown-cell-stacked">
-              <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${itmCeDeltaStr}</span></div>
-              <div class="breakdown-line"><span class="tag-otm">OTM</span><span class="val-otm">${otmCeDeltaStr}</span></div>
-            </div>
-          </td>
-          <td class="breakdown-ce col-iv">
-            <div class="breakdown-cell-stacked">
-              <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${itmCeIvStr}</span></div>
-              <div class="breakdown-line"><span class="tag-otm">OTM</span><span class="val-otm">${otmCeIvStr}</span></div>
-            </div>
-          </td>
+          <td class="breakdown-ce col-delta">-</td>
+          <td class="breakdown-ce col-iv">-</td>
           <td class="breakdown-ce col-oichg">
             <div class="breakdown-cell-stacked">
               <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${formatIndianNumber(sumItmCeOiChg)}</span></div>
@@ -1540,18 +1315,8 @@ function renderTable(payload) {
               <div class="breakdown-line"><span class="tag-otm">OTM</span><span class="val-otm">${formatIndianNumber(sumOtmCeOi)}</span></div>
             </div>
           </td>
-          <td class="breakdown-ce col-vol">
-            <div class="breakdown-cell-stacked">
-              <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${formatIndianNumber(sumItmCeVol)}</span></div>
-              <div class="breakdown-line"><span class="tag-otm">OTM</span><span class="val-otm">${formatIndianNumber(sumOtmCeVol)}</span></div>
-            </div>
-          </td>
-          <td class="breakdown-ce col-ltp">
-            <div class="breakdown-cell-stacked">
-              <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${itmCeLtpStr}</span></div>
-              <div class="breakdown-line"><span class="tag-otm">OTM</span><span class="val-otm">${otmCeLtpStr}</span></div>
-            </div>
-          </td>
+          <td class="breakdown-ce col-vol">-</td>
+          <td class="breakdown-ce col-ltp">-</td>
           <td class="breakdown-ce col-oichg-pct">
             <div class="breakdown-cell-stacked">
               <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${itmCeChgPctStr}</span></div>
@@ -1581,18 +1346,8 @@ function renderTable(payload) {
               <div class="breakdown-line"><span class="tag-otm">OTM</span><span class="val-otm">${otmPeChgPctStr}</span></div>
             </div>
           </td>
-          <td class="breakdown-pe col-ltp">
-            <div class="breakdown-cell-stacked">
-              <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${itmPeLtpStr}</span></div>
-              <div class="breakdown-line"><span class="tag-otm">OTM</span><span class="val-otm">${otmPeLtpStr}</span></div>
-            </div>
-          </td>
-          <td class="breakdown-pe col-vol">
-            <div class="breakdown-cell-stacked">
-              <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${formatIndianNumber(sumItmPeVol)}</span></div>
-              <div class="breakdown-line"><span class="tag-otm">OTM</span><span class="val-otm">${formatIndianNumber(sumOtmPeVol)}</span></div>
-            </div>
-          </td>
+          <td class="breakdown-pe col-ltp">-</td>
+          <td class="breakdown-pe col-vol">-</td>
           <td class="breakdown-pe col-oi">
             <div class="breakdown-cell-stacked">
               <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${formatIndianNumber(sumItmPeOi)}</span></div>
@@ -1605,18 +1360,8 @@ function renderTable(payload) {
               <div class="breakdown-line"><span class="tag-otm">OTM</span><span class="val-otm">${formatIndianNumber(sumOtmPeOiChg)}</span></div>
             </div>
           </td>
-          <td class="breakdown-pe col-iv">
-            <div class="breakdown-cell-stacked">
-              <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${itmPeIvStr}</span></div>
-              <div class="breakdown-line"><span class="tag-otm">OTM</span><span class="val-otm">${otmPeIvStr}</span></div>
-            </div>
-          </td>
-          <td class="breakdown-pe col-delta">
-            <div class="breakdown-cell-stacked">
-              <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${itmPeDeltaStr}</span></div>
-              <div class="breakdown-line"><span class="tag-otm">OTM</span><span class="val-otm">${otmPeDeltaStr}</span></div>
-            </div>
-          </td>
+          <td class="breakdown-pe col-iv">-</td>
+          <td class="breakdown-pe col-delta">-</td>
         </tr>
       `;
     }
