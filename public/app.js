@@ -360,829 +360,833 @@ function updateExpiryDropdown(expiryDates) {
 
 // Render Option Chain Table with Set A, Set B, Baseline Divider & Golden Exact Match
 function renderTable(payload) {
-  let records = [];
-  let underlyingValue = 24055.8;
-  let futureValue = null;
+  try {
+    let records = [];
+    let underlyingValue = 24055.8;
+    let futureValue = null;
 
-  if (payload.futureValue) {
-    futureValue = Number(payload.futureValue);
-  } else if (payload.records && payload.records.futureValue) {
-    futureValue = Number(payload.records.futureValue);
-  }
-
-  if (payload.filtered && payload.filtered.data) {
-    records = payload.filtered.data;
-  } else if (payload.records && payload.records.data) {
-    records = payload.records.data;
-  } else if (Array.isArray(payload.data)) {
-    records = payload.data;
-  } else if (Array.isArray(payload)) {
-    records = payload;
-  }
-
-  if (payload.records && payload.records.underlyingValue) {
-    underlyingValue = Number(payload.records.underlyingValue);
-  } else if (records.length > 0 && records[0].CE && records[0].CE.underlyingValue) {
-    underlyingValue = Number(records[0].CE.underlyingValue);
-  }
-
-  if (!futureValue) {
-    futureValue = underlyingValue;
-  }
-
-  // Update F: Value and 65 Multiplier in Badges
-  const futBadgeEl = document.getElementById('futHeaderBadge');
-  if (futBadgeEl) {
-    futBadgeEl.textContent = `F: ${formatIndianNumber(futureValue)}`;
-  }
-  const brandBadgeEl = document.getElementById('brandBadge');
-  if (brandBadgeEl) {
-    brandBadgeEl.textContent = `65•${currentSymbol}`;
-  }
-
-  // Filter records by selected expiry if multiple are present
-  const currentExpiryValue = expirySelect.value || currentExpiry;
-  let filteredRecords = records.filter(r => {
-    if (!r.expiryDates && !r.CE?.expiryDate && !r.PE?.expiryDate) return true;
-    return (r.expiryDates === currentExpiryValue || r.CE?.expiryDate === currentExpiryValue || r.PE?.expiryDate === currentExpiryValue);
-  });
-
-  if (filteredRecords.length === 0) {
-    filteredRecords = records;
-  }
-
-  // Deduplicate by strikePrice
-  const strikeMap = new Map();
-  filteredRecords.forEach(r => {
-    const strike = Number(r.strikePrice);
-    if (!isNaN(strike) && !strikeMap.has(strike)) {
-      strikeMap.set(strike, r);
+    if (payload.futureValue) {
+      futureValue = Number(payload.futureValue);
+    } else if (payload.records && payload.records.futureValue) {
+      futureValue = Number(payload.records.futureValue);
     }
-  });
 
-  const allStrikes = Array.from(strikeMap.keys()).sort((a, b) => a - b);
-  if (allStrikes.length === 0) {
-    tableBody.innerHTML = '<tr><td colspan="15" style="text-align:center; padding: 20px;">No option chain records found.</td></tr>';
-    return;
-  }
-
-  // Separate into SET A (Strikes > underlyingValue) and SET B (Strikes < underlyingValue)
-  // Check for Exact Match (Strike === underlyingValue)
-  const setA_Strikes = allStrikes.filter(s => s > underlyingValue).sort((a, b) => a - b); // Ascending: closest to spot first
-  const setB_Strikes = allStrikes.filter(s => s < underlyingValue).sort((a, b) => b - a); // Descending: closest to spot first
-  const exactMatchStrike = allStrikes.find(s => s === underlyingValue);
-
-  // User configured depth: slice N above and N below
-  const count = Math.max(1, parseInt(strikeCountInput.value) || strikeDepth);
-  
-  const selectedA = setA_Strikes.slice(0, count).sort((a, b) => b - a); // Display descending (highest on top)
-  const selectedB = setB_Strikes.slice(0, count).sort((a, b) => b - a); // Display descending (closest to spot on top)
-
-  const LOT_MULTIPLIER = 65;
-
-  // Find max values for badge highlights and compute fallback ATM IV
-  const visibleStrikes = [...selectedA, ...(exactMatchStrike ? [exactMatchStrike] : []), ...selectedB];
-  let maxCeOI = 0;
-  let maxCeVol = 0;
-  let maxCeOiChg = 0;
-  let maxPeOI = 0;
-  let maxPeVol = 0;
-  let maxPeOiChg = 0;
-  const validIvs = [];
-
-  visibleStrikes.forEach(s => {
-    const r = strikeMap.get(s);
-    if (r) {
-      if (r.CE) {
-        const ceOi = (Number(r.CE.openInterest) || 0) * LOT_MULTIPLIER;
-        const ceOiChg = (Number(r.CE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
-        const ceVol = (Number(r.CE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
-        if (ceOi > maxCeOI) maxCeOI = ceOi;
-        if (ceVol > maxCeVol) maxCeVol = ceVol;
-        if (ceOiChg > maxCeOiChg) maxCeOiChg = ceOiChg;
-        if (Number(r.CE.impliedVolatility) > 0) validIvs.push(Number(r.CE.impliedVolatility));
-      }
-      if (r.PE) {
-        const peOi = (Number(pe.openInterest) || 0) * LOT_MULTIPLIER;
-        const peOiChg = (Number(pe.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
-        const peVol = (Number(pe.totalTradedVolume) || 0) * LOT_MULTIPLIER;
-        if (peOi > maxPeOI) maxPeOI = peOi;
-        if (peVol > maxPeVol) maxPeVol = peVol;
-        if (peOiChg > maxPeOiChg) maxPeOiChg = peOiChg;
-        if (Number(r.PE.impliedVolatility) > 0) validIvs.push(Number(r.PE.impliedVolatility));
-      }
+    if (payload.filtered && payload.filtered.data) {
+      records = payload.filtered.data;
+    } else if (payload.records && payload.records.data) {
+      records = payload.records.data;
+    } else if (Array.isArray(payload.data)) {
+      records = payload.data;
+    } else if (Array.isArray(payload)) {
+      records = payload;
     }
-  });
 
-  const fallbackAtmIv = validIvs.length > 0 ? (validIvs.reduce((a, b) => a + b, 0) / validIvs.length) : 12.0;
-
-  // -------------------------------------------------------------
-  // Calculate Resistance (R3: 3 Params [OI, OI Chg, Vol]) for CALLS (CE):
-  // Start from 1st ITM row (closest strike < spot). If any of the 3 (OI, OI Chg, Volume)
-  // is at 100% max, take that strike. If not, go UP into OTM (ascending from spot)
-  // until the first 100% max is found.
-  // -------------------------------------------------------------
-  let resistanceStrike3 = null;
-
-  // Check 1st ITM strike for Calls (or exact match if present)
-  const candidateCeItmStrikes = exactMatchStrike ? [exactMatchStrike, ...setB_Strikes] : setB_Strikes;
-  if (candidateCeItmStrikes.length > 0) {
-    const firstItmCe = candidateCeItmStrikes[0];
-    const item = strikeMap.get(firstItmCe);
-    if (item && item.CE) {
-      const oi = (Number(item.CE.openInterest) || 0) * LOT_MULTIPLIER;
-      const oic = (Number(item.CE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
-      const vol = (Number(item.CE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
-      if ((maxCeOI > 0 && oi === maxCeOI) || (maxCeOiChg > 0 && oic === maxCeOiChg) || (maxCeVol > 0 && vol === maxCeVol)) {
-        resistanceStrike3 = firstItmCe;
-      }
+    if (payload.records && payload.records.underlyingValue) {
+      underlyingValue = Number(payload.records.underlyingValue);
+    } else if (records.length > 0 && records[0].CE && records[0].CE.underlyingValue) {
+      underlyingValue = Number(records[0].CE.underlyingValue);
     }
-  }
 
-  // If not at 1st ITM strike, scan UP into OTM strikes (ascending from spot upwards)
-  if (!resistanceStrike3) {
-    for (const strike of setA_Strikes) {
-      const item = strikeMap.get(strike);
+    if (!futureValue) {
+      futureValue = underlyingValue;
+    }
+
+    // Update F: Value and 65 Multiplier in Badges
+    const futBadgeEl = document.getElementById('futHeaderBadge');
+    if (futBadgeEl) {
+      futBadgeEl.textContent = `F: ${formatIndianNumber(futureValue)}`;
+    }
+    const brandBadgeEl = document.getElementById('brandBadge');
+    if (brandBadgeEl) {
+      brandBadgeEl.textContent = `65•${currentSymbol}`;
+    }
+
+    // Filter records by selected expiry if multiple are present
+    const currentExpiryValue = expirySelect.value || currentExpiry;
+    let filteredRecords = records.filter(r => {
+      if (!r.expiryDates && !r.CE?.expiryDate && !r.PE?.expiryDate) return true;
+      return (r.expiryDates === currentExpiryValue || r.CE?.expiryDate === currentExpiryValue || r.PE?.expiryDate === currentExpiryValue);
+    });
+
+    if (filteredRecords.length === 0) {
+      filteredRecords = records;
+    }
+
+    // Deduplicate by strikePrice
+    const strikeMap = new Map();
+    filteredRecords.forEach(r => {
+      const strike = Number(r.strikePrice);
+      if (!isNaN(strike) && !strikeMap.has(strike)) {
+        strikeMap.set(strike, r);
+      }
+    });
+
+    const allStrikes = Array.from(strikeMap.keys()).sort((a, b) => a - b);
+    if (allStrikes.length === 0) {
+      tableBody.innerHTML = '<tr><td colspan="15" style="text-align:center; padding: 20px;">No option chain records found.</td></tr>';
+      return;
+    }
+
+    // Separate into SET A (Strikes > underlyingValue) and SET B (Strikes < underlyingValue)
+    // Check for Exact Match (Strike === underlyingValue)
+    const setA_Strikes = allStrikes.filter(s => s > underlyingValue).sort((a, b) => a - b); // Ascending: closest to spot first
+    const setB_Strikes = allStrikes.filter(s => s < underlyingValue).sort((a, b) => b - a); // Descending: closest to spot first
+    const exactMatchStrike = allStrikes.find(s => s === underlyingValue);
+
+    // User configured depth: slice N above and N below
+    const count = Math.max(1, parseInt(strikeCountInput.value) || strikeDepth);
+    
+    const selectedA = setA_Strikes.slice(0, count).sort((a, b) => b - a); // Display descending (highest on top)
+    const selectedB = setB_Strikes.slice(0, count).sort((a, b) => b - a); // Display descending (closest to spot on top)
+
+    const LOT_MULTIPLIER = 65;
+
+    // Find max values for badge highlights and compute fallback ATM IV
+    const visibleStrikes = [...selectedA, ...(exactMatchStrike ? [exactMatchStrike] : []), ...selectedB];
+    let maxCeOI = 0;
+    let maxCeVol = 0;
+    let maxCeOiChg = 0;
+    let maxPeOI = 0;
+    let maxPeVol = 0;
+    let maxPeOiChg = 0;
+    const validIvs = [];
+
+    visibleStrikes.forEach(s => {
+      const r = strikeMap.get(s);
+      if (r) {
+        if (r.CE) {
+          const ceOi = (Number(r.CE.openInterest) || 0) * LOT_MULTIPLIER;
+          const ceOiChg = (Number(r.CE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
+          const ceVol = (Number(r.CE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
+          if (ceOi > maxCeOI) maxCeOI = ceOi;
+          if (ceVol > maxCeVol) maxCeVol = ceVol;
+          if (ceOiChg > maxCeOiChg) maxCeOiChg = ceOiChg;
+          if (Number(r.CE.impliedVolatility) > 0) validIvs.push(Number(r.CE.impliedVolatility));
+        }
+        if (r.PE) {
+          const peOi = (Number(r.PE.openInterest) || 0) * LOT_MULTIPLIER;
+          const peOiChg = (Number(r.PE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
+          const peVol = (Number(r.PE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
+          if (peOi > maxPeOI) maxPeOI = peOi;
+          if (peVol > maxPeVol) maxPeVol = peVol;
+          if (peOiChg > maxPeOiChg) maxPeOiChg = peOiChg;
+          if (Number(r.PE.impliedVolatility) > 0) validIvs.push(Number(r.PE.impliedVolatility));
+        }
+      }
+    });
+
+    const fallbackAtmIv = validIvs.length > 0 ? (validIvs.reduce((a, b) => a + b, 0) / validIvs.length) : 12.0;
+
+    // -------------------------------------------------------------
+    // Calculate Resistance (R3: 3 Params [OI, OI Chg, Vol]) for CALLS (CE):
+    // Start from 1st ITM row (closest strike < spot). If any of the 3 (OI, OI Chg, Volume)
+    // is at 100% max, take that strike. If not, go UP into OTM (ascending from spot)
+    // until the first 100% max is found.
+    // -------------------------------------------------------------
+    let resistanceStrike3 = null;
+
+    // Check 1st ITM strike for Calls (or exact match if present)
+    const candidateCeItmStrikes = exactMatchStrike ? [exactMatchStrike, ...setB_Strikes] : setB_Strikes;
+    if (candidateCeItmStrikes.length > 0) {
+      const firstItmCe = candidateCeItmStrikes[0];
+      const item = strikeMap.get(firstItmCe);
       if (item && item.CE) {
         const oi = (Number(item.CE.openInterest) || 0) * LOT_MULTIPLIER;
         const oic = (Number(item.CE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
         const vol = (Number(item.CE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
         if ((maxCeOI > 0 && oi === maxCeOI) || (maxCeOiChg > 0 && oic === maxCeOiChg) || (maxCeVol > 0 && vol === maxCeVol)) {
-          resistanceStrike3 = strike;
-          break;
+          resistanceStrike3 = firstItmCe;
         }
       }
     }
-  }
 
-  // -------------------------------------------------------------
-  // Calculate Resistance (R2: 2 Params [OI, Volume ONLY]) for CALLS (CE):
-  // -------------------------------------------------------------
-  let resistanceStrike2 = null;
-  if (candidateCeItmStrikes.length > 0) {
-    const firstItmCe = candidateCeItmStrikes[0];
-    const item = strikeMap.get(firstItmCe);
-    if (item && item.CE) {
-      const oi = (Number(item.CE.openInterest) || 0) * LOT_MULTIPLIER;
-      const vol = (Number(item.CE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
-      if ((maxCeOI > 0 && oi === maxCeOI) || (maxCeVol > 0 && vol === maxCeVol)) {
-        resistanceStrike2 = firstItmCe;
+    // If not at 1st ITM strike, scan UP into OTM strikes (ascending from spot upwards)
+    if (!resistanceStrike3) {
+      for (const strike of setA_Strikes) {
+        const item = strikeMap.get(strike);
+        if (item && item.CE) {
+          const oi = (Number(item.CE.openInterest) || 0) * LOT_MULTIPLIER;
+          const oic = (Number(item.CE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
+          const vol = (Number(item.CE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
+          if ((maxCeOI > 0 && oi === maxCeOI) || (maxCeOiChg > 0 && oic === maxCeOiChg) || (maxCeVol > 0 && vol === maxCeVol)) {
+            resistanceStrike3 = strike;
+            break;
+          }
+        }
       }
     }
-  }
-  if (!resistanceStrike2) {
-    for (const strike of setA_Strikes) {
-      const item = strikeMap.get(strike);
+
+    // -------------------------------------------------------------
+    // Calculate Resistance (R2: 2 Params [OI, Volume ONLY]) for CALLS (CE):
+    // -------------------------------------------------------------
+    let resistanceStrike2 = null;
+    if (candidateCeItmStrikes.length > 0) {
+      const firstItmCe = candidateCeItmStrikes[0];
+      const item = strikeMap.get(firstItmCe);
       if (item && item.CE) {
         const oi = (Number(item.CE.openInterest) || 0) * LOT_MULTIPLIER;
         const vol = (Number(item.CE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
         if ((maxCeOI > 0 && oi === maxCeOI) || (maxCeVol > 0 && vol === maxCeVol)) {
-          resistanceStrike2 = strike;
-          break;
+          resistanceStrike2 = firstItmCe;
         }
       }
     }
-  }
-
-  // -------------------------------------------------------------
-  // Calculate Support (S3: 3 Params [OI, OI Chg, Vol]) for PUTS (PE):
-  // Start from 1st ITM row (closest strike > spot). If any of the 3 (OI, OI Chg, Volume)
-  // is at 100% max, take that strike. If not, go DOWN into OTM (descending from spot)
-  // until the first 100% max is found.
-  // -------------------------------------------------------------
-  let supportStrike3 = null;
-
-  // Check 1st ITM strike for Puts (or exact match if present)
-  const candidatePeItmStrikes = exactMatchStrike ? [exactMatchStrike, ...setA_Strikes] : setA_Strikes;
-  if (candidatePeItmStrikes.length > 0) {
-    const firstItmPe = candidatePeItmStrikes[0];
-    const item = strikeMap.get(firstItmPe);
-    if (item && item.PE) {
-      const oi = (Number(item.PE.openInterest) || 0) * LOT_MULTIPLIER;
-      const oic = (Number(item.PE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
-      const vol = (Number(item.PE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
-      if ((maxPeOI > 0 && oi === maxPeOI) || (maxPeOiChg > 0 && oic === maxPeOiChg) || (maxPeVol > 0 && vol === maxPeVol)) {
-        supportStrike3 = firstItmPe;
+    if (!resistanceStrike2) {
+      for (const strike of setA_Strikes) {
+        const item = strikeMap.get(strike);
+        if (item && item.CE) {
+          const oi = (Number(item.CE.openInterest) || 0) * LOT_MULTIPLIER;
+          const vol = (Number(item.CE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
+          if ((maxCeOI > 0 && oi === maxCeOI) || (maxCeVol > 0 && vol === maxCeVol)) {
+            resistanceStrike2 = strike;
+            break;
+          }
+        }
       }
     }
-  }
 
-  // If not at 1st ITM strike, scan DOWN into OTM strikes (descending from spot downwards)
-  if (!supportStrike3) {
-    for (const strike of setB_Strikes) {
-      const item = strikeMap.get(strike);
+    // -------------------------------------------------------------
+    // Calculate Support (S3: 3 Params [OI, OI Chg, Vol]) for PUTS (PE):
+    // Start from 1st ITM row (closest strike > spot). If any of the 3 (OI, OI Chg, Volume)
+    // is at 100% max, take that strike. If not, go DOWN into OTM (descending from spot)
+    // until the first 100% max is found.
+    // -------------------------------------------------------------
+    let supportStrike3 = null;
+
+    // Check 1st ITM strike for Puts (or exact match if present)
+    const candidatePeItmStrikes = exactMatchStrike ? [exactMatchStrike, ...setA_Strikes] : setA_Strikes;
+    if (candidatePeItmStrikes.length > 0) {
+      const firstItmPe = candidatePeItmStrikes[0];
+      const item = strikeMap.get(firstItmPe);
       if (item && item.PE) {
         const oi = (Number(item.PE.openInterest) || 0) * LOT_MULTIPLIER;
         const oic = (Number(item.PE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
         const vol = (Number(item.PE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
         if ((maxPeOI > 0 && oi === maxPeOI) || (maxPeOiChg > 0 && oic === maxPeOiChg) || (maxPeVol > 0 && vol === maxPeVol)) {
-          supportStrike3 = strike;
-          break;
+          supportStrike3 = firstItmPe;
         }
       }
     }
-  }
 
-  // -------------------------------------------------------------
-  // Calculate Support (S2: 2 Params [OI, Volume ONLY]) for PUTS (PE):
-  // -------------------------------------------------------------
-  let supportStrike2 = null;
-  if (candidatePeItmStrikes.length > 0) {
-    const firstItmPe = candidatePeItmStrikes[0];
-    const item = strikeMap.get(firstItmPe);
-    if (item && item.PE) {
-      const oi = (Number(item.PE.openInterest) || 0) * LOT_MULTIPLIER;
-      const vol = (Number(item.PE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
-      if ((maxPeOI > 0 && oi === maxPeOI) || (maxPeVol > 0 && vol === maxPeVol)) {
-        supportStrike2 = firstItmPe;
+    // If not at 1st ITM strike, scan DOWN into OTM strikes (descending from spot downwards)
+    if (!supportStrike3) {
+      for (const strike of setB_Strikes) {
+        const item = strikeMap.get(strike);
+        if (item && item.PE) {
+          const oi = (Number(item.PE.openInterest) || 0) * LOT_MULTIPLIER;
+          const oic = (Number(item.PE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
+          const vol = (Number(item.PE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
+          if ((maxPeOI > 0 && oi === maxPeOI) || (maxPeOiChg > 0 && oic === maxPeOiChg) || (maxPeVol > 0 && vol === maxPeVol)) {
+            supportStrike3 = strike;
+            break;
+          }
+        }
       }
     }
-  }
-  if (!supportStrike2) {
-    for (const strike of setB_Strikes) {
-      const item = strikeMap.get(strike);
+
+    // -------------------------------------------------------------
+    // Calculate Support (S2: 2 Params [OI, Volume ONLY]) for PUTS (PE):
+    // -------------------------------------------------------------
+    let supportStrike2 = null;
+    if (candidatePeItmStrikes.length > 0) {
+      const firstItmPe = candidatePeItmStrikes[0];
+      const item = strikeMap.get(firstItmPe);
       if (item && item.PE) {
         const oi = (Number(item.PE.openInterest) || 0) * LOT_MULTIPLIER;
         const vol = (Number(item.PE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
         if ((maxPeOI > 0 && oi === maxPeOI) || (maxPeVol > 0 && vol === maxPeVol)) {
-          supportStrike2 = strike;
-          break;
+          supportStrike2 = firstItmPe;
         }
       }
     }
-  }
-
-  // Helper to retrieve or freeze 09:20 AM IST Fixed Levels (RF3, RF2, SF3, SF2)
-  function getOrUpdateFixedRS(symbol, r3, r2, s3, s2) {
-    const now = new Date();
-    const istString = now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
-    const istDate = new Date(istString);
-    const todayDateString = now.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
-    const currentMinutes = istDate.getHours() * 60 + istDate.getMinutes();
-    const isPast920 = currentMinutes >= (9 * 60 + 20); // 9:20 AM IST = 560 mins
-
-    const storageKey = `papa_fixed_levels_v2_${symbol}_${todayDateString}`;
-    let fixedLevels = null;
-    try {
-      const raw = localStorage.getItem(storageKey);
-      if (raw) {
-        fixedLevels = JSON.parse(raw);
+    if (!supportStrike2) {
+      for (const strike of setB_Strikes) {
+        const item = strikeMap.get(strike);
+        if (item && item.PE) {
+          const oi = (Number(item.PE.openInterest) || 0) * LOT_MULTIPLIER;
+          const vol = (Number(item.PE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
+          if ((maxPeOI > 0 && oi === maxPeOI) || (maxPeVol > 0 && vol === maxPeVol)) {
+            supportStrike2 = strike;
+            break;
+          }
+        }
       }
-    } catch (e) {}
-
-    // 1. If already locked today at or after 9:20 AM, return locked values
-    if (fixedLevels && (fixedLevels.rf3 || fixedLevels.rf2) && (fixedLevels.sf3 || fixedLevels.sf2)) {
-      return fixedLevels;
     }
 
-    // 2. If current time is 09:20 AM or later and we have valid levels, lock them permanently for today
-    if (isPast920 && (r3 || r2) && (s3 || s2)) {
-      fixedLevels = {
+    // Helper to retrieve or freeze 09:20 AM IST Fixed Levels (RF3, RF2, SF3, SF2)
+    function getOrUpdateFixedRS(symbol, r3, r2, s3, s2) {
+      const now = new Date();
+      const istString = now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
+      const istDate = new Date(istString);
+      const todayDateString = now.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+      const currentMinutes = istDate.getHours() * 60 + istDate.getMinutes();
+      const isPast920 = currentMinutes >= (9 * 60 + 20); // 9:20 AM IST = 560 mins
+
+      const storageKey = `papa_fixed_levels_v2_${symbol}_${todayDateString}`;
+      let fixedLevels = null;
+      try {
+        const raw = localStorage.getItem(storageKey);
+        if (raw) {
+          fixedLevels = JSON.parse(raw);
+        }
+      } catch (e) {}
+
+      // 1. If already locked today at or after 9:20 AM, return locked values
+      if (fixedLevels && (fixedLevels.rf3 || fixedLevels.rf2) && (fixedLevels.sf3 || fixedLevels.sf2)) {
+        return fixedLevels;
+      }
+
+      // 2. If current time is 09:20 AM or later and we have valid levels, lock them permanently for today
+      if (isPast920 && (r3 || r2) && (s3 || s2)) {
+        fixedLevels = {
+          date: todayDateString,
+          symbol: symbol,
+          rf3: r3 || r2,
+          rf2: r2 || r3,
+          sf3: s3 || s2,
+          sf2: s2 || s3,
+          lockedAt: '09:20 AM IST'
+        };
+        try {
+          localStorage.setItem(storageKey, JSON.stringify(fixedLevels));
+        } catch (e) {}
+        return fixedLevels;
+      }
+
+      // 3. If before 09:20 AM today or during night/off-hours, check if there's any recent locked value for this symbol
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith(`papa_fixed_levels_v2_${symbol}_`)) {
+            const cached = JSON.parse(localStorage.getItem(key));
+            if (cached && (cached.rf3 || cached.rf2) && (cached.sf3 || cached.sf2)) {
+              return cached;
+            }
+          }
+        }
+      } catch (e) {}
+
+      // 4. Live calculated fallback: Return current calculated levels so badges are NEVER empty
+      return {
         date: todayDateString,
         symbol: symbol,
         rf3: r3 || r2,
         rf2: r2 || r3,
         sf3: s3 || s2,
         sf2: s2 || s3,
-        lockedAt: '09:20 AM IST'
+        lockedAt: 'Calculated'
       };
-      try {
-        localStorage.setItem(storageKey, JSON.stringify(fixedLevels));
-      } catch (e) {}
-      return fixedLevels;
     }
 
-    // 3. If before 09:20 AM today or during night/off-hours, check if there's any recent locked value for this symbol
-    try {
-      for (let i = 0; i < localStorage.length; i++) {
-        const key = localStorage.key(i);
-        if (key && key.startsWith(`papa_fixed_levels_v2_${symbol}_`)) {
-          const cached = JSON.parse(localStorage.getItem(key));
-          if (cached && (cached.rf3 || cached.rf2) && (cached.sf3 || cached.sf2)) {
-            return cached;
-          }
+    const fixedRS = getOrUpdateFixedRS(currentSymbol, resistanceStrike3, resistanceStrike2, supportStrike3, supportStrike2);
+    const displayRf3 = fixedRS?.rf3 || resistanceStrike3 || resistanceStrike2;
+    const displayRf2 = fixedRS?.rf2 || resistanceStrike2 || resistanceStrike3;
+    const displaySf3 = fixedRS?.sf3 || supportStrike3 || supportStrike2;
+    const displaySf2 = fixedRS?.sf2 || supportStrike2 || supportStrike3;
+
+    // Update R, RF3, RF2, S, SF3, SF2 Badges in Super Headers
+    const badgeResistance = document.getElementById('badgeResistance');
+    const badgeRf3 = document.getElementById('badgeRf3');
+    const badgeRf2 = document.getElementById('badgeRf2');
+    const badgeSupport = document.getElementById('badgeSupport');
+    const badgeSf3 = document.getElementById('badgeSf3');
+    const badgeSf2 = document.getElementById('badgeSf2');
+
+    if (badgeResistance) {
+      badgeResistance.textContent = resistanceStrike3 ? `R: ${formatIndianNumber(resistanceStrike3)}` : 'R: -';
+    }
+    if (badgeRf3) {
+      badgeRf3.textContent = displayRf3 ? `RF3: ${formatIndianNumber(displayRf3)}` : 'RF3: -';
+      badgeRf3.title = displayRf3 ? `Resistance Fixed (3 Params: OI, OI Chg, Vol): ${formatIndianNumber(displayRf3)}` : 'RF3 (3-param)';
+    }
+    if (badgeRf2) {
+      badgeRf2.textContent = displayRf2 ? `RF2: ${formatIndianNumber(displayRf2)}` : 'RF2: -';
+      badgeRf2.title = displayRf2 ? `Resistance Fixed (2 Params: OI, Vol): ${formatIndianNumber(displayRf2)}` : 'RF2 (2-param)';
+    }
+    if (badgeSupport) {
+      badgeSupport.textContent = supportStrike3 ? `S: ${formatIndianNumber(supportStrike3)}` : 'S: -';
+    }
+    if (badgeSf3) {
+      badgeSf3.textContent = displaySf3 ? `SF3: ${formatIndianNumber(displaySf3)}` : 'SF3: -';
+      badgeSf3.title = displaySf3 ? `Support Fixed (3 Params: OI, OI Chg, Vol): ${formatIndianNumber(displaySf3)}` : 'SF3 (3-param)';
+    }
+    if (badgeSf2) {
+      badgeSf2.textContent = displaySf2 ? `SF2: ${formatIndianNumber(displaySf2)}` : 'SF2: -';
+      badgeSf2.title = displaySf2 ? `Support Fixed (2 Params: OI, Vol): ${formatIndianNumber(displaySf2)}` : 'SF2 (2-param)';
+    }
+
+    // Helper function to render 2-line stacked cell with relative percentage & highlight badges
+    function renderRelativeCell(val, maxVal, isCe, isOiChg = false) {
+      const formattedVal = formatIndianNumber(val);
+      const isMax = (val > 0 && maxVal > 0 && val === maxVal);
+      let relPct = 0;
+      let formattedPct = '-';
+
+      if (maxVal > 0 && val > 0) {
+        relPct = (val / maxVal) * 100;
+        formattedPct = isMax ? '100%' : (relPct.toFixed(1) + '%');
+      } else if (isOiChg && val < 0) {
+        formattedPct = '0.0%';
+      } else if (val === 0) {
+        formattedPct = '0.0%';
+      }
+
+      if (isMax && val > 0) {
+        const maxClass = isCe ? 'cell-highlight-max-ce' : 'cell-highlight-max-pe';
+        return `<div class="${maxClass}"><span class="cell-val-main">${formattedVal}</span><span class="cell-val-sub">100%</span></div>`;
+      }
+
+      if (relPct >= 75) {
+        return `<div class="cell-highlight-high"><span class="cell-val-main">${formattedVal}</span><span class="cell-val-sub">${formattedPct}</span></div>`;
+      }
+
+      let valColorClass = '';
+      let pctColorClass = '';
+      if (isOiChg) {
+        if (val < 0) {
+          valColorClass = 'text-negative';
+          pctColorClass = 'text-negative';
+        } else if (val > 0) {
+          valColorClass = 'text-positive';
         }
       }
-    } catch (e) {}
 
-    // 4. Live calculated fallback: Return current calculated levels so badges are NEVER empty
-    return {
-      date: todayDateString,
-      symbol: symbol,
-      rf3: r3 || r2,
-      rf2: r2 || r3,
-      sf3: s3 || s2,
-      sf2: s2 || s3,
-      lockedAt: 'Calculated'
+      return `<div class="cell-stacked-num"><span class="cell-val-main ${valColorClass}">${formattedVal}</span><span class="cell-val-sub ${pctColorClass}">${formattedPct}</span></div>`;
+    }
+
+    // Build HTML
+    let rowsHtml = '';
+
+    // Extract index OHLC data (Open, High, Low, Previous Close)
+    const indexInfo = payload.indexInfo || payload.records?.indexInfo || {
+      open: 23858,
+      high: 23914.45,
+      low: 23786.8,
+      previousClose: 24055.8
     };
-  }
 
-  const fixedRS = getOrUpdateFixedRS(currentSymbol, resistanceStrike3, resistanceStrike2, supportStrike3, supportStrike2);
-  const displayRf3 = fixedRS?.rf3 || resistanceStrike3 || resistanceStrike2;
-  const displayRf2 = fixedRS?.rf2 || resistanceStrike2 || resistanceStrike3;
-  const displaySf3 = fixedRS?.sf3 || supportStrike3 || supportStrike2;
-  const displaySf2 = fixedRS?.sf2 || supportStrike2 || supportStrike3;
+    // Spot difference from Previous Close (Spot - PreviousClose)
+    const prevCloseVal = Number(indexInfo.previousClose) || underlyingValue;
+    const spotPrevCloseDiff = underlyingValue - prevCloseVal;
+    const spotPrevCloseDiffStr = (spotPrevCloseDiff > 0 ? '+' : '') + spotPrevCloseDiff.toFixed(2);
 
-  // Update R, RF3, RF2, S, SF3, SF2 Badges in Super Headers
-  const badgeResistance = document.getElementById('badgeResistance');
-  const badgeRf3 = document.getElementById('badgeRf3');
-  const badgeRf2 = document.getElementById('badgeRf2');
-  const badgeSupport = document.getElementById('badgeSupport');
-  const badgeSf3 = document.getElementById('badgeSf3');
-  const badgeSf2 = document.getElementById('badgeSf2');
+    // Future difference from Spot (Future - Spot)
+    const spotFutDiff = futureValue - underlyingValue;
+    const spotFutDiffStr = (spotFutDiff > 0 ? '+' : '') + spotFutDiff.toFixed(2);
 
-  if (badgeResistance) {
-    badgeResistance.textContent = resistanceStrike3 ? `R: ${formatIndianNumber(resistanceStrike3)}` : 'R: -';
-  }
-  if (badgeRf3) {
-    badgeRf3.textContent = displayRf3 ? `RF3: ${formatIndianNumber(displayRf3)}` : 'RF3: -';
-    badgeRf3.title = displayRf3 ? `Resistance Fixed (3 Params: OI, OI Chg, Vol): ${formatIndianNumber(displayRf3)}` : 'RF3 (3-param)';
-  }
-  if (badgeRf2) {
-    badgeRf2.textContent = displayRf2 ? `RF2: ${formatIndianNumber(displayRf2)}` : 'RF2: -';
-    badgeRf2.title = displayRf2 ? `Resistance Fixed (2 Params: OI, Vol): ${formatIndianNumber(displayRf2)}` : 'RF2 (2-param)';
-  }
-  if (badgeSupport) {
-    badgeSupport.textContent = supportStrike3 ? `S: ${formatIndianNumber(supportStrike3)}` : 'S: -';
-  }
-  if (badgeSf3) {
-    badgeSf3.textContent = displaySf3 ? `SF3: ${formatIndianNumber(displaySf3)}` : 'SF3: -';
-    badgeSf3.title = displaySf3 ? `Support Fixed (3 Params: OI, OI Chg, Vol): ${formatIndianNumber(displaySf3)}` : 'SF3 (3-param)';
-  }
-  if (badgeSf2) {
-    badgeSf2.textContent = displaySf2 ? `SF2: ${formatIndianNumber(displaySf2)}` : 'SF2: -';
-    badgeSf2.title = displaySf2 ? `Support Fixed (2 Params: OI, Vol): ${formatIndianNumber(displaySf2)}` : 'SF2 (2-param)';
-  }
+    // Range calculation (R = High - Low)
+    const highVal = Number(indexInfo.high) || 0;
+    const lowVal = Number(indexInfo.low) || 0;
+    const rangeVal = highVal - lowVal;
+    const rangeStr = (rangeVal % 1 === 0) ? rangeVal.toString() : rangeVal.toFixed(2);
 
-  // Helper function to render 2-line stacked cell with relative percentage & highlight badges
-  function renderRelativeCell(val, maxVal, isCe, isOiChg = false) {
-    const formattedVal = formatIndianNumber(val);
-    const isMax = (val > 0 && maxVal > 0 && val === maxVal);
-    let relPct = 0;
-    let formattedPct = '-';
+    // Calculate days to expiry for quantitative Delta calculation
+    const daysToExpiry = parseDaysToExpiry(currentExpiryValue);
 
-    if (maxVal > 0 && val > 0) {
-      relPct = (val / maxVal) * 100;
-      formattedPct = isMax ? '100%' : (relPct.toFixed(1) + '%');
-    } else if (isOiChg && val < 0) {
-      formattedPct = '0.0%';
-    } else if (val === 0) {
-      formattedPct = '0.0%';
-    }
+    // Render Row Helper Function
+    function buildStrikeRowHtml(strike, isExactMatch = false) {
+      const item = (strikeMap && strikeMap.get(strike)) ? strikeMap.get(strike) : {};
+      const ce = (item && item.CE) ? item.CE : {};
+      const pe = (item && item.PE) ? item.PE : {};
 
-    if (isMax && val > 0) {
-      const maxClass = isCe ? 'cell-highlight-max-ce' : 'cell-highlight-max-pe';
-      return `<div class="${maxClass}"><span class="cell-val-main">${formattedVal}</span><span class="cell-val-sub">100%</span></div>`;
-    }
+      const ceRawIv = Number(ce.impliedVolatility) || 0;
+      const peRawIv = Number(pe.impliedVolatility) || 0;
 
-    if (relPct >= 75) {
-      return `<div class="cell-highlight-high"><span class="cell-val-main">${formattedVal}</span><span class="cell-val-sub">${formattedPct}</span></div>`;
-    }
+      // Use Put-Call Parity / shared strike IV fallback so deep ITM/OTM strikes never miss Delta
+      const ceEffectiveIv = (ceRawIv > 0) ? ceRawIv : ((peRawIv > 0) ? peRawIv : fallbackAtmIv);
+      const peEffectiveIv = (peRawIv > 0) ? peRawIv : ((ceRawIv > 0) ? ceRawIv : fallbackAtmIv);
 
-    let valColorClass = '';
-    let pctColorClass = '';
-    if (isOiChg) {
-      if (val < 0) {
-        valColorClass = 'text-negative';
-        pctColorClass = 'text-negative';
-      } else if (val > 0) {
-        valColorClass = 'text-positive';
+      // Calculate Real-Time Delta for Calls and Puts using Black-Scholes
+      const ceDeltaRes = calculateDelta(underlyingValue, strike, ceEffectiveIv, daysToExpiry, 0.068);
+      const peDeltaRes = calculateDelta(underlyingValue, strike, peEffectiveIv, daysToExpiry, 0.068);
+      const ceDeltaStr = ceDeltaRes.callDelta !== null ? (ceDeltaRes.callDelta > 0 ? '+' : '') + ceDeltaRes.callDelta.toFixed(2) : '-';
+      const peDeltaStr = peDeltaRes.putDelta !== null ? peDeltaRes.putDelta.toFixed(2) : '-';
+
+      // Multiply OI, OI Change, and Volume by 65
+      const ceOi = (Number(ce.openInterest) || 0) * LOT_MULTIPLIER;
+      const ceOiChg = (Number(ce.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
+      const ceVol = (Number(ce.totalTradedVolume) || 0) * LOT_MULTIPLIER;
+
+      const peOi = (Number(pe.openInterest) || 0) * LOT_MULTIPLIER;
+      const peOiChg = (Number(pe.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
+      const peVol = (Number(pe.totalTradedVolume) || 0) * LOT_MULTIPLIER;
+
+      const isCeItm = strike < underlyingValue;
+      const isPeItm = strike > underlyingValue;
+
+      const ceClass = isCeItm ? 'ce-itm' : 'ce-otm';
+      const peClass = isPeItm ? 'pe-itm' : 'pe-otm';
+
+      // Highlight Golden color if exact match
+      const strikeClass = isExactMatch ? 'exact-match-strike' : 'cell-strike';
+      const rowClass = isExactMatch ? 'exact-match-row' : '';
+
+      // Calculate Change in OI% (with respect to OI, with negative values allowed and styled in red)
+      let ceOiChgPctStr = '-';
+      let ceOiChgPctClass = '';
+      if (ceOi !== 0) {
+        const cePct = (ceOiChg / ceOi) * 100;
+        ceOiChgPctStr = (cePct > 0 ? '+' : '') + cePct.toFixed(1) + '%';
+        ceOiChgPctClass = (cePct < 0) ? 'text-negative' : (cePct > 0 ? 'text-positive' : '');
       }
+
+      let peOiChgPctStr = '-';
+      let peOiChgPctClass = '';
+      if (peOi !== 0) {
+        const pePct = (peOiChg / peOi) * 100;
+        peOiChgPctStr = (pePct > 0 ? '+' : '') + pePct.toFixed(1) + '%';
+        peOiChgPctClass = (pePct < 0) ? 'text-negative' : (peOiChg > 0 ? 'text-positive' : '');
+      }
+
+      // Calculate CALL OI% and PUT OI% (Percentage of their sum for this strike row)
+      const totalOiSum = ceOi + peOi;
+
+      let ceOiPctStr = '-';
+      let peOiPctStr = '-';
+
+      if (totalOiSum > 0) {
+        const cePct = (ceOi / totalOiSum) * 100;
+        const pePct = (peOi / totalOiSum) * 100;
+        ceOiPctStr = cePct.toFixed(1) + '%';
+        peOiPctStr = pePct.toFixed(1) + '%';
+      }
+
+      // Strike bold formatting: Only multiples of 100 are shown in bold
+      const isMultipleOf100 = (Number(strike) % 100 === 0);
+      const formattedStrike = formatIndianNumber(strike);
+      const strikeDisplayContent = isExactMatch 
+        ? `<span class="golden-badge">${formattedStrike}</span>` 
+        : (isMultipleOf100 ? `<strong>${formattedStrike}</strong>` : formattedStrike);
+
+      return `
+        <tr class="${rowClass}">
+          <!-- CALLS (CE): Delta | IV | OI Chg | OI | Volume | LTP | CHG OI% | CALL OI% -->
+          <td class="${ceClass} col-delta">${ceDeltaStr}</td>
+          <td class="${ceClass} col-iv">${formatDecimal(ce.impliedVolatility)}</td>
+          <td class="${ceClass} col-oichg">${renderRelativeCell(ceOiChg, maxCeOiChg, true, true)}</td>
+          <td class="${ceClass} col-oi">${renderRelativeCell(ceOi, maxCeOI, true, false)}</td>
+          <td class="${ceClass} col-vol">${renderRelativeCell(ceVol, maxCeVol, true, false)}</td>
+          <td class="${ceClass} col-ltp"><strong>${formatDecimal(ce.lastPrice)}</strong></td>
+          <td class="${ceClass} ${ceOiChgPctClass} col-oichg-pct"><strong>${ceOiChgPctStr}</strong></td>
+          <td class="${ceClass} cell-oi-pct col-oi-pct"><strong>${ceOiPctStr}</strong></td>
+
+          <!-- STRIKE PRICE (CENTER) - Multiples of 100 in Bold -->
+          <td class="${strikeClass} ${isMultipleOf100 ? 'strike-bold' : ''} col-strike">
+            ${strikeDisplayContent}
+          </td>
+
+          <!-- PUTS (PE) - Mirrored: PUT OI% | CHG OI% | LTP | Volume | OI | OI Chg | IV | Delta -->
+          <td class="${peClass} cell-oi-pct col-oi-pct"><strong>${peOiPctStr}</strong></td>
+          <td class="${peClass} ${peOiChgPctClass} col-oichg-pct"><strong>${peOiChgPctStr}</strong></td>
+          <td class="${peClass} col-ltp"><strong>${formatDecimal(pe.lastPrice)}</strong></td>
+          <td class="${peClass} col-vol">${renderRelativeCell(peVol, maxPeVol, false, false)}</td>
+          <td class="${peClass} col-oi">${renderRelativeCell(peOi, maxPeOI, false, false)}</td>
+          <td class="${peClass} col-oichg">${renderRelativeCell(peOiChg, maxPeOiChg, false, true)}</td>
+          <td class="${peClass} col-iv">${formatDecimal(pe.impliedVolatility)}</td>
+          <td class="${peClass} col-delta">${peDeltaStr}</td>
+        </tr>
+      `;
     }
 
-    return `<div class="cell-stacked-num"><span class="cell-val-main ${valColorClass}">${formattedVal}</span><span class="cell-val-sub ${pctColorClass}">${formattedPct}</span></div>`;
-  }
+    // 1. Render SET A (Above Spot Baseline)
+    selectedA.forEach(strike => {
+      rowsHtml += buildStrikeRowHtml(strike, false);
+    });
 
-  // Build HTML
-  let rowsHtml = '';
-
-  // Extract index OHLC data (Open, High, Low, Previous Close)
-  const indexInfo = payload.indexInfo || payload.records?.indexInfo || {
-    open: 23858,
-    high: 23914.45,
-    low: 23786.8,
-    previousClose: 24055.8
-  };
-
-  // Spot difference from Previous Close (Spot - PreviousClose)
-  const prevCloseVal = Number(indexInfo.previousClose) || underlyingValue;
-  const spotPrevCloseDiff = underlyingValue - prevCloseVal;
-  const spotPrevCloseDiffStr = (spotPrevCloseDiff > 0 ? '+' : '') + spotPrevCloseDiff.toFixed(2);
-
-  // Future difference from Spot (Future - Spot)
-  const spotFutDiff = futureValue - underlyingValue;
-  const spotFutDiffStr = (spotFutDiff > 0 ? '+' : '') + spotFutDiff.toFixed(2);
-
-  // Range calculation (R = High - Low)
-  const highVal = Number(indexInfo.high) || 0;
-  const lowVal = Number(indexInfo.low) || 0;
-  const rangeVal = highVal - lowVal;
-  const rangeStr = (rangeVal % 1 === 0) ? rangeVal.toString() : rangeVal.toFixed(2);
-
-  // Calculate days to expiry for quantitative Delta calculation
-  const daysToExpiry = parseDaysToExpiry(currentExpiryValue);
-
-  // Render Row Helper Function
-  function buildStrikeRowHtml(strike, isExactMatch = false) {
-    const item = strikeMap.get(strike) || {};
-    const ce = item.CE || {};
-    const pe = item.PE || {};
-
-    const ceRawIv = Number(ce.impliedVolatility) || 0;
-    const peRawIv = Number(pe.impliedVolatility) || 0;
-
-    // Use Put-Call Parity / shared strike IV fallback so deep ITM/OTM strikes never miss Delta
-    const ceEffectiveIv = (ceRawIv > 0) ? ceRawIv : ((peRawIv > 0) ? peRawIv : fallbackAtmIv);
-    const peEffectiveIv = (peRawIv > 0) ? peRawIv : ((ceRawIv > 0) ? ceRawIv : fallbackAtmIv);
-
-    // Calculate Real-Time Delta for Calls and Puts using Black-Scholes
-    const ceDeltaRes = calculateDelta(underlyingValue, strike, ceEffectiveIv, daysToExpiry, 0.068);
-    const peDeltaRes = calculateDelta(underlyingValue, strike, peEffectiveIv, daysToExpiry, 0.068);
-    const ceDeltaStr = ceDeltaRes.callDelta !== null ? (ceDeltaRes.callDelta > 0 ? '+' : '') + ceDeltaRes.callDelta.toFixed(2) : '-';
-    const peDeltaStr = peDeltaRes.putDelta !== null ? peDeltaRes.putDelta.toFixed(2) : '-';
-
-    // Multiply OI, OI Change, and Volume by 65
-    const ceOi = (Number(ce.openInterest) || 0) * LOT_MULTIPLIER;
-    const ceOiChg = (Number(ce.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
-    const ceVol = (Number(ce.totalTradedVolume) || 0) * LOT_MULTIPLIER;
-
-    const peOi = (Number(pe.openInterest) || 0) * LOT_MULTIPLIER;
-    const peOiChg = (Number(pe.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
-    const peVol = (Number(pe.totalTradedVolume) || 0) * LOT_MULTIPLIER;
-
-    const isCeItm = strike < underlyingValue;
-    const isPeItm = strike > underlyingValue;
-
-    const ceClass = isCeItm ? 'ce-itm' : 'ce-otm';
-    const peClass = isPeItm ? 'pe-itm' : 'pe-otm';
-
-    // Highlight Golden color if exact match
-    const strikeClass = isExactMatch ? 'exact-match-strike' : 'cell-strike';
-    const rowClass = isExactMatch ? 'exact-match-row' : '';
-
-    // Calculate Change in OI% (with respect to OI, with negative values allowed and styled in red)
-    let ceOiChgPctStr = '-';
-    let ceOiChgPctClass = '';
-    if (ceOi !== 0) {
-      const cePct = (ceOiChg / ceOi) * 100;
-      ceOiChgPctStr = (cePct > 0 ? '+' : '') + cePct.toFixed(1) + '%';
-      ceOiChgPctClass = (cePct < 0) ? 'text-negative' : (cePct > 0 ? 'text-positive' : '');
-    }
-
-    let peOiChgPctStr = '-';
-    let peOiChgPctClass = '';
-    if (peOi !== 0) {
-      const pePct = (peOiChg / peOi) * 100;
-      peOiChgPctStr = (pePct > 0 ? '+' : '') + pePct.toFixed(1) + '%';
-      peOiChgPctClass = (pePct < 0) ? 'text-negative' : (peOiChg > 0 ? 'text-positive' : '');
-    }
-
-    // Calculate CALL OI% and PUT OI% (Percentage of their sum for this strike row)
-    const totalOiSum = ceOi + peOi;
-
-    let ceOiPctStr = '-';
-    let peOiPctStr = '-';
-
-    if (totalOiSum > 0) {
-      const cePct = (ceOi / totalOiSum) * 100;
-      const pePct = (peOi / totalOiSum) * 100;
-      ceOiPctStr = cePct.toFixed(1) + '%';
-      peOiPctStr = pePct.toFixed(1) + '%';
-    }
-
-    // Strike bold formatting: Only multiples of 100 are shown in bold
-    const isMultipleOf100 = (Number(strike) % 100 === 0);
-    const formattedStrike = formatIndianNumber(strike);
-    const strikeDisplayContent = isExactMatch 
-      ? `<span class="golden-badge">${formattedStrike}</span>` 
-      : (isMultipleOf100 ? `<strong>${formattedStrike}</strong>` : formattedStrike);
-
-    return `
-      <tr class="${rowClass}">
-        <!-- CALLS (CE): Delta | IV | OI Chg | OI | Volume | LTP | CHG OI% | CALL OI% -->
-        <td class="${ceClass} col-delta">${ceDeltaStr}</td>
-        <td class="${ceClass} col-iv">${formatDecimal(ce.impliedVolatility)}</td>
-        <td class="${ceClass} col-oichg">${renderRelativeCell(ceOiChg, maxCeOiChg, true, true)}</td>
-        <td class="${ceClass} col-oi">${renderRelativeCell(ceOi, maxCeOI, true, false)}</td>
-        <td class="${ceClass} col-vol">${renderRelativeCell(ceVol, maxCeVol, true, false)}</td>
-        <td class="${ceClass} col-ltp"><strong>${formatDecimal(ce.lastPrice)}</strong></td>
-        <td class="${ceClass} ${ceOiChgPctClass} col-oichg-pct"><strong>${ceOiChgPctStr}</strong></td>
-        <td class="${ceClass} cell-oi-pct col-oi-pct"><strong>${ceOiPctStr}</strong></td>
-
-        <!-- STRIKE PRICE (CENTER) - Multiples of 100 in Bold -->
-        <td class="${strikeClass} ${isMultipleOf100 ? 'strike-bold' : ''} col-strike">
-          ${strikeDisplayContent}
+    // 2. Render Spot Baseline Divider Bar (Blue row with SPOT (prevClose diff), F (spot diff), and O, H, L, R)
+    rowsHtml += `
+      <tr id="spotDividerRow" class="spot-divider-row">
+        <td colspan="17">
+          <div class="spot-divider-content">
+            <div class="spot-center-title">
+              <span class="spot-price-badge">SPOT: ${formatIndianNumber(underlyingValue)} (${spotPrevCloseDiffStr})</span>
+              <span class="spot-price-badge">F: ${formatIndianNumber(futureValue)} (${spotFutDiffStr})</span>
+              <span class="spot-ohlc-badge">
+                <span class="spot-ohlc-item"><span class="spot-ohlc-label">O:</span> ${formatIndianNumber(indexInfo.open)}</span>
+                <span class="spot-ohlc-item"><span class="spot-ohlc-label">H:</span> ${formatIndianNumber(indexInfo.high)}</span>
+                <span class="spot-ohlc-item"><span class="spot-ohlc-label">L:</span> ${formatIndianNumber(indexInfo.low)}</span>
+                <span class="spot-ohlc-item"><span class="spot-ohlc-label">R:</span> ${rangeStr}</span>
+              </span>
+            </div>
+          </div>
         </td>
-
-        <!-- PUTS (PE) - Mirrored: PUT OI% | CHG OI% | LTP | Volume | OI | OI Chg | IV | Delta -->
-        <td class="${peClass} cell-oi-pct col-oi-pct"><strong>${peOiPctStr}</strong></td>
-        <td class="${peClass} ${peOiChgPctClass} col-oichg-pct"><strong>${peOiChgPctStr}</strong></td>
-        <td class="${peClass} col-ltp"><strong>${formatDecimal(pe.lastPrice)}</strong></td>
-        <td class="${peClass} col-vol">${renderRelativeCell(peVol, maxPeVol, false, false)}</td>
-        <td class="${peClass} col-oi">${renderRelativeCell(peOi, maxPeOI, false, false)}</td>
-        <td class="${peClass} col-oichg">${renderRelativeCell(peOiChg, maxPeOiChg, false, true)}</td>
-        <td class="${peClass} col-iv">${formatDecimal(pe.impliedVolatility)}</td>
-        <td class="${peClass} col-delta">${peDeltaStr}</td>
       </tr>
     `;
-  }
 
-  // 1. Render SET A (Above Spot Baseline)
-  selectedA.forEach(strike => {
-    rowsHtml += buildStrikeRowHtml(strike, false);
-  });
+    // 2b. If exact match exists, render right at baseline with Golden highlight
+    if (exactMatchStrike) {
+      rowsHtml += buildStrikeRowHtml(exactMatchStrike, true);
+    }
 
-  // 2. Render Spot Baseline Divider Bar (Blue row with SPOT (prevClose diff), F (spot diff), and O, H, L, R)
-  rowsHtml += `
-    <tr id="spotDividerRow" class="spot-divider-row">
-      <td colspan="17">
-        <div class="spot-divider-content">
-          <div class="spot-center-title">
-            <span class="spot-price-badge">SPOT: ${formatIndianNumber(underlyingValue)} (${spotPrevCloseDiffStr})</span>
-            <span class="spot-price-badge">F: ${formatIndianNumber(futureValue)} (${spotFutDiffStr})</span>
-            <span class="spot-ohlc-badge">
-              <span class="spot-ohlc-item"><span class="spot-ohlc-label">O:</span> ${formatIndianNumber(indexInfo.open)}</span>
-              <span class="spot-ohlc-item"><span class="spot-ohlc-label">H:</span> ${formatIndianNumber(indexInfo.high)}</span>
-              <span class="spot-ohlc-item"><span class="spot-ohlc-label">L:</span> ${formatIndianNumber(indexInfo.low)}</span>
-              <span class="spot-ohlc-item"><span class="spot-ohlc-label">R:</span> ${rangeStr}</span>
-            </span>
-          </div>
-        </div>
-      </td>
-    </tr>
-  `;
+    // 3. Render SET B (Below Spot Baseline)
+    selectedB.forEach(strike => {
+      rowsHtml += buildStrikeRowHtml(strike, false);
+    });
 
-  // 2b. If exact match exists, render right at baseline with Golden highlight
-  if (exactMatchStrike) {
-    rowsHtml += buildStrikeRowHtml(exactMatchStrike, true);
-  }
+    tableBody.innerHTML = rowsHtml;
 
-  // 3. Render SET B (Below Spot Baseline)
-  selectedB.forEach(strike => {
-    rowsHtml += buildStrikeRowHtml(strike, false);
-  });
+    // Calculate sum of OI and OI Change ONLY for the visible strikes displayed on the page (multiplied by 65)
+    let sumVisibleCeOi = 0;
+    let sumVisibleCeOiChg = 0;
+    let sumVisiblePeOi = 0;
+    let sumVisiblePeOiChg = 0;
 
-  tableBody.innerHTML = rowsHtml;
+    // Breakdown calculations:
+    // ITM Call (Yellow Call side) = Set B strikes (< spot)
+    // OTM Call (White Call side) = Set A strikes (> spot)
+    // ITM Put (Yellow Put side) = Set A strikes (> spot)
+    // OTM Put (White Put side) = Set B strikes (< spot)
+    let sumItmCeOi = 0;
+    let sumItmCeOiChg = 0;
+    let sumOtmCeOi = 0;
+    let sumOtmCeOiChg = 0;
 
-  // Calculate sum of OI and OI Change ONLY for the visible strikes displayed on the page (multiplied by 65)
-  let sumVisibleCeOi = 0;
-  let sumVisibleCeOiChg = 0;
-  let sumVisiblePeOi = 0;
-  let sumVisiblePeOiChg = 0;
+    let sumItmPeOi = 0;
+    let sumItmPeOiChg = 0;
+    let sumOtmPeOi = 0;
+    let sumOtmPeOiChg = 0;
 
-  // Breakdown calculations:
-  // ITM Call (Yellow Call side) = Set B strikes (< spot)
-  // OTM Call (White Call side) = Set A strikes (> spot)
-  // ITM Put (Yellow Put side) = Set A strikes (> spot)
-  // OTM Put (White Put side) = Set B strikes (< spot)
-  let sumItmCeOi = 0;
-  let sumItmCeOiChg = 0;
-  let sumOtmCeOi = 0;
-  let sumOtmCeOiChg = 0;
-
-  let sumItmPeOi = 0;
-  let sumItmPeOiChg = 0;
-  let sumOtmPeOi = 0;
-  let sumOtmPeOiChg = 0;
-
-  selectedA.forEach(s => {
-    const item = strikeMap.get(s);
-    if (item) {
-      if (item.CE) {
-        sumOtmCeOi += (Number(item.CE.openInterest) || 0) * LOT_MULTIPLIER;
-        sumOtmCeOiChg += (Number(item.CE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
+    selectedA.forEach(s => {
+      const item = strikeMap.get(s);
+      if (item) {
+        if (item.CE) {
+          sumOtmCeOi += (Number(item.CE.openInterest) || 0) * LOT_MULTIPLIER;
+          sumOtmCeOiChg += (Number(item.CE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
+        }
+        if (item.PE) {
+          sumItmPeOi += (Number(item.PE.openInterest) || 0) * LOT_MULTIPLIER;
+          sumItmPeOiChg += (Number(item.PE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
+        }
       }
-      if (item.PE) {
-        sumItmPeOi += (Number(item.PE.openInterest) || 0) * LOT_MULTIPLIER;
-        sumItmPeOiChg += (Number(item.PE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
+    });
+
+    selectedB.forEach(s => {
+      const item = strikeMap.get(s);
+      if (item) {
+        if (item.CE) {
+          sumItmCeOi += (Number(item.CE.openInterest) || 0) * LOT_MULTIPLIER;
+          sumItmCeOiChg += (Number(item.CE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
+        }
+        if (item.PE) {
+          sumOtmPeOi += (Number(item.PE.openInterest) || 0) * LOT_MULTIPLIER;
+          sumOtmPeOiChg += (Number(item.PE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
+        }
+      }
+    });
+
+    // Include exact match strike if present
+    if (exactMatchStrike) {
+      const item = strikeMap.get(exactMatchStrike);
+      if (item) {
+        if (item.CE) {
+          sumItmCeOi += (Number(item.CE.openInterest) || 0) * LOT_MULTIPLIER;
+          sumItmCeOiChg += (Number(item.CE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
+        }
+        if (item.PE) {
+          sumItmPeOi += (Number(item.PE.openInterest) || 0) * LOT_MULTIPLIER;
+          sumItmPeOiChg += (Number(item.PE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
+        }
       }
     }
-  });
 
-  selectedB.forEach(s => {
-    const item = strikeMap.get(s);
-    if (item) {
-      if (item.CE) {
-        sumItmCeOi += (Number(item.CE.openInterest) || 0) * LOT_MULTIPLIER;
-        sumItmCeOiChg += (Number(item.CE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
-      }
-      if (item.PE) {
-        sumOtmPeOi += (Number(item.PE.openInterest) || 0) * LOT_MULTIPLIER;
-        sumOtmPeOiChg += (Number(item.PE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
-      }
+    sumVisibleCeOi = sumItmCeOi + sumOtmCeOi;
+    sumVisibleCeOiChg = sumItmCeOiChg + sumOtmCeOiChg;
+    sumVisiblePeOi = sumItmPeOi + sumOtmPeOi;
+    sumVisiblePeOiChg = sumItmPeOiChg + sumOtmPeOiChg;
+
+    // Calculate percentages for overall totals
+    const totalVisibleOiSum = sumVisibleCeOi + sumVisiblePeOi;
+    let ceOiTotalPctStr = '-';
+    let peOiTotalPctStr = '-';
+    if (totalVisibleOiSum > 0) {
+      ceOiTotalPctStr = ((sumVisibleCeOi / totalVisibleOiSum) * 100).toFixed(1) + '%';
+      peOiTotalPctStr = ((sumVisiblePeOi / totalVisibleOiSum) * 100).toFixed(1) + '%';
     }
-  });
 
-  // Include exact match strike if present
-  if (exactMatchStrike) {
-    const item = strikeMap.get(exactMatchStrike);
-    if (item) {
-      if (item.CE) {
-        sumItmCeOi += (Number(item.CE.openInterest) || 0) * LOT_MULTIPLIER;
-        sumItmCeOiChg += (Number(item.CE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
-      }
-      if (item.PE) {
-        sumItmPeOi += (Number(item.PE.openInterest) || 0) * LOT_MULTIPLIER;
-        sumItmPeOiChg += (Number(item.PE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
-      }
+    const absTotalOiChgSum = Math.abs(sumVisibleCeOiChg) + Math.abs(sumVisiblePeOiChg);
+    let ceOiChgTotalPctStr = '-';
+    let peOiChgTotalPctStr = '-';
+    if (absTotalOiChgSum > 0) {
+      ceOiChgTotalPctStr = ((Math.abs(sumVisibleCeOiChg) / absTotalOiChgSum) * 100).toFixed(1) + '%';
+      peOiChgTotalPctStr = ((Math.abs(sumVisiblePeOiChg) / absTotalOiChgSum) * 100).toFixed(1) + '%';
     }
-  }
 
-  sumVisibleCeOi = sumItmCeOi + sumOtmCeOi;
-  sumVisibleCeOiChg = sumItmCeOiChg + sumOtmCeOiChg;
-  sumVisiblePeOi = sumItmPeOi + sumOtmPeOi;
-  sumVisiblePeOiChg = sumItmPeOiChg + sumOtmPeOiChg;
-
-  // Calculate percentages for overall totals
-  const totalVisibleOiSum = sumVisibleCeOi + sumVisiblePeOi;
-  let ceOiTotalPctStr = '-';
-  let peOiTotalPctStr = '-';
-  if (totalVisibleOiSum > 0) {
-    ceOiTotalPctStr = ((sumVisibleCeOi / totalVisibleOiSum) * 100).toFixed(1) + '%';
-    peOiTotalPctStr = ((sumVisiblePeOi / totalVisibleOiSum) * 100).toFixed(1) + '%';
-  }
-
-  const absTotalOiChgSum = Math.abs(sumVisibleCeOiChg) + Math.abs(sumVisiblePeOiChg);
-  let ceOiChgTotalPctStr = '-';
-  let peOiChgTotalPctStr = '-';
-  if (absTotalOiChgSum > 0) {
-    ceOiChgTotalPctStr = ((Math.abs(sumVisibleCeOiChg) / absTotalOiChgSum) * 100).toFixed(1) + '%';
-    peOiChgTotalPctStr = ((Math.abs(sumVisiblePeOiChg) / absTotalOiChgSum) * 100).toFixed(1) + '%';
-  }
-
-  // Calculate percentages for ITM vs OTM within Calls and Puts
-  let itmCeOiPctStr = '-';
-  let otmCeOiPctStr = '-';
-  if (sumVisibleCeOi > 0) {
-    itmCeOiPctStr = ((sumItmCeOi / sumVisibleCeOi) * 100).toFixed(1) + '%';
-    otmCeOiPctStr = ((sumOtmCeOi / sumVisibleCeOi) * 100).toFixed(1) + '%';
-  }
-
-  let itmPeOiPctStr = '-';
-  let otmPeOiPctStr = '-';
-  if (sumVisiblePeOi > 0) {
-    itmPeOiPctStr = ((sumItmPeOi / sumVisiblePeOi) * 100).toFixed(1) + '%';
-    otmPeOiPctStr = ((sumOtmPeOi / sumVisiblePeOi) * 100).toFixed(1) + '%';
-  }
-
-  // Render Table Footer Rows (Row 1: OVERALL TOTALS, Row 2: ITM / OTM BREAKDOWN)
-  if (tableFoot) {
-    const totalCeChgPctVal = sumVisibleCeOi !== 0 ? ((sumVisibleCeOiChg / sumVisibleCeOi) * 100) : 0;
-    const totalCeChgPctStr = sumVisibleCeOi !== 0 ? ((totalCeChgPctVal > 0 ? '+' : '') + totalCeChgPctVal.toFixed(1) + '%') : '-';
-    const totalCeChgClass = sumVisibleCeOi !== 0 ? (totalCeChgPctVal < 0 ? 'text-negative' : (totalCeChgPctVal > 0 ? 'text-positive' : '')) : '';
-
-    const totalPeChgPctVal = sumVisiblePeOi !== 0 ? ((sumVisiblePeOiChg / sumVisiblePeOi) * 100) : 0;
-    const totalPeChgPctStr = sumVisiblePeOi !== 0 ? ((totalPeChgPctVal > 0 ? '+' : '') + totalPeChgPctVal.toFixed(1) + '%') : '-';
-    const totalPeChgClass = sumVisiblePeOi !== 0 ? (totalPeChgPctVal < 0 ? 'text-negative' : (totalPeChgPctVal > 0 ? 'text-positive' : '')) : '';
-
-    const itmCeChgPctStr = sumItmCeOi !== 0 ? (((sumItmCeOiChg / sumItmCeOi) * 100 > 0 ? '+' : '') + ((sumItmCeOiChg / sumItmCeOi) * 100).toFixed(1) + '%') : '-';
-    const otmCeChgPctStr = sumOtmCeOi !== 0 ? (((sumOtmCeOiChg / sumOtmCeOi) * 100 > 0 ? '+' : '') + ((sumOtmCeOiChg / sumOtmCeOi) * 100).toFixed(1) + '%') : '-';
-
-    const itmPeChgPctStr = sumItmPeOi !== 0 ? (((sumItmPeOiChg / sumItmPeOi) * 100 > 0 ? '+' : '') + ((sumItmPeOiChg / sumItmPeOi) * 100).toFixed(1) + '%') : '-';
-    const otmPeChgPctStr = sumOtmPeOi !== 0 ? (((sumOtmPeOiChg / sumOtmPeOi) * 100 > 0 ? '+' : '') + ((sumOtmPeOiChg / sumOtmPeOi) * 100).toFixed(1) + '%') : '-';
-
-    tableFoot.innerHTML = `
-      <!-- Row 1: TOTAL SUMMARY -->
-      <tr class="total-row">
-        <!-- CALLS (CE) TOTALS: Delta | IV | OI Chg | OI | Volume | LTP | CHG OI% | CALL OI% -->
-        <td class="total-ce col-delta">-</td>
-        <td class="total-ce col-iv">-</td>
-        <td class="total-ce col-oichg">
-          <div class="total-cell-stacked">
-            <span class="total-line-sum">${formatIndianNumber(sumVisibleCeOiChg)}</span>
-            <span class="total-line-pct">${ceOiChgTotalPctStr}</span>
-          </div>
-        </td>
-        <td class="total-ce col-oi">
-          <div class="total-cell-stacked">
-            <span class="total-line-sum">${formatIndianNumber(sumVisibleCeOi)}</span>
-            <span class="total-line-pct">${ceOiTotalPctStr}</span>
-          </div>
-        </td>
-        <td class="total-ce col-vol">-</td>
-        <td class="total-ce col-ltp">-</td>
-        <td class="total-ce col-oichg-pct">
-          <div class="total-cell-stacked">
-            <span class="total-line-sum ${totalCeChgClass}"><strong>${totalCeChgPctStr}</strong></span>
-          </div>
-        </td>
-        <td class="total-ce col-oi-pct">
-          <div class="total-cell-stacked">
-            <span class="total-line-pct">${ceOiTotalPctStr}</span>
-          </div>
-        </td>
-
-        <!-- STRIKE TOTAL LABEL -->
-        <td class="total-strike col-strike">TOTAL (${visibleStrikes.length})</td>
-
-        <!-- PUTS (PE) TOTALS: PUT OI% | CHG OI% | LTP | Volume | OI | OI Chg | IV | Delta -->
-        <td class="total-pe col-oi-pct">
-          <div class="total-cell-stacked">
-            <span class="total-line-pct">${peOiTotalPctStr}</span>
-          </div>
-        </td>
-        <td class="total-pe col-oichg-pct">
-          <div class="total-cell-stacked">
-            <span class="total-line-sum ${totalPeChgClass}"><strong>${totalPeChgPctStr}</strong></span>
-          </div>
-        </td>
-        <td class="total-pe col-ltp">-</td>
-        <td class="total-pe col-vol">-</td>
-        <td class="total-pe col-oi">
-          <div class="total-cell-stacked">
-            <span class="total-line-sum">${formatIndianNumber(sumVisiblePeOi)}</span>
-            <span class="total-line-pct">${peOiTotalPctStr}</span>
-          </div>
-        </td>
-        <td class="total-pe col-oichg">
-          <div class="total-cell-stacked">
-            <span class="total-line-sum">${formatIndianNumber(sumVisiblePeOiChg)}</span>
-            <span class="total-line-pct">${peOiChgTotalPctStr}</span>
-          </div>
-        </td>
-        <td class="total-pe col-iv">-</td>
-        <td class="total-pe col-delta">-</td>
-      </tr>
-
-      <!-- Row 2: ITM & OTM BREAKDOWN (Realtime based on visible entries) -->
-      <tr class="breakdown-row">
-        <!-- CALLS (CE) ITM / OTM: Delta | IV | OI Chg | OI | Volume | LTP | CHG OI% | CALL OI% -->
-        <td class="breakdown-ce col-delta">-</td>
-        <td class="breakdown-ce col-iv">-</td>
-        <td class="breakdown-ce col-oichg">
-          <div class="breakdown-cell-stacked">
-            <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${formatIndianNumber(sumItmCeOiChg)}</span></div>
-            <div class="breakdown-line"><span class="tag-otm">OTM</span><span class="val-otm">${formatIndianNumber(sumOtmCeOiChg)}</span></div>
-          </div>
-        </td>
-        <td class="breakdown-ce col-oi">
-          <div class="breakdown-cell-stacked">
-            <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${formatIndianNumber(sumItmCeOi)}</span></div>
-            <div class="breakdown-line"><span class="tag-otm">OTM</span><span class="val-otm">${formatIndianNumber(sumOtmCeOi)}</span></div>
-          </div>
-        </td>
-        <td class="breakdown-ce col-vol">-</td>
-        <td class="breakdown-ce col-ltp">-</td>
-        <td class="breakdown-ce col-oichg-pct">
-          <div class="breakdown-cell-stacked">
-            <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${itmCeChgPctStr}</span></div>
-            <div class="breakdown-line"><span class="tag-otm">OTM</span><span class="val-otm">${otmCeChgPctStr}</span></div>
-          </div>
-        </td>
-        <td class="breakdown-ce col-oi-pct">
-          <div class="breakdown-cell-stacked">
-            <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${itmCeOiPctStr}</span></div>
-            <div class="breakdown-line"><span class="tag-otm">OTM</span><span class="val-otm">${otmCeOiPctStr}</span></div>
-          </div>
-        </td>
-
-        <!-- STRIKE BREAKDOWN LABEL -->
-        <td class="breakdown-strike col-strike">ITM / OTM</td>
-
-        <!-- PUTS (PE) ITM / OTM: PUT OI% | CHG OI% | LTP | Volume | OI | OI Chg | IV | Delta -->
-        <td class="breakdown-pe col-oi-pct">
-          <div class="breakdown-cell-stacked">
-            <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${itmPeOiPctStr}</span></div>
-            <div class="breakdown-line"><span class="tag-otm">OTM</span><span class="val-otm">${otmPeOiPctStr}</span></div>
-          </div>
-        </td>
-        <td class="breakdown-pe col-oichg-pct">
-          <div class="breakdown-cell-stacked">
-            <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${itmPeChgPctStr}</span></div>
-            <div class="breakdown-line"><span class="tag-otm">OTM</span><span class="val-otm">${otmPeChgPctStr}</span></div>
-          </div>
-        </td>
-        <td class="breakdown-pe col-ltp">-</td>
-        <td class="breakdown-pe col-vol">-</td>
-        <td class="breakdown-pe col-oi">
-          <div class="breakdown-cell-stacked">
-            <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${formatIndianNumber(sumItmPeOi)}</span></div>
-            <div class="breakdown-line"><span class="tag-otm">OTM</span><span class="val-otm">${formatIndianNumber(sumOtmPeOi)}</span></div>
-          </div>
-        </td>
-        <td class="breakdown-pe col-oichg">
-          <div class="breakdown-cell-stacked">
-            <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${formatIndianNumber(sumItmPeOiChg)}</span></div>
-            <div class="breakdown-line"><span class="tag-otm">OTM</span><span class="val-otm">${formatIndianNumber(sumOtmPeOiChg)}</span></div>
-          </div>
-        </td>
-        <td class="breakdown-pe col-iv">-</td>
-        <td class="breakdown-pe col-delta">-</td>
-      </tr>
-    `;
-  }
-
-  // Auto-scroll table container internally to center the spot baseline divider row
-  setTimeout(() => {
-    const tableContainer = document.querySelector('.table-container');
-    const spotRow = document.getElementById('spotDividerRow');
-    if (tableContainer && spotRow) {
-      const containerHeight = tableContainer.clientHeight;
-      const rowOffsetTop = spotRow.offsetTop;
-      const rowHeight = spotRow.clientHeight;
-      tableContainer.scrollTop = rowOffsetTop - (containerHeight / 2) + (rowHeight / 2);
+    // Calculate percentages for ITM vs OTM within Calls and Puts
+    let itmCeOiPctStr = '-';
+    let otmCeOiPctStr = '-';
+    if (sumVisibleCeOi > 0) {
+      itmCeOiPctStr = ((sumItmCeOi / sumVisibleCeOi) * 100).toFixed(1) + '%';
+      otmCeOiPctStr = ((sumOtmCeOi / sumVisibleCeOi) * 100).toFixed(1) + '%';
     }
-  }, 30);
+
+    let itmPeOiPctStr = '-';
+    let otmPeOiPctStr = '-';
+    if (sumVisiblePeOi > 0) {
+      itmPeOiPctStr = ((sumItmPeOi / sumVisiblePeOi) * 100).toFixed(1) + '%';
+      otmPeOiPctStr = ((sumOtmPeOi / sumVisiblePeOi) * 100).toFixed(1) + '%';
+    }
+
+    // Render Table Footer Rows (Row 1: OVERALL TOTALS, Row 2: ITM / OTM BREAKDOWN)
+    if (tableFoot) {
+      const totalCeChgPctVal = sumVisibleCeOi !== 0 ? ((sumVisibleCeOiChg / sumVisibleCeOi) * 100) : 0;
+      const totalCeChgPctStr = sumVisibleCeOi !== 0 ? ((totalCeChgPctVal > 0 ? '+' : '') + totalCeChgPctVal.toFixed(1) + '%') : '-';
+      const totalCeChgClass = sumVisibleCeOi !== 0 ? (totalCeChgPctVal < 0 ? 'text-negative' : (totalCeChgPctVal > 0 ? 'text-positive' : '')) : '';
+
+      const totalPeChgPctVal = sumVisiblePeOi !== 0 ? ((sumVisiblePeOiChg / sumVisiblePeOi) * 100) : 0;
+      const totalPeChgPctStr = sumVisiblePeOi !== 0 ? ((totalPeChgPctVal > 0 ? '+' : '') + totalPeChgPctVal.toFixed(1) + '%') : '-';
+      const totalPeChgClass = sumVisiblePeOi !== 0 ? (totalPeChgPctVal < 0 ? 'text-negative' : (totalPeChgPctVal > 0 ? 'text-positive' : '')) : '';
+
+      const itmCeChgPctStr = sumItmCeOi !== 0 ? (((sumItmCeOiChg / sumItmCeOi) * 100 > 0 ? '+' : '') + ((sumItmCeOiChg / sumItmCeOi) * 100).toFixed(1) + '%') : '-';
+      const otmCeChgPctStr = sumOtmCeOi !== 0 ? (((sumOtmCeOiChg / sumOtmCeOi) * 100 > 0 ? '+' : '') + ((sumOtmCeOiChg / sumOtmCeOi) * 100).toFixed(1) + '%') : '-';
+
+      const itmPeChgPctStr = sumItmPeOi !== 0 ? (((sumItmPeOiChg / sumItmPeOi) * 100 > 0 ? '+' : '') + ((sumItmPeOiChg / sumItmPeOi) * 100).toFixed(1) + '%') : '-';
+      const otmPeChgPctStr = sumOtmPeOi !== 0 ? (((sumOtmPeOiChg / sumOtmPeOi) * 100 > 0 ? '+' : '') + ((sumOtmPeOiChg / sumOtmPeOi) * 100).toFixed(1) + '%') : '-';
+
+      tableFoot.innerHTML = `
+        <!-- Row 1: TOTAL SUMMARY -->
+        <tr class="total-row">
+          <!-- CALLS (CE) TOTALS: Delta | IV | OI Chg | OI | Volume | LTP | CHG OI% | CALL OI% -->
+          <td class="total-ce col-delta">-</td>
+          <td class="total-ce col-iv">-</td>
+          <td class="total-ce col-oichg">
+            <div class="total-cell-stacked">
+              <span class="total-line-sum">${formatIndianNumber(sumVisibleCeOiChg)}</span>
+              <span class="total-line-pct">${ceOiChgTotalPctStr}</span>
+            </div>
+          </td>
+          <td class="total-ce col-oi">
+            <div class="total-cell-stacked">
+              <span class="total-line-sum">${formatIndianNumber(sumVisibleCeOi)}</span>
+              <span class="total-line-pct">${ceOiTotalPctStr}</span>
+            </div>
+          </td>
+          <td class="total-ce col-vol">-</td>
+          <td class="total-ce col-ltp">-</td>
+          <td class="total-ce col-oichg-pct">
+            <div class="total-cell-stacked">
+              <span class="total-line-sum ${totalCeChgClass}"><strong>${totalCeChgPctStr}</strong></span>
+            </div>
+          </td>
+          <td class="total-ce col-oi-pct">
+            <div class="total-cell-stacked">
+              <span class="total-line-pct">${ceOiTotalPctStr}</span>
+            </div>
+          </td>
+
+          <!-- STRIKE TOTAL LABEL -->
+          <td class="total-strike col-strike">TOTAL (${visibleStrikes.length})</td>
+
+          <!-- PUTS (PE) TOTALS: PUT OI% | CHG OI% | LTP | Volume | OI | OI Chg | IV | Delta -->
+          <td class="total-pe col-oi-pct">
+            <div class="total-cell-stacked">
+              <span class="total-line-pct">${peOiTotalPctStr}</span>
+            </div>
+          </td>
+          <td class="total-pe col-oichg-pct">
+            <div class="total-cell-stacked">
+              <span class="total-line-sum ${totalPeChgClass}"><strong>${totalPeChgPctStr}</strong></span>
+            </div>
+          </td>
+          <td class="total-pe col-ltp">-</td>
+          <td class="total-pe col-vol">-</td>
+          <td class="total-pe col-oi">
+            <div class="total-cell-stacked">
+              <span class="total-line-sum">${formatIndianNumber(sumVisiblePeOi)}</span>
+              <span class="total-line-pct">${peOiTotalPctStr}</span>
+            </div>
+          </td>
+          <td class="total-pe col-oichg">
+            <div class="total-cell-stacked">
+              <span class="total-line-sum">${formatIndianNumber(sumVisiblePeOiChg)}</span>
+              <span class="total-line-pct">${peOiChgTotalPctStr}</span>
+            </div>
+          </td>
+          <td class="total-pe col-iv">-</td>
+          <td class="total-pe col-delta">-</td>
+        </tr>
+
+        <!-- Row 2: ITM & OTM BREAKDOWN (Realtime based on visible entries) -->
+        <tr class="breakdown-row">
+          <!-- CALLS (CE) ITM / OTM: Delta | IV | OI Chg | OI | Volume | LTP | CHG OI% | CALL OI% -->
+          <td class="breakdown-ce col-delta">-</td>
+          <td class="breakdown-ce col-iv">-</td>
+          <td class="breakdown-ce col-oichg">
+            <div class="breakdown-cell-stacked">
+              <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${formatIndianNumber(sumItmCeOiChg)}</span></div>
+              <div class="breakdown-line"><span class="tag-otm">OTM</span><span class="val-otm">${formatIndianNumber(sumOtmCeOiChg)}</span></div>
+            </div>
+          </td>
+          <td class="breakdown-ce col-oi">
+            <div class="breakdown-cell-stacked">
+              <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${formatIndianNumber(sumItmCeOi)}</span></div>
+              <div class="breakdown-line"><span class="tag-otm">OTM</span><span class="val-otm">${formatIndianNumber(sumOtmCeOi)}</span></div>
+            </div>
+          </td>
+          <td class="breakdown-ce col-vol">-</td>
+          <td class="breakdown-ce col-ltp">-</td>
+          <td class="breakdown-ce col-oichg-pct">
+            <div class="breakdown-cell-stacked">
+              <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${itmCeChgPctStr}</span></div>
+              <div class="breakdown-line"><span class="tag-otm">OTM</span><span class="val-otm">${otmCeChgPctStr}</span></div>
+            </div>
+          </td>
+          <td class="breakdown-ce col-oi-pct">
+            <div class="breakdown-cell-stacked">
+              <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${itmCeOiPctStr}</span></div>
+              <div class="breakdown-line"><span class="tag-otm">OTM</span><span class="val-otm">${otmCeOiPctStr}</span></div>
+            </div>
+          </td>
+
+          <!-- STRIKE BREAKDOWN LABEL -->
+          <td class="breakdown-strike col-strike">ITM / OTM</td>
+
+          <!-- PUTS (PE) ITM / OTM: PUT OI% | CHG OI% | LTP | Volume | OI | OI Chg | IV | Delta -->
+          <td class="breakdown-pe col-oi-pct">
+            <div class="breakdown-cell-stacked">
+              <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${itmPeOiPctStr}</span></div>
+              <div class="breakdown-line"><span class="tag-otm">OTM</span><span class="val-otm">${otmPeOiPctStr}</span></div>
+            </div>
+          </td>
+          <td class="breakdown-pe col-oichg-pct">
+            <div class="breakdown-cell-stacked">
+              <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${itmPeChgPctStr}</span></div>
+              <div class="breakdown-line"><span class="tag-otm">OTM</span><span class="val-otm">${otmPeChgPctStr}</span></div>
+            </div>
+          </td>
+          <td class="breakdown-pe col-ltp">-</td>
+          <td class="breakdown-pe col-vol">-</td>
+          <td class="breakdown-pe col-oi">
+            <div class="breakdown-cell-stacked">
+              <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${formatIndianNumber(sumItmPeOi)}</span></div>
+              <div class="breakdown-line"><span class="tag-otm">OTM</span><span class="val-otm">${formatIndianNumber(sumOtmPeOi)}</span></div>
+            </div>
+          </td>
+          <td class="breakdown-pe col-oichg">
+            <div class="breakdown-cell-stacked">
+              <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${formatIndianNumber(sumItmPeOiChg)}</span></div>
+              <div class="breakdown-line"><span class="tag-otm">OTM</span><span class="val-otm">${formatIndianNumber(sumOtmPeOiChg)}</span></div>
+            </div>
+          </td>
+          <td class="breakdown-pe col-iv">-</td>
+          <td class="breakdown-pe col-delta">-</td>
+        </tr>
+      `;
+    }
+
+    // Auto-scroll table container internally to center the spot baseline divider row
+    setTimeout(() => {
+      const tableContainer = document.querySelector('.table-container');
+      const spotRow = document.getElementById('spotDividerRow');
+      if (tableContainer && spotRow) {
+        const containerHeight = tableContainer.clientHeight;
+        const rowOffsetTop = spotRow.offsetTop;
+        const rowHeight = spotRow.clientHeight;
+        tableContainer.scrollTop = rowOffsetTop - (containerHeight / 2) + (rowHeight / 2);
+      }
+    }, 30);
+  } catch (err) {
+    console.error('Error in renderTable:', err);
+  }
 }
 
 // Event Listeners
