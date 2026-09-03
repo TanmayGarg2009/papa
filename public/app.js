@@ -1513,108 +1513,113 @@ function renderTable(payload) {
           </td>
         </tr>
 
-        <!-- Row 2: ITM & OTM BREAKDOWN (All 17 Columns Populated) -->
+        <!-- Row 2: ITM & OTM BREAKDOWN (All 17 Columns Populated cleanly without clutter) -->
         <tr class="breakdown-row">
           <!-- CALLS (CE) ITM / OTM: Delta | IV | OI Chg | OI | Volume | LTP | CHG OI% | CALL OI% -->
           <td class="breakdown-ce col-delta">
             <div class="breakdown-cell-stacked">
-              <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${itmCeDeltaStr}</span></div>
-              <div class="breakdown-line"><span class="tag-otm">OTM</span><span class="val-otm">${otmCeDeltaStr}</span></div>
+              <span class="val-itm">${itmCeDeltaStr}</span>
+              <span class="val-otm">${otmCeDeltaStr}</span>
             </div>
           </td>
           <td class="breakdown-ce col-iv">
             <div class="breakdown-cell-stacked">
-              <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${itmCeIvStr}</span></div>
-              <div class="breakdown-line"><span class="tag-otm">OTM</span><span class="val-otm">${otmCeIvStr}</span></div>
+              <span class="val-itm">${itmCeIvStr}</span>
+              <span class="val-otm">${otmCeIvStr}</span>
             </div>
           </td>
           <td class="breakdown-ce col-oichg">
             <div class="breakdown-cell-stacked">
-              <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${formatIndianNumber(sumItmCeOiChg)}</span></div>
-              <div class="breakdown-line"><span class="tag-otm">OTM</span><span class="val-otm">${formatIndianNumber(sumOtmCeOiChg)}</span></div>
+              <span class="val-itm">${formatIndianNumber(sumItmCeOiChg)}</span>
+              <span class="val-otm">${formatIndianNumber(sumOtmCeOiChg)}</span>
             </div>
           </td>
           <td class="breakdown-ce col-oi">
             <div class="breakdown-cell-stacked">
-              <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${formatIndianNumber(sumItmCeOi)}</span></div>
-              <div class="breakdown-line"><span class="tag-otm">OTM</span><span class="val-otm">${formatIndianNumber(sumOtmCeOi)}</span></div>
+              <span class="val-itm">${formatIndianNumber(sumItmCeOi)}</span>
+              <span class="val-otm">${formatIndianNumber(sumOtmCeOi)}</span>
             </div>
           </td>
           <td class="breakdown-ce col-vol">
             <div class="breakdown-cell-stacked">
-              <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${formatIndianNumber(sumItmCeVol)}</span></div>
-              <div class="breakdown-line"><span class="tag-otm">OTM</span><span class="val-otm">${formatIndianNumber(sumOtmCeVol)}</span></div>
+              <span class="val-itm">${formatIndianNumber(sumItmCeVol)}</span>
+              <span class="val-otm">${formatIndianNumber(sumOtmCeVol)}</span>
             </div>
           </td>
           <td class="breakdown-ce col-ltp">
             <div class="breakdown-cell-stacked">
-              <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${itmCeLtpStr}</span></div>
-              <div class="breakdown-line"><span class="tag-otm">OTM</span><span class="val-otm">${otmCeLtpStr}</span></div>
+              <span class="val-itm">${itmCeLtpStr}</span>
+              <span class="val-otm">${otmCeLtpStr}</span>
             </div>
           </td>
           <td class="breakdown-ce col-oichg-pct">
             <div class="breakdown-cell-stacked">
-              <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${itmCeChgPctStr}</span></div>
-              <div class="breakdown-line"><span class="tag-otm">OTM</span><span class="val-otm">${otmCeChgPctStr}</span></div>
+              <span class="val-itm">${itmCeChgPctStr}</span>
+              <span class="val-otm">${otmCeChgPctStr}</span>
             </div>
           </td>
           <td class="breakdown-ce col-oi-pct">
             <div class="breakdown-cell-stacked">
-              <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${itmCeOiPctStr}</span></div>
-              <div class="breakdown-line"><span class="tag-otm">OTM</span><span class="val-otm">${otmCeOiPctStr}</span></div>
+              <span class="val-itm">${itmCeOiPctStr}</span>
+              <span class="val-otm">${otmCeOiPctStr}</span>
             </div>
           </td>
 
-          <!-- STRIKE BREAKDOWN LABEL -->
-          <td class="breakdown-strike col-strike">ITM / OTM</td>
+          <!-- STRIKE BREAKDOWN LABEL (Labels row 1 as ITM and row 2 as OTM) -->
+          <td class="breakdown-strike col-strike">
+            <div class="breakdown-cell-stacked">
+              <span class="val-itm-label">ITM</span>
+              <span class="val-otm-label">OTM</span>
+            </div>
+          </td>
 
           <!-- PUTS (PE) ITM / OTM: PUT OI% | CHG OI% | LTP | Volume | OI | OI Chg | IV | Delta -->
           <td class="breakdown-pe col-oi-pct">
             <div class="breakdown-cell-stacked">
-              <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${itmPeOiPctStr}</span></div>
-              <div class="breakdown-line"><span class="tag-otm">OTM</span><span class="val-otm">${otmPeOiPctStr}</span></div>
+              <span class="val-itm">${itmPeOiPctStr}</span>
+              <span class="val-otm">${otmPeOiPctStr}</span>
             </div>
           </td>
           <td class="breakdown-pe col-oichg-pct">
             <div class="breakdown-cell-stacked">
-              <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${itmPeChgPctStr}</span></div>
-              <div class="breakdown-line"><span class="tag-otm">OTM</span><span class="val-otm">${otmPeChgPctStr}</span></div>
+              <span class="val-itm">${itmPeChgPctStr}</span>
+              <span class="val-otm">${otmPeChgPctStr}</span>
             </div>
           </td>
           <td class="breakdown-pe col-ltp">
             <div class="breakdown-cell-stacked">
-              <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${itmPeLtpStr}</span></div>
-              <div class="breakdown-line"><span class="tag-otm">OTM</span><span class="val-otm">${otmPeLtpStr}</span></div>
+              <span class="val-itm">${itmPeLtpStr}</span>
+              <span class="val-otm">${otmPeLtpStr}</span>
             </div>
           </td>
           <td class="breakdown-pe col-vol">
             <div class="breakdown-cell-stacked">
-              <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${formatIndianNumber(sumItmPeVol)}</span></div>
-              <div class="breakdown-line"><span class="tag-otm">OTM</span><span class="val-otm">${formatIndianNumber(sumOtmPeVol)}</span></div>
+              <span class="val-itm">${formatIndianNumber(sumItmPeVol)}</span>
+              <span class="val-otm">${formatIndianNumber(sumOtmPeVol)}</span>
             </div>
           </td>
           <td class="breakdown-pe col-oi">
             <div class="breakdown-cell-stacked">
-              <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${formatIndianNumber(sumItmPeOi)}</span></div>
-              <div class="breakdown-line"><span class="tag-otm">OTM</span><span class="val-otm">${formatIndianNumber(sumOtmPeOi)}</span></div>
+              <span class="val-itm">${formatIndianNumber(sumItmPeOi)}</span>
+              <span class="val-otm">${formatIndianNumber(sumOtmPeOi)}</span>
             </div>
           </td>
           <td class="breakdown-pe col-oichg">
             <div class="breakdown-cell-stacked">
-              <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${formatIndianNumber(sumItmPeOiChg)}</span></div>
-              <div class="breakdown-line"><span class="tag-otm">OTM</span><span class="val-otm">${formatIndianNumber(sumOtmPeOiChg)}</span></div>
+              <span class="val-itm">${formatIndianNumber(sumItmPeOiChg)}</span>
+              <span class="val-otm">${formatIndianNumber(sumOtmPeOiChg)}</span>
             </div>
           </td>
           <td class="breakdown-pe col-iv">
             <div class="breakdown-cell-stacked">
-              <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${itmPeIvStr}</span></div>
-              <div class="breakdown-line"><span class="tag-otm">OTM</span><span class="val-otm">${otmPeIvStr}</span></div>
+              <span class="val-itm">${itmPeIvStr}</span>
+              <span class="val-otm">${otmPeIvStr}</span>
             </div>
           </td>
           <td class="breakdown-pe col-delta">
             <div class="breakdown-cell-stacked">
-              <div class="breakdown-line"><span class="tag-itm">ITM</span><span class="val-itm">${itmPeDeltaStr}</span></div>
-              <div class="breakdown-line"><span class="tag-otm">OTM</span><span class="val-otm">${otmPeDeltaStr}</span></div>
+              <span class="val-itm">${itmPeDeltaStr}</span>
+              <span class="val-otm">${otmPeDeltaStr}</span>
             </div>
           </td>
         </tr>
