@@ -198,6 +198,37 @@ function isMarketActiveHoursIST() {
   return timeInMinutes >= 420 && timeInMinutes < 960;
 }
 
+// Background Worker Timer for 100% reliable execution in background / inactive tabs
+let bgWorker = null;
+let nextRefreshTimestamp = null;
+let isFetchingNow = false;
+
+try {
+  const workerScript = `
+    let intervalId = null;
+    self.onmessage = function(e) {
+      if (e.data === 'start') {
+        if (intervalId) clearInterval(intervalId);
+        intervalId = setInterval(() => {
+          self.postMessage('tick');
+        }, 1000);
+      } else if (e.data === 'stop') {
+        if (intervalId) clearInterval(intervalId);
+        intervalId = null;
+      }
+    };
+  `;
+  const blob = new Blob([workerScript], { type: 'application/javascript' });
+  bgWorker = new Worker(URL.createObjectURL(blob));
+  bgWorker.onmessage = function(e) {
+    if (e.data === 'tick') {
+      onTimerTick();
+    }
+  };
+} catch (e) {
+  console.warn('Web Worker background timer fallback', e);
+}
+
 // Start Configurable Countdown Timer (Runs 7:00 AM - 4:00 PM IST; Pauses after 4:00 PM)
 function startAutoRefreshTimer(resetToMax = true) {
   if (timerCountdownInterval) {
@@ -210,6 +241,7 @@ function startAutoRefreshTimer(resetToMax = true) {
     if (timerDisplay) {
       timerDisplay.textContent = 'Paused (Resumes 7 AM)';
     }
+    if (bgWorker) bgWorker.postMessage('stop');
     // Background watcher to automatically resume auto-refresh when morning 7:00 AM IST arrives
     timerCountdownInterval = setInterval(() => {
       if (isMarketActiveHoursIST()) {
@@ -221,28 +253,74 @@ function startAutoRefreshTimer(resetToMax = true) {
     return;
   }
 
-  if (resetToMax) {
+  if (resetToMax || !nextRefreshTimestamp || Date.now() >= nextRefreshTimestamp) {
+    nextRefreshTimestamp = Date.now() + (refreshCooldownSeconds * 1000);
     timerSecondsRemaining = refreshCooldownSeconds;
+  } else {
+    const remainingMs = nextRefreshTimestamp - Date.now();
+    timerSecondsRemaining = Math.max(0, Math.ceil(remainingMs / 1000));
   }
   updateTimerDisplay();
 
-  timerCountdownInterval = setInterval(() => {
-    // If time passes 4:00 PM IST during countdown, pause auto-refresh
-    if (!isMarketActiveHoursIST()) {
-      clearInterval(timerCountdownInterval);
-      startAutoRefreshTimer(false);
-      return;
-    }
-
-    timerSecondsRemaining--;
-    updateTimerDisplay();
-
-    if (timerSecondsRemaining <= 0) {
-      clearInterval(timerCountdownInterval);
-      fetchOptionChain(true); // Auto trigger
-    }
-  }, 1000);
+  if (bgWorker) {
+    bgWorker.postMessage('start');
+  } else {
+    timerCountdownInterval = setInterval(() => {
+      onTimerTick();
+    }, 1000);
+  }
 }
+
+function onTimerTick() {
+  if (!isMarketActiveHoursIST()) {
+    startAutoRefreshTimer(false);
+    return;
+  }
+
+  if (!nextRefreshTimestamp) {
+    nextRefreshTimestamp = Date.now() + (refreshCooldownSeconds * 1000);
+  }
+
+  const remainingMs = nextRefreshTimestamp - Date.now();
+  timerSecondsRemaining = Math.max(0, Math.ceil(remainingMs / 1000));
+  updateTimerDisplay();
+
+  if (remainingMs <= 0) {
+    if (bgWorker) bgWorker.postMessage('stop');
+    if (timerCountdownInterval) {
+      clearInterval(timerCountdownInterval);
+      timerCountdownInterval = null;
+    }
+    if (!isFetchingNow) {
+      fetchOptionChain(true);
+    }
+  }
+}
+
+// Ensure instant refresh catch-up when tab regains visibility or focus
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && isMarketActiveHoursIST()) {
+    const remainingMs = nextRefreshTimestamp ? (nextRefreshTimestamp - Date.now()) : 0;
+    if (remainingMs <= 0) {
+      if (!isFetchingNow) fetchOptionChain(true);
+    } else {
+      timerSecondsRemaining = Math.max(0, Math.ceil(remainingMs / 1000));
+      updateTimerDisplay();
+    }
+  }
+});
+
+window.addEventListener('focus', () => {
+  if (isMarketActiveHoursIST()) {
+    const remainingMs = nextRefreshTimestamp ? (nextRefreshTimestamp - Date.now()) : 0;
+    if (remainingMs <= 0) {
+      if (!isFetchingNow) fetchOptionChain(true);
+    } else {
+      timerSecondsRemaining = Math.max(0, Math.ceil(remainingMs / 1000));
+      updateTimerDisplay();
+    }
+  }
+});
 
 function updateTimerDisplay() {
   if (!isMarketActiveHoursIST()) {
@@ -258,6 +336,7 @@ function updateTimerDisplay() {
 // Fetch Option Chain Data from Local Proxy Server
 async function fetchOptionChain(isAutoRefresh = false) {
   try {
+    isFetchingNow = true;
     statusBadge.className = 'status-badge';
     statusText.textContent = 'Fetching...';
 
@@ -328,6 +407,7 @@ async function fetchOptionChain(isAutoRefresh = false) {
       tableBody.innerHTML = `<tr><td colspan="15" style="text-align:center; padding: 25px; color: #ef4444; font-weight: 600;">Data fetch failed: ${failureReason}. No previous data available.</td></tr>`;
     }
   } finally {
+    isFetchingNow = false;
     // Re-schedule next timer based on configured cooldown
     startAutoRefreshTimer(true);
   }
@@ -441,8 +521,33 @@ function renderTable(payload) {
 
     const LOT_MULTIPLIER = 65;
 
-    // Find max values for badge highlights and compute fallback ATM IV
-    const visibleStrikes = [...selectedA, ...(exactMatchStrike ? [exactMatchStrike] : []), ...selectedB];
+    // -------------------------------------------------------------
+    // Calculate 100% Benchmarks:
+    // CALLS (CE): 100% is taken ONLY from 1st ITM row (closest strike < spot, or exact match)
+    //             to the last OTM row (highest visible strike > spot).
+    // PUTS (PE):  100% is taken ONLY from 1st ITM row (closest strike > spot, or exact match)
+    //             to the last OTM row (lowest visible strike < spot).
+    // Deep ITM rows calculate relative percentage with respect to this 100% benchmark (e.g. 113%).
+    // -------------------------------------------------------------
+
+    // 1st ITM strike for Calls (closest strike < spot, or exact match if present)
+    const firstItmCeStrike = exactMatchStrike ?? (setB_Strikes.length > 0 ? setB_Strikes[0] : null);
+    // OTM strikes for Calls (all strikes > spot displayed)
+    const otmCeStrikes = selectedA;
+    const ceBenchmarkStrikes = [
+      ...(firstItmCeStrike !== null && firstItmCeStrike !== undefined ? [firstItmCeStrike] : []),
+      ...otmCeStrikes
+    ];
+
+    // 1st ITM strike for Puts (closest strike > spot, or exact match if present)
+    const firstItmPeStrike = exactMatchStrike ?? (setA_Strikes.length > 0 ? setA_Strikes[0] : null);
+    // OTM strikes for Puts (all strikes < spot displayed)
+    const otmPeStrikes = selectedB;
+    const peBenchmarkStrikes = [
+      ...(firstItmPeStrike !== null && firstItmPeStrike !== undefined ? [firstItmPeStrike] : []),
+      ...otmPeStrikes
+    ];
+
     let maxCeOI = 0;
     let maxCeVol = 0;
     let maxCeOiChg = 0;
@@ -451,27 +556,39 @@ function renderTable(payload) {
     let maxPeOiChg = 0;
     const validIvs = [];
 
+    // 1. Scan CE Benchmark Range [1st ITM ... all OTM] for 100% Max CE OI, Vol, OI Chg
+    ceBenchmarkStrikes.forEach(s => {
+      const r = strikeMap.get(s);
+      if (r && r.CE) {
+        const ceOi = (Number(r.CE.openInterest) || 0) * LOT_MULTIPLIER;
+        const ceOiChg = (Number(r.CE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
+        const ceVol = (Number(r.CE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
+        if (ceOi > maxCeOI) maxCeOI = ceOi;
+        if (ceVol > maxCeVol) maxCeVol = ceVol;
+        if (ceOiChg > maxCeOiChg) maxCeOiChg = ceOiChg;
+      }
+    });
+
+    // 2. Scan PE Benchmark Range [1st ITM ... all OTM] for 100% Max PE OI, Vol, OI Chg
+    peBenchmarkStrikes.forEach(s => {
+      const r = strikeMap.get(s);
+      if (r && r.PE) {
+        const peOi = (Number(r.PE.openInterest) || 0) * LOT_MULTIPLIER;
+        const peOiChg = (Number(r.PE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
+        const peVol = (Number(r.PE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
+        if (peOi > maxPeOI) maxPeOI = peOi;
+        if (peVol > maxPeVol) maxPeVol = peVol;
+        if (peOiChg > maxPeOiChg) maxPeOiChg = peOiChg;
+      }
+    });
+
+    // Collect valid IVs from all visible strikes for quantitative Delta calculation
+    const visibleStrikes = [...selectedA, ...(exactMatchStrike ? [exactMatchStrike] : []), ...selectedB];
     visibleStrikes.forEach(s => {
       const r = strikeMap.get(s);
       if (r) {
-        if (r.CE) {
-          const ceOi = (Number(r.CE.openInterest) || 0) * LOT_MULTIPLIER;
-          const ceOiChg = (Number(r.CE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
-          const ceVol = (Number(r.CE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
-          if (ceOi > maxCeOI) maxCeOI = ceOi;
-          if (ceVol > maxCeVol) maxCeVol = ceVol;
-          if (ceOiChg > maxCeOiChg) maxCeOiChg = ceOiChg;
-          if (Number(r.CE.impliedVolatility) > 0) validIvs.push(Number(r.CE.impliedVolatility));
-        }
-        if (r.PE) {
-          const peOi = (Number(r.PE.openInterest) || 0) * LOT_MULTIPLIER;
-          const peOiChg = (Number(r.PE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
-          const peVol = (Number(r.PE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
-          if (peOi > maxPeOI) maxPeOI = peOi;
-          if (peVol > maxPeVol) maxPeVol = peVol;
-          if (peOiChg > maxPeOiChg) maxPeOiChg = peOiChg;
-          if (Number(r.PE.impliedVolatility) > 0) validIvs.push(Number(r.PE.impliedVolatility));
-        }
+        if (r.CE && Number(r.CE.impliedVolatility) > 0) validIvs.push(Number(r.CE.impliedVolatility));
+        if (r.PE && Number(r.PE.impliedVolatility) > 0) validIvs.push(Number(r.PE.impliedVolatility));
       }
     });
 
@@ -486,16 +603,14 @@ function renderTable(payload) {
     let resistanceStrike3 = null;
 
     // Check 1st ITM strike for Calls (or exact match if present)
-    const candidateCeItmStrikes = exactMatchStrike ? [exactMatchStrike, ...setB_Strikes] : setB_Strikes;
-    if (candidateCeItmStrikes.length > 0) {
-      const firstItmCe = candidateCeItmStrikes[0];
-      const item = strikeMap.get(firstItmCe);
+    if (firstItmCeStrike !== null && firstItmCeStrike !== undefined) {
+      const item = strikeMap.get(firstItmCeStrike);
       if (item && item.CE) {
         const oi = (Number(item.CE.openInterest) || 0) * LOT_MULTIPLIER;
         const oic = (Number(item.CE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
         const vol = (Number(item.CE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
         if ((maxCeOI > 0 && oi === maxCeOI) || (maxCeOiChg > 0 && oic === maxCeOiChg) || (maxCeVol > 0 && vol === maxCeVol)) {
-          resistanceStrike3 = firstItmCe;
+          resistanceStrike3 = firstItmCeStrike;
         }
       }
     }
@@ -520,14 +635,13 @@ function renderTable(payload) {
     // Calculate Resistance (R2: 2 Params [OI, Volume ONLY]) for CALLS (CE):
     // -------------------------------------------------------------
     let resistanceStrike2 = null;
-    if (candidateCeItmStrikes.length > 0) {
-      const firstItmCe = candidateCeItmStrikes[0];
-      const item = strikeMap.get(firstItmCe);
+    if (firstItmCeStrike !== null && firstItmCeStrike !== undefined) {
+      const item = strikeMap.get(firstItmCeStrike);
       if (item && item.CE) {
         const oi = (Number(item.CE.openInterest) || 0) * LOT_MULTIPLIER;
         const vol = (Number(item.CE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
         if ((maxCeOI > 0 && oi === maxCeOI) || (maxCeVol > 0 && vol === maxCeVol)) {
-          resistanceStrike2 = firstItmCe;
+          resistanceStrike2 = firstItmCeStrike;
         }
       }
     }
@@ -554,16 +668,14 @@ function renderTable(payload) {
     let supportStrike3 = null;
 
     // Check 1st ITM strike for Puts (or exact match if present)
-    const candidatePeItmStrikes = exactMatchStrike ? [exactMatchStrike, ...setA_Strikes] : setA_Strikes;
-    if (candidatePeItmStrikes.length > 0) {
-      const firstItmPe = candidatePeItmStrikes[0];
-      const item = strikeMap.get(firstItmPe);
+    if (firstItmPeStrike !== null && firstItmPeStrike !== undefined) {
+      const item = strikeMap.get(firstItmPeStrike);
       if (item && item.PE) {
         const oi = (Number(item.PE.openInterest) || 0) * LOT_MULTIPLIER;
         const oic = (Number(item.PE.changeinOpenInterest) || 0) * LOT_MULTIPLIER;
         const vol = (Number(item.PE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
         if ((maxPeOI > 0 && oi === maxPeOI) || (maxPeOiChg > 0 && oic === maxPeOiChg) || (maxPeVol > 0 && vol === maxPeVol)) {
-          supportStrike3 = firstItmPe;
+          supportStrike3 = firstItmPeStrike;
         }
       }
     }
@@ -588,14 +700,13 @@ function renderTable(payload) {
     // Calculate Support (S2: 2 Params [OI, Volume ONLY]) for PUTS (PE):
     // -------------------------------------------------------------
     let supportStrike2 = null;
-    if (candidatePeItmStrikes.length > 0) {
-      const firstItmPe = candidatePeItmStrikes[0];
-      const item = strikeMap.get(firstItmPe);
+    if (firstItmPeStrike !== null && firstItmPeStrike !== undefined) {
+      const item = strikeMap.get(firstItmPeStrike);
       if (item && item.PE) {
         const oi = (Number(item.PE.openInterest) || 0) * LOT_MULTIPLIER;
         const vol = (Number(item.PE.totalTradedVolume) || 0) * LOT_MULTIPLIER;
         if ((maxPeOI > 0 && oi === maxPeOI) || (maxPeVol > 0 && vol === maxPeVol)) {
-          supportStrike2 = firstItmPe;
+          supportStrike2 = firstItmPeStrike;
         }
       }
     }
@@ -718,20 +829,26 @@ function renderTable(payload) {
     // Helper function to render 2-line stacked cell with relative percentage & highlight badges
     function renderRelativeCell(val, maxVal, isCe, isOiChg = false) {
       const formattedVal = formatIndianNumber(val);
-      const isMax = (val > 0 && maxVal > 0 && val === maxVal);
+      const isExact100 = (val > 0 && maxVal > 0 && val === maxVal);
       let relPct = 0;
       let formattedPct = '-';
 
       if (maxVal > 0 && val > 0) {
         relPct = (val / maxVal) * 100;
-        formattedPct = isMax ? '100%' : (relPct.toFixed(1) + '%');
+        if (isExact100) {
+          formattedPct = '100%';
+        } else if (relPct >= 100) {
+          formattedPct = (relPct % 1 === 0 ? relPct.toFixed(0) : relPct.toFixed(1)) + '%';
+        } else {
+          formattedPct = relPct.toFixed(1) + '%';
+        }
       } else if (isOiChg && val < 0) {
         formattedPct = '0.0%';
       } else if (val === 0) {
         formattedPct = '0.0%';
       }
 
-      if (isMax && val > 0) {
+      if (isExact100) {
         const maxClass = isCe ? 'cell-highlight-max-ce' : 'cell-highlight-max-pe';
         return `<div class="${maxClass}"><span class="cell-val-main">${formattedVal}</span><span class="cell-val-sub">100%</span></div>`;
       }
