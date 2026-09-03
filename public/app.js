@@ -897,14 +897,85 @@ function renderTable(payload) {
     const rangeVal = highVal - lowVal;
     const rangeStr = (rangeVal % 1 === 0) ? rangeVal.toString() : rangeVal.toFixed(2);
 
+    // Helper to retrieve or freeze 09:20 AM IST Fixed OHLC (HF, LF, RF)
+    function getOrUpdateFixedOHLC(symbol, h, l) {
+      const now = new Date();
+      const istString = now.toLocaleString("en-US", { timeZone: "Asia/Kolkata" });
+      const istDate = new Date(istString);
+      const todayDateString = now.toLocaleDateString("en-CA", { timeZone: "Asia/Kolkata" });
+      const currentMinutes = istDate.getHours() * 60 + istDate.getMinutes();
+      const isPast920 = currentMinutes >= (9 * 60 + 20); // 9:20 AM IST = 560 mins
+
+      const storageKey = `papa_fixed_ohlc_v1_${symbol}_${todayDateString}`;
+      let fixedOhlc = null;
+      try {
+        const raw = localStorage.getItem(storageKey);
+        if (raw) {
+          fixedOhlc = JSON.parse(raw);
+        }
+      } catch (e) {}
+
+      // 1. If already locked today at or after 9:20 AM, return locked values
+      if (fixedOhlc && fixedOhlc.hf && fixedOhlc.lf) {
+        return fixedOhlc;
+      }
+
+      // 2. If past 9:20 AM and we have valid numbers, lock them permanently for today
+      if (isPast920 && h > 0 && l > 0) {
+        const diff = Number((h - l).toFixed(2));
+        fixedOhlc = {
+          date: todayDateString,
+          symbol: symbol,
+          hf: h,
+          lf: l,
+          rf: diff,
+          lockedAt: '09:20 AM IST'
+        };
+        try {
+          localStorage.setItem(storageKey, JSON.stringify(fixedOhlc));
+        } catch (e) {}
+        return fixedOhlc;
+      }
+
+      // 3. If before 09:20 AM today or during night/off-hours, check if there's any recent locked value for this symbol
+      try {
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith(`papa_fixed_ohlc_v1_${symbol}_`)) {
+            const cached = JSON.parse(localStorage.getItem(key));
+            if (cached && cached.hf && cached.lf) {
+              return cached;
+            }
+          }
+        }
+      } catch (e) {}
+
+      // 4. Live calculated fallback: Return current live values so badges are NEVER empty
+      const diff = Number((h - l).toFixed(2));
+      return {
+        date: todayDateString,
+        symbol: symbol,
+        hf: h,
+        lf: l,
+        rf: diff,
+        lockedAt: 'Calculated'
+      };
+    }
+
+    const fixedOhlc = getOrUpdateFixedOHLC(currentSymbol, highVal, lowVal);
+    const displayHf = fixedOhlc?.hf || highVal;
+    const displayLf = fixedOhlc?.lf || lowVal;
+    const displayRfVal = fixedOhlc?.rf ?? (displayHf - displayLf);
+    const displayRfStr = (displayRfVal % 1 === 0) ? displayRfVal.toString() : Number(displayRfVal).toFixed(2);
+
     // Calculate days to expiry for quantitative Delta calculation
     const daysToExpiry = parseDaysToExpiry(currentExpiryValue);
 
     // Render Row Helper Function
     function buildStrikeRowHtml(strike, isExactMatch = false) {
-      const item = (strikeMap && strikeMap.get(strike)) ? strikeMap.get(strike) : {};
-      const ce = (item && item.CE) ? item.CE : {};
-      const pe = (item && item.PE) ? item.PE : {};
+      const item = strikeMap.get(strike) || {};
+      const ce = item.CE || {};
+      const pe = item.PE || {};
 
       const ceRawIv = Number(ce.impliedVolatility) || 0;
       const peRawIv = Number(pe.impliedVolatility) || 0;
@@ -1010,7 +1081,7 @@ function renderTable(payload) {
       rowsHtml += buildStrikeRowHtml(strike, false);
     });
 
-    // 2. Render Spot Baseline Divider Bar (Blue row with SPOT (prevClose diff), F (spot diff), and O, H, L, R)
+    // 2. Render Spot Baseline Divider Bar (Blue row with SPOT (prevClose diff), F (spot diff), and O, H, L, R + HF, LF, RF)
     rowsHtml += `
       <tr id="spotDividerRow" class="spot-divider-row">
         <td colspan="17">
@@ -1018,11 +1089,16 @@ function renderTable(payload) {
             <div class="spot-center-title">
               <span class="spot-price-badge">SPOT: ${formatIndianNumber(underlyingValue)} (${spotPrevCloseDiffStr})</span>
               <span class="spot-price-badge">F: ${formatIndianNumber(futureValue)} (${spotFutDiffStr})</span>
-              <span class="spot-ohlc-badge">
+              <span class="spot-ohlc-badge" title="Live Index OHLC (Open, High, Low, Range)">
                 <span class="spot-ohlc-item"><span class="spot-ohlc-label">O:</span> ${formatIndianNumber(indexInfo.open)}</span>
                 <span class="spot-ohlc-item"><span class="spot-ohlc-label">H:</span> ${formatIndianNumber(indexInfo.high)}</span>
                 <span class="spot-ohlc-item"><span class="spot-ohlc-label">L:</span> ${formatIndianNumber(indexInfo.low)}</span>
                 <span class="spot-ohlc-item"><span class="spot-ohlc-label">R:</span> ${rangeStr}</span>
+              </span>
+              <span class="spot-ohlc-badge spot-fixed-ohlc-badge" title="09:20 AM Fixed OHLC (High Fixed, Low Fixed, Range Fixed)">
+                <span class="spot-ohlc-item"><span class="spot-ohlc-label fixed-label">HF:</span> ${formatIndianNumber(displayHf)}</span>
+                <span class="spot-ohlc-item"><span class="spot-ohlc-label fixed-label">LF:</span> ${formatIndianNumber(displayLf)}</span>
+                <span class="spot-ohlc-item"><span class="spot-ohlc-label fixed-label">RF:</span> ${displayRfStr}</span>
               </span>
             </div>
           </div>
