@@ -51,6 +51,10 @@
   box-sizing: border-box;
 }
 
+html {
+  zoom: 0.8;
+}
+
 body {
   font-family: var(--font-primary);
   background-color: var(--bg-app);
@@ -66,7 +70,7 @@ body {
   flex-shrink: 0;
   background-color: #0f172a;
   color: #f8fafc;
-  padding: 3px 8px;
+  padding: 4px 10px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -76,9 +80,9 @@ body {
   z-index: 100;
   overflow-x: auto;
   white-space: nowrap !important;
-  height: 36px;
-  min-height: 36px;
-  max-height: 36px;
+  height: 40px;
+  min-height: 40px;
+  max-height: 40px;
   scrollbar-width: none;
   box-sizing: border-box;
 }
@@ -140,12 +144,12 @@ body {
   background-color: #1e293b;
   border: 1px solid #334155;
   color: #f8fafc;
-  padding: 2px 5px;
+  padding: 3px 6px;
   border-radius: 4px;
-  font-size: 0.74rem;
+  font-size: 0.78rem;
   font-weight: 600;
   outline: none;
-  height: 24px;
+  height: 28px;
   box-sizing: border-box;
 }
 
@@ -162,19 +166,19 @@ input[type="number"] {
 .timer-box {
   background-color: #1e293b;
   border: 1px solid #334155;
-  padding: 1px 6px;
+  padding: 2px 7px;
   border-radius: 4px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  height: 24px;
+  height: 28px;
   box-sizing: border-box;
 }
 
 .timer-label {
-  font-size: 0.50rem;
+  font-size: 0.52rem;
   color: #94a3b8;
   text-transform: uppercase;
   font-weight: 700;
@@ -184,7 +188,7 @@ input[type="number"] {
 
 .timer-value {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 0.70rem;
+  font-size: 0.74rem;
   font-weight: 700;
   color: #38bdf8;
   line-height: 1.1;
@@ -196,16 +200,16 @@ input[type="number"] {
   background-color: #2563eb;
   color: #ffffff;
   border: none;
-  padding: 2px 8px;
+  padding: 3px 10px;
   border-radius: 4px;
   cursor: pointer;
   display: flex;
   align-items: center;
   gap: 4px;
-  font-size: 0.72rem;
+  font-size: 0.76rem;
   font-weight: 600;
   flex-shrink: 0;
-  height: 24px;
+  height: 28px;
   box-sizing: border-box;
   white-space: nowrap;
 }
@@ -222,19 +226,19 @@ input[type="number"] {
 .timestamp-box {
   background-color: #1e293b;
   border: 1px solid #334155;
-  padding: 1px 6px;
+  padding: 2px 7px;
   border-radius: 4px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
-  height: 24px;
+  height: 28px;
   box-sizing: border-box;
 }
 
 .timestamp-label {
-  font-size: 0.50rem;
+  font-size: 0.52rem;
   color: #94a3b8;
   text-transform: uppercase;
   font-weight: 700;
@@ -244,7 +248,7 @@ input[type="number"] {
 
 .timestamp-value {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   font-weight: 700;
   color: #38bdf8;
   white-space: nowrap;
@@ -256,14 +260,14 @@ input[type="number"] {
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 6px;
+  padding: 2px 7px;
   border-radius: 12px;
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   font-weight: 600;
   background-color: #1e293b;
   border: 1px solid #334155;
   flex-shrink: 0;
-  height: 24px;
+  height: 28px;
   box-sizing: border-box;
   white-space: nowrap;
 }
@@ -336,7 +340,7 @@ input[type="number"] {
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  height: calc(100vh - 46px);
+  height: calc(125vh - 62px);
 }
 
 .table-container {
@@ -478,14 +482,14 @@ input[type="number"] {
   z-index: 51;
   background-color: #f1f5f9 !important;
   color: #0f172a !important;
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   font-weight: 800;
   letter-spacing: 0.02em;
   text-transform: uppercase;
   border-bottom: 2px solid #64748b;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
-  height: 25px;
-  padding: 3px 2px;
+  height: 28px;
+  padding: 4px 2px;
 }
 
 .th-sub-ce {
@@ -508,9 +512,9 @@ input[type="number"] {
    Table Body Rows & Cell Types
    ========================================================================== */
 
-/* ITM (In-The-Money) Subtle Cool Tint vs OTM (Crisp Pure White) */
+/* ITM (In-The-Money) Pale Warm Yellow vs OTM (Crisp Pure White) */
 .ce-itm, .pe-itm {
-  background-color: #f8fafc !important; /* Subtle, clean high-contrast tint */
+  background-color: #fef9c3 !important; /* Pale warm lemon yellow - clearly differentiable from white */
   color: #0f172a;
 }
 
@@ -521,10 +525,10 @@ input[type="number"] {
 
 /* Strike Column in Center - Bold Charcoal Anchor */
 .cell-strike {
-  background-color: #f8fafc !important;
+  background-color: #f1f5f9 !important;
   color: #0f172a !important;
-  font-weight: 700;
-  font-size: 0.82rem;
+  font-weight: 800;
+  font-size: 0.88rem;
   text-align: center;
   border-left: 2px solid #94a3b8 !important;
   border-right: 2px solid #94a3b8 !important;
@@ -545,23 +549,23 @@ input[type="number"] {
 /* Table Footer - Sticky Bottom Summary Rows */
 .total-row {
   position: sticky;
-  bottom: 26px;
+  bottom: 28px;
   z-index: 49;
-  height: 26px;
+  height: 30px;
 }
 
 .breakdown-row {
   position: sticky;
   bottom: 0px;
   z-index: 48;
-  height: 25px;
+  height: 28px;
 }
 
 .total-row td {
-  padding: 3px 2px;
+  padding: 4px 2px;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 0.70rem;
-  letter-spacing: -0.03em;
+  font-size: 0.75rem;
+  letter-spacing: -0.02em;
   font-weight: 700;
   border-top: 2px solid #0f172a;
   border-right: 1px solid rgba(255, 255, 255, 0.2);
@@ -598,10 +602,10 @@ input[type="number"] {
 
 /* Second Footer Row - ITM / OTM Breakdown */
 .breakdown-row td {
-  padding: 2px 2px;
+  padding: 3px 2px;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 0.66rem;
-  letter-spacing: -0.03em;
+  font-size: 0.70rem;
+  letter-spacing: -0.02em;
   font-weight: 700;
   border-top: 1px solid rgba(255, 255, 255, 0.2);
   border-right: 1px solid rgba(255, 255, 255, 0.15);
@@ -636,7 +640,7 @@ input[type="number"] {
 .tag-itm {
   color: #fef08a !important; /* Soft yellow matching ITM rows */
   font-weight: 800;
-  font-size: 0.54rem;
+  font-size: 0.58rem;
   letter-spacing: 0.01em;
   text-align: left;
   flex-shrink: 0;
@@ -646,7 +650,7 @@ input[type="number"] {
 .tag-otm {
   color: #ffffff !important; /* Crisp white matching OTM rows */
   font-weight: 800;
-  font-size: 0.54rem;
+  font-size: 0.58rem;
   letter-spacing: 0.01em;
   text-align: left;
   flex-shrink: 0;
@@ -654,20 +658,20 @@ input[type="number"] {
 }
 
 .val-itm {
-  font-size: 0.62rem;
+  font-size: 0.68rem;
   font-weight: 700;
   color: #fef08a !important;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.02em;
   text-align: right;
   white-space: nowrap;
   flex: 1;
 }
 
 .val-otm {
-  font-size: 0.62rem;
+  font-size: 0.68rem;
   font-weight: 700;
   color: #ffffff !important;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.02em;
   text-align: right;
   white-space: nowrap;
   flex: 1;
@@ -705,9 +709,9 @@ input[type="number"] {
 }
 
 .total-line-sum {
-  font-size: 0.70rem;
+  font-size: 0.75rem;
   font-weight: 700;
-  letter-spacing: -0.03em;
+  letter-spacing: -0.02em;
   text-align: center;
   color: #ffffff;
   white-space: nowrap;
@@ -715,10 +719,10 @@ input[type="number"] {
 }
 
 .total-line-pct {
-  font-size: 0.66rem;
+  font-size: 0.70rem;
   font-weight: 800;
   color: #fef08a !important; /* Bright golden yellow on red/green headers */
-  letter-spacing: -0.025em;
+  letter-spacing: -0.02em;
   text-align: center;
   white-space: nowrap;
   max-width: 100%;
@@ -747,48 +751,48 @@ th.col-delta, th.col-iv, th.col-oichg, th.col-oi, th.col-vol, th.col-ltp, th.col
 
 /* Table Cells */
 .oc-table td {
-  padding: 3px 2px;
+  padding: 5px 3px;
   border-right: 1px solid #cbd5e1;
   border-bottom: 1px solid #cbd5e1;
   font-family: 'JetBrains Mono', monospace;
-  font-size: 0.78rem;
-  letter-spacing: -0.03em;
+  font-size: 0.84rem;
+  letter-spacing: -0.02em;
   text-align: center;
   overflow: hidden;
   text-overflow: clip;
   box-sizing: border-box;
-  line-height: 1.2;
+  line-height: 1.25;
 }
 
 td.col-vol, td.col-oi, td.col-oichg {
-  font-size: 0.78rem;
-  letter-spacing: -0.03em;
-  padding: 3px 2px;
+  font-size: 0.84rem;
+  letter-spacing: -0.02em;
+  padding: 5px 3px;
 }
 
 td.col-delta {
-  font-size: 0.74rem;
-  letter-spacing: -0.03em;
+  font-size: 0.80rem;
+  letter-spacing: -0.02em;
   font-weight: 700;
   color: #0f172a;
 }
 
 td.col-iv {
-  font-size: 0.74rem;
-  letter-spacing: -0.03em;
+  font-size: 0.80rem;
+  letter-spacing: -0.02em;
   font-weight: 600;
   color: #334155;
 }
 
 td.col-ltp {
-  font-size: 0.78rem;
+  font-size: 0.85rem;
   font-weight: 800;
   color: #0f172a;
 }
 
 td.col-oi-pct, td.col-oichg-pct {
-  font-size: 0.74rem;
-  letter-spacing: -0.03em;
+  font-size: 0.80rem;
+  letter-spacing: -0.02em;
 }
 
 /* Relative Value Highlighting */
@@ -819,8 +823,8 @@ td.col-oi-pct, td.col-oichg-pct {
 .cell-highlight-max-ce .cell-val-main {
   color: #ffffff !important;
   font-weight: 800;
-  font-size: 0.78rem;
-  line-height: 1.15;
+  font-size: 0.84rem;
+  line-height: 1.2;
   text-align: center !important;
   width: 100%;
 }
@@ -828,7 +832,7 @@ td.col-oi-pct, td.col-oichg-pct {
 .cell-highlight-max-ce .cell-val-sub {
   color: #ffffff !important;
   font-weight: 800;
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   line-height: 1.1;
   text-align: center !important;
   width: 100%;
@@ -851,8 +855,8 @@ td.col-oi-pct, td.col-oichg-pct {
 .cell-highlight-max-pe .cell-val-main {
   color: #ffffff !important;
   font-weight: 800;
-  font-size: 0.78rem;
-  line-height: 1.15;
+  font-size: 0.84rem;
+  line-height: 1.2;
   text-align: center !important;
   width: 100%;
 }
@@ -860,7 +864,7 @@ td.col-oi-pct, td.col-oichg-pct {
 .cell-highlight-max-pe .cell-val-sub {
   color: #ffffff !important;
   font-weight: 800;
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   line-height: 1.1;
   text-align: center !important;
   width: 100%;
@@ -883,8 +887,8 @@ td.col-oi-pct, td.col-oichg-pct {
 .cell-highlight-high .cell-val-main {
   color: #0f172a !important;
   font-weight: 800;
-  font-size: 0.78rem;
-  line-height: 1.15;
+  font-size: 0.84rem;
+  line-height: 1.2;
   text-align: center !important;
   width: 100%;
 }
@@ -892,7 +896,7 @@ td.col-oi-pct, td.col-oichg-pct {
 .cell-highlight-high .cell-val-sub {
   color: #1e293b !important;
   font-weight: 800;
-  font-size: 0.68rem;
+  font-size: 0.72rem;
   line-height: 1.1;
   text-align: center !important;
   width: 100%;
@@ -909,7 +913,7 @@ td.col-oi-pct, td.col-oichg-pct {
 }
 
 .cell-val-main {
-  font-size: 0.78rem;
+  font-size: 0.84rem;
   font-weight: 700;
   color: #0f172a;
   text-align: center !important;
@@ -918,7 +922,7 @@ td.col-oi-pct, td.col-oichg-pct {
 }
 
 .cell-val-sub {
-  font-size: 0.66rem;
+  font-size: 0.72rem;
   font-weight: 700;
   color: #475569;
   text-align: center !important;
@@ -953,8 +957,8 @@ td.col-oi-pct, td.col-oichg-pct {
   background-color: #1d4ed8 !important; /* Blue bar matching the screenshot */
   color: #ffffff !important;
   font-weight: 700;
-  font-size: 0.8rem;
-  padding: 4px 8px;
+  font-size: 0.84rem;
+  padding: 5px 8px;
   text-align: center;
   border-top: 2px solid #1e40af;
   border-bottom: 2px solid #1e40af;
