@@ -63,39 +63,29 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Header & Controls - Compact Single Line (Strictly 1 Line, No Wrapping) */
+/* Header & Controls - Institutional Trading Toolbar */
 .app-header {
   flex-shrink: 0;
   background-color: #0f172a;
   color: #f8fafc;
-  padding: 4px 10px;
+  padding: 3px 10px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: nowrap !important;
   gap: 6px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
   z-index: 100;
-  overflow-x: auto;
-  white-space: nowrap !important;
-  height: 36px;
   min-height: 36px;
-  max-height: 36px;
-  scrollbar-width: none;
   box-sizing: border-box;
-}
-
-.app-header::-webkit-scrollbar {
-  display: none;
+  transition: all 0.2s ease;
 }
 
 .header-left, .header-right {
   display: flex;
   align-items: center;
-  flex-wrap: nowrap !important;
   gap: 6px;
   flex-shrink: 0;
-  white-space: nowrap !important;
+  white-space: nowrap;
 }
 
 .brand-title {
@@ -631,18 +621,21 @@ input[type="number"] {
 
 .main-content {
   flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  height: calc(100vh - 36px);
 }
 
 .table-container {
   flex: 1;
+  min-height: 0;
   overflow-y: auto;
   overflow-x: auto;
   background-color: #ffffff;
   position: relative;
+  scrollbar-width: thin;
+  scrollbar-color: #cbd5e1 #f1f5f9;
 }
 
 /* Custom Scrollbar for Sleek Density */
@@ -664,6 +657,7 @@ input[type="number"] {
 /* Option Chain Table Architecture */
 .oc-table {
   width: 100%;
+  min-width: 1460px;
   border-collapse: collapse;
   table-layout: fixed;
   background-color: #ffffff;
@@ -1265,11 +1259,12 @@ td.col-oi-pct, td.col-oichg-pct {
   color: #ffffff !important;
   font-weight: 600;
   font-size: 0.78rem;
-  padding: 2px 8px;
+  padding: 2px 4px;
   text-align: center;
   border-top: 1.5px solid #2563eb;
   border-bottom: 1.5px solid #2563eb;
   height: 26px;
+  box-sizing: border-box;
 }
 
 .spot-divider-content {
@@ -1277,7 +1272,7 @@ td.col-oi-pct, td.col-oichg-pct {
   align-items: center;
   justify-content: center;
   width: 100%;
-  gap: 8px;
+  box-sizing: border-box;
 }
 
 .spot-tag-left {
@@ -1291,14 +1286,15 @@ td.col-oi-pct, td.col-oichg-pct {
 }
 
 .spot-center-title {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  font-size: 0.8rem;
+  gap: 6px;
+  font-size: 0.78rem;
   font-weight: 800;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.02em;
   flex-wrap: nowrap;
+  white-space: nowrap;
 }
 
 .spot-label {
@@ -1309,10 +1305,10 @@ td.col-oi-pct, td.col-oichg-pct {
 .spot-price-badge {
   background-color: #ffffff;
   color: #0f172a;
-  padding: 1px 7px;
+  padding: 1px 6px;
   border-radius: 3px;
   font-weight: 800;
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   font-family: 'JetBrains Mono', monospace;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   white-space: nowrap;
@@ -1323,14 +1319,14 @@ td.col-oi-pct, td.col-oichg-pct {
   background-color: rgba(15, 23, 42, 0.75);
   color: #f8fafc;
   border: 1px solid rgba(255, 255, 255, 0.25);
-  padding: 1px 7px;
+  padding: 1px 6px;
   border-radius: 3px;
   font-weight: 700;
-  font-size: 0.74rem;
+  font-size: 0.72rem;
   font-family: 'JetBrains Mono', monospace;
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   white-space: nowrap;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
@@ -1370,14 +1366,14 @@ td.col-oi-pct, td.col-oichg-pct {
   background-color: rgba(30, 41, 59, 0.8);
   color: #f8fafc;
   border: 1px solid rgba(255, 255, 255, 0.18);
-  padding: 1px 6px;
+  padding: 1px 5px;
   border-radius: 3px;
   font-weight: 600;
-  font-size: 0.72rem;
+  font-size: 0.70rem;
   font-family: 'JetBrains Mono', monospace;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   white-space: nowrap;
 }
 
@@ -1483,4 +1479,66 @@ td.col-oi-pct, td.col-oichg-pct {
 @keyframes spin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+
+/* ==========================================================================
+   Responsive Zoom & Multi-Resolution Display Hardening
+   ========================================================================== */
+
+@media (max-width: 1440px) {
+  .app-header {
+    padding: 3px 8px;
+    gap: 4px;
+  }
+  .header-left, .header-right {
+    gap: 4px;
+  }
+  .control-group label {
+    font-size: 0.58rem;
+  }
+  .styled-select, input[type="number"] {
+    font-size: 0.74rem;
+    height: 26px;
+    padding: 2px 5px;
+  }
+  input[type="number"] {
+    width: 44px;
+  }
+  .timestamp-box, .timer-box, .btn-refresh, .status-badge {
+    height: 26px;
+    padding: 2px 5px;
+  }
+  .btn-refresh {
+    font-size: 0.72rem;
+    padding: 2px 8px;
+  }
+}
+
+@media (max-width: 1280px) {
+  .app-header {
+    flex-wrap: wrap !important;
+    padding: 4px 8px;
+    gap: 4px 8px;
+  }
+  .header-left {
+    flex: 1 0 auto;
+    justify-content: flex-start;
+  }
+  .header-right {
+    flex: 1 0 auto;
+    justify-content: flex-end;
+  }
+}
+
+@media (max-width: 768px) {
+  .app-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    padding: 6px 8px;
+  }
+  .header-left, .header-right {
+    flex-wrap: wrap;
+    justify-content: space-between;
+  }
 }
