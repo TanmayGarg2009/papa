@@ -1837,6 +1837,11 @@ function updateMMIUI(data) {
   }
   if (zoneDesc) {
     zoneDesc.textContent = data.description || '';
+    zoneDesc.style.setProperty('white-space', 'normal', 'important');
+    zoneDesc.style.setProperty('word-break', 'normal', 'important');
+    zoneDesc.style.setProperty('overflow-wrap', 'break-word', 'important');
+    zoneDesc.style.setProperty('display', 'block', 'important');
+    zoneDesc.style.setProperty('width', '100%', 'important');
   }
 
   // 4. Historical Comparisons
