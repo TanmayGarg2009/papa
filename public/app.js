@@ -584,6 +584,16 @@ function renderTable(payload) {
 
     // Collect valid IVs from all visible strikes for quantitative Delta calculation
     const visibleStrikes = [...selectedA, ...(exactMatchStrike ? [exactMatchStrike] : []), ...selectedB];
+    let atmStrike = null;
+    let minAtmDiff = Infinity;
+    visibleStrikes.forEach(s => {
+      const diff = Math.abs(Number(s) - underlyingValue);
+      if (diff < minAtmDiff) {
+        minAtmDiff = diff;
+        atmStrike = s;
+      }
+    });
+
     visibleStrikes.forEach(s => {
       const r = strikeMap.get(s);
       if (r) {
@@ -830,7 +840,7 @@ function renderTable(payload) {
     function renderRelativeCell(val, maxVal, isCe, isOiChg = false, inlineSuffix = '') {
       const formattedVal = formatIndianNumber(val);
       const displayVal = inlineSuffix 
-        ? `${formattedVal}<span class="cell-oichg-pct-bracket">${inlineSuffix}</span>` 
+        ? `${formattedVal}&nbsp;<span class="cell-oichg-pct-bracket">${inlineSuffix}</span>` 
         : formattedVal;
       const isExact100 = (val > 0 && maxVal > 0 && val === maxVal);
       let relPct = 0;
@@ -1038,12 +1048,17 @@ function renderTable(payload) {
         peOiPctStr = pePct.toFixed(1) + '%';
       }
 
-      // Strike bold formatting: Only multiples of 100 are shown in bold
+      // Strike bold formatting: Only multiples of 100 are shown in bold; ATM strike has sleek ATM pill
       const isMultipleOf100 = (Number(strike) % 100 === 0);
+      const isAtm = (atmStrike !== null && Number(strike) === Number(atmStrike));
       const formattedStrike = formatIndianNumber(strike);
+      let strikeInner = isMultipleOf100 ? `<strong>${formattedStrike}</strong>` : formattedStrike;
+      if (isAtm && !isExactMatch) {
+        strikeInner = `<div class="strike-cell-inner">${strikeInner}<span class="atm-badge">ATM</span></div>`;
+      }
       const strikeDisplayContent = isExactMatch 
         ? `<span class="golden-badge">${formattedStrike}</span>` 
-        : (isMultipleOf100 ? `<strong>${formattedStrike}</strong>` : formattedStrike);
+        : strikeInner;
 
       return `
         <tr class="${rowClass}">
