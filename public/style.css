@@ -983,16 +983,16 @@ td.col-oi-pct, td.col-oichg-pct {
   border: 1px solid #d97706;
 }
 
-/* Spot Baseline Divider Row (TradingView / Sensibull Sleek Slate Design) */
+/* Spot Baseline Divider Row (The center blue line) */
 .spot-divider-row td {
-  background-color: #0f172a !important; /* Modern Sleek Slate */
+  background-color: #1e40af !important; /* Rich institutional trading blue */
   color: #ffffff !important;
   font-weight: 600;
   font-size: 0.78rem;
   padding: 2px 8px;
   text-align: center;
-  border-top: 1.5px solid #334155;
-  border-bottom: 1.5px solid #334155;
+  border-top: 1.5px solid #2563eb;
+  border-bottom: 1.5px solid #2563eb;
   height: 26px;
 }
 
@@ -1040,6 +1040,47 @@ td.col-oi-pct, td.col-oichg-pct {
   font-family: 'JetBrains Mono', monospace;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
   white-space: nowrap;
+}
+
+/* Market Breadth AUD Badge (Advances, Unchanged, Declines) */
+.spot-aud-badge {
+  background-color: rgba(15, 23, 42, 0.75);
+  color: #f8fafc;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  padding: 1px 7px;
+  border-radius: 3px;
+  font-weight: 700;
+  font-size: 0.74rem;
+  font-family: 'JetBrains Mono', monospace;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.aud-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.aud-a {
+  color: #86efac !important; /* Crisp Mint Green for Advances */
+}
+
+.aud-u {
+  color: #fef08a !important; /* Bright Gold for Unchanged */
+}
+
+.aud-d {
+  color: #fca5a5 !important; /* Pastel Red for Declines */
+}
+
+.aud-label {
+  font-weight: 800;
+  font-size: 0.72rem;
+  opacity: 0.95;
 }
 
 .spot-ohlc-badge {
