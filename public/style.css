@@ -1348,6 +1348,13 @@ td.col-oi-pct, td.col-oichg-pct {
   opacity: 0.95;
 }
 
+.aud-pct {
+  font-size: 0.68rem;
+  font-weight: 600;
+  opacity: 0.88;
+  letter-spacing: -0.01em;
+}
+
 .spot-ohlc-badge {
   background-color: rgba(30, 41, 59, 0.8);
   color: #f8fafc;

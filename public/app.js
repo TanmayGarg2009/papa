@@ -1115,6 +1115,10 @@ function renderTable(payload) {
     const advCount = Number(advDecData.advances) || 0;
     const uncCount = Number(advDecData.unchange) || 0;
     const decCount = Number(advDecData.declines) || 0;
+    const totalAud = advCount + uncCount + decCount;
+    const advPctStr = totalAud > 0 ? ((advCount / totalAud) * 100).toFixed(1) + '%' : '0.0%';
+    const uncPctStr = totalAud > 0 ? ((uncCount / totalAud) * 100).toFixed(1) + '%' : '0.0%';
+    const decPctStr = totalAud > 0 ? ((decCount / totalAud) * 100).toFixed(1) + '%' : '0.0%';
 
     // 2. Render Spot Baseline Divider Bar (Blue row with SPOT, AUD, F, and O, H, L, R + HF, LF, RF)
     rowsHtml += `
@@ -1123,10 +1127,10 @@ function renderTable(payload) {
           <div class="spot-divider-content">
             <div class="spot-center-title">
               <span class="spot-price-badge">SPOT: ${formatIndianNumber(underlyingValue)} (${spotPrevCloseDiffStr})</span>
-              <span class="spot-aud-badge" title="Market Breadth: Advances (A), Unchanged (U), Declines (D)">
-                <span class="aud-item aud-a"><span class="aud-label">A:</span> ${formatIndianNumber(advCount)}</span>
-                <span class="aud-item aud-u"><span class="aud-label">U:</span> ${formatIndianNumber(uncCount)}</span>
-                <span class="aud-item aud-d"><span class="aud-label">D:</span> ${formatIndianNumber(decCount)}</span>
+              <span class="spot-aud-badge" title="Market Breadth: Advances (A), Unchanged (U), Declines (D) | Total: ${formatIndianNumber(totalAud)}">
+                <span class="aud-item aud-a"><span class="aud-label">A:</span> ${formatIndianNumber(advCount)} <span class="aud-pct">(${advPctStr})</span></span>
+                <span class="aud-item aud-u"><span class="aud-label">U:</span> ${formatIndianNumber(uncCount)} <span class="aud-pct">(${uncPctStr})</span></span>
+                <span class="aud-item aud-d"><span class="aud-label">D:</span> ${formatIndianNumber(decCount)} <span class="aud-pct">(${decPctStr})</span></span>
               </span>
               <span class="spot-price-badge">F: ${formatIndianNumber(futureValue)} (${spotFutDiffStr})</span>
               <span class="spot-ohlc-badge" title="Live Index OHLC (Open, High, Low, Range)">
