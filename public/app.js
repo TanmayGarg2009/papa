@@ -1018,21 +1018,36 @@ function renderTable(payload) {
       const strikeClass = isExactMatch ? 'exact-match-strike' : 'cell-strike';
       const rowClass = isExactMatch ? 'exact-match-row' : '';
 
-      // Calculate Change in OI% (with respect to OI, with negative values allowed and styled in red)
-      let ceOiChgPctStr = '-';
-      let ceOiChgPctClass = '';
+      // 1. Strike individual Change in OI% (with respect to OI) for the inline bracket in OI CHG cell
+      let ceStrikeOiChgPctStr = '-';
       if (ceOi !== 0) {
         const cePct = (ceOiChg / ceOi) * 100;
+        ceStrikeOiChgPctStr = (cePct > 0 ? '+' : '') + cePct.toFixed(1) + '%';
+      }
+
+      let peStrikeOiChgPctStr = '-';
+      if (peOi !== 0) {
+        const pePct = (peOiChg / peOi) * 100;
+        peStrikeOiChgPctStr = (pePct > 0 ? '+' : '') + pePct.toFixed(1) + '%';
+      }
+
+      // 2. Dedicated CHG OI% Column using user's formula: (oi chg / (|oichg(call)| + |oichg(put)|)) * 100
+      const totalAbsRowOiChg = Math.abs(ceOiChg) + Math.abs(peOiChg);
+
+      let ceOiChgPctStr = '-';
+      let ceOiChgPctClass = '';
+      if (totalAbsRowOiChg > 0) {
+        const cePct = (ceOiChg / totalAbsRowOiChg) * 100;
         ceOiChgPctStr = (cePct > 0 ? '+' : '') + cePct.toFixed(1) + '%';
         ceOiChgPctClass = (cePct < 0) ? 'text-negative' : (cePct > 0 ? 'text-positive' : '');
       }
 
       let peOiChgPctStr = '-';
       let peOiChgPctClass = '';
-      if (peOi !== 0) {
-        const pePct = (peOiChg / peOi) * 100;
+      if (totalAbsRowOiChg > 0) {
+        const pePct = (peOiChg / totalAbsRowOiChg) * 100;
         peOiChgPctStr = (pePct > 0 ? '+' : '') + pePct.toFixed(1) + '%';
-        peOiChgPctClass = (pePct < 0) ? 'text-negative' : (peOiChg > 0 ? 'text-positive' : '');
+        peOiChgPctClass = (pePct < 0) ? 'text-negative' : (pePct > 0 ? 'text-positive' : '');
       }
 
       // Calculate CALL OI% and PUT OI% (Percentage of their sum for this strike row)
@@ -1065,7 +1080,7 @@ function renderTable(payload) {
           <!-- CALLS (CE): Delta | IV | OI Chg | OI | Volume | LTP | CHG OI% | CALL OI% -->
           <td class="${ceClass} col-delta">${ceDeltaStr}</td>
           <td class="${ceClass} col-iv">${formatDecimal(ce.impliedVolatility)}</td>
-          <td class="${ceClass} col-oichg">${renderRelativeCell(ceOiChg, maxCeOiChg, true, true, (ceOi !== 0 && ceOiChgPctStr !== '-') ? `(${ceOiChgPctStr})` : '')}</td>
+          <td class="${ceClass} col-oichg">${renderRelativeCell(ceOiChg, maxCeOiChg, true, true, (ceOi !== 0 && ceStrikeOiChgPctStr !== '-') ? `(${ceStrikeOiChgPctStr})` : '')}</td>
           <td class="${ceClass} col-oi">${renderRelativeCell(ceOi, maxCeOI, true, false)}</td>
           <td class="${ceClass} col-vol">${renderRelativeCell(ceVol, maxCeVol, true, false)}</td>
           <td class="${ceClass} col-ltp">${formatDecimal(ce.lastPrice)}</td>
@@ -1083,7 +1098,7 @@ function renderTable(payload) {
           <td class="${peClass} col-ltp">${formatDecimal(pe.lastPrice)}</td>
           <td class="${peClass} col-vol">${renderRelativeCell(peVol, maxPeVol, false, false)}</td>
           <td class="${peClass} col-oi">${renderRelativeCell(peOi, maxPeOI, false, false)}</td>
-          <td class="${peClass} col-oichg">${renderRelativeCell(peOiChg, maxPeOiChg, false, true, (peOi !== 0 && peOiChgPctStr !== '-') ? `(${peOiChgPctStr})` : '')}</td>
+          <td class="${peClass} col-oichg">${renderRelativeCell(peOiChg, maxPeOiChg, false, true, (peOi !== 0 && peStrikeOiChgPctStr !== '-') ? `(${peStrikeOiChgPctStr})` : '')}</td>
           <td class="${peClass} col-iv">${formatDecimal(pe.impliedVolatility)}</td>
           <td class="${peClass} col-delta">${peDeltaStr}</td>
         </tr>
