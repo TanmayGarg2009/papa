@@ -827,8 +827,11 @@ function renderTable(payload) {
     }
 
     // Helper function to render 2-line stacked cell with relative percentage & highlight badges
-    function renderRelativeCell(val, maxVal, isCe, isOiChg = false) {
+    function renderRelativeCell(val, maxVal, isCe, isOiChg = false, inlineSuffix = '') {
       const formattedVal = formatIndianNumber(val);
+      const displayVal = inlineSuffix 
+        ? `${formattedVal}<span class="cell-oichg-pct-bracket">${inlineSuffix}</span>` 
+        : formattedVal;
       const isExact100 = (val > 0 && maxVal > 0 && val === maxVal);
       let relPct = 0;
       let formattedPct = '-';
@@ -850,11 +853,11 @@ function renderTable(payload) {
 
       if (isExact100) {
         const maxClass = isCe ? 'cell-highlight-max-ce' : 'cell-highlight-max-pe';
-        return `<div class="${maxClass}"><span class="cell-val-main">${formattedVal}</span><span class="cell-val-sub">100%</span></div>`;
+        return `<div class="${maxClass}"><span class="cell-val-main">${displayVal}</span><span class="cell-val-sub">100%</span></div>`;
       }
 
       if (relPct >= 75) {
-        return `<div class="cell-highlight-high"><span class="cell-val-main">${formattedVal}</span><span class="cell-val-sub">${formattedPct}</span></div>`;
+        return `<div class="cell-highlight-high"><span class="cell-val-main">${displayVal}</span><span class="cell-val-sub">${formattedPct}</span></div>`;
       }
 
       let valColorClass = '';
@@ -864,7 +867,7 @@ function renderTable(payload) {
         pctColorClass = 'text-negative';
       }
 
-      return `<div class="cell-stacked-num"><span class="cell-val-main ${valColorClass}">${formattedVal}</span><span class="cell-val-sub ${pctColorClass}">${formattedPct}</span></div>`;
+      return `<div class="cell-stacked-num"><span class="cell-val-main ${valColorClass}">${displayVal}</span><span class="cell-val-sub ${pctColorClass}">${formattedPct}</span></div>`;
     }
 
     // Build HTML
@@ -1047,7 +1050,7 @@ function renderTable(payload) {
           <!-- CALLS (CE): Delta | IV | OI Chg | OI | Volume | LTP | CHG OI% | CALL OI% -->
           <td class="${ceClass} col-delta">${ceDeltaStr}</td>
           <td class="${ceClass} col-iv">${formatDecimal(ce.impliedVolatility)}</td>
-          <td class="${ceClass} col-oichg">${renderRelativeCell(ceOiChg, maxCeOiChg, true, true)}</td>
+          <td class="${ceClass} col-oichg">${renderRelativeCell(ceOiChg, maxCeOiChg, true, true, (ceOi !== 0 && ceOiChgPctStr !== '-') ? `(${ceOiChgPctStr})` : '')}</td>
           <td class="${ceClass} col-oi">${renderRelativeCell(ceOi, maxCeOI, true, false)}</td>
           <td class="${ceClass} col-vol">${renderRelativeCell(ceVol, maxCeVol, true, false)}</td>
           <td class="${ceClass} col-ltp">${formatDecimal(ce.lastPrice)}</td>
@@ -1065,7 +1068,7 @@ function renderTable(payload) {
           <td class="${peClass} col-ltp">${formatDecimal(pe.lastPrice)}</td>
           <td class="${peClass} col-vol">${renderRelativeCell(peVol, maxPeVol, false, false)}</td>
           <td class="${peClass} col-oi">${renderRelativeCell(peOi, maxPeOI, false, false)}</td>
-          <td class="${peClass} col-oichg">${renderRelativeCell(peOiChg, maxPeOiChg, false, true)}</td>
+          <td class="${peClass} col-oichg">${renderRelativeCell(peOiChg, maxPeOiChg, false, true, (peOi !== 0 && peOiChgPctStr !== '-') ? `(${peOiChgPctStr})` : '')}</td>
           <td class="${peClass} col-iv">${formatDecimal(pe.impliedVolatility)}</td>
           <td class="${peClass} col-delta">${peDeltaStr}</td>
         </tr>

@@ -377,8 +377,8 @@ input[type="number"] {
 /* Column Width Distributions */
 .col-delta { width: 3.4%; }
 .col-iv { width: 3.2%; }
-.col-oichg { width: 9.2%; }
-.col-oi { width: 10.2%; }
+.col-oichg { width: 9.6%; }
+.col-oi { width: 9.8%; }
 .col-vol { width: 9.0%; }
 .col-ltp { width: 4.2%; }
 .col-oichg-pct { width: 4.2%; }
@@ -925,6 +925,14 @@ td.col-oi-pct, td.col-oichg-pct {
   text-align: center !important;
   width: 100%;
   white-space: nowrap;
+}
+
+/* Inline Change in OI Percentage in bracket next to OI Change number */
+.cell-oichg-pct-bracket {
+  font-size: 0.72rem;
+  font-weight: inherit;
+  letter-spacing: -0.01em;
+  margin-left: 1px;
 }
 
 /* Golden Highlight Row / Strike for Exact Match */
