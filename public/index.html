@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>NSE Option Chain | Live Analytics</title>
-  <link rel="stylesheet" href="style.css?v=3.3">
+  <link rel="stylesheet" href="style.css?v=3.5">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -15,7 +15,79 @@
   <header class="app-header">
     <div class="header-left">
       <div class="brand-title">
-        <span id="brandBadge" class="brand-badge">65•NIFTY</span>
+        <!-- MMI Trigger Badge with Hover Dial Card -->
+        <div id="mmiContainer" class="mmi-header-container">
+          <div id="mmiTrigger" class="mmi-trigger-badge" title="Market Mood Index (Tickertape) - Hover to view dial">
+            <span class="mmi-trigger-pill">MMI</span>
+            <span id="mmiTriggerValue" class="mmi-trigger-val">43.87</span>
+            <span id="mmiTriggerZone" class="mmi-trigger-zone">Fear</span>
+            <span id="mmiTriggerDot" class="mmi-trigger-dot"></span>
+          </div>
+
+          <!-- MMI Card Popover (1-to-1 Tickertape Gauge) -->
+          <div id="mmiCard" class="mmi-card-flyout">
+            <div class="mmi-card-header">
+              <h2 class="mmi-card-title">Market Mood Index (MMI)</h2>
+              <p class="mmi-card-sub">Know what's the sentiment on the street today</p>
+            </div>
+            
+            <!-- Dial Container -->
+            <div class="mmi-dial-wrapper">
+              <div class="mmi-dial-holder">
+                <!-- Base Track & Zone Labels SVG -->
+                <img src="images/mmi/indicator-base.svg" alt="MMI Base" class="mmi-img-base" />
+                
+                <!-- Active Zone Highlight Overlay SVG -->
+                <img id="mmiActiveZoneImg" src="images/mmi/indicator_parts/fear.svg" alt="Active Zone" class="mmi-img-active-zone" />
+                
+                <!-- Needle Pointer with Center Axis -->
+                <div class="mmi-pointer-holder">
+                  <svg id="mmiPointerSvg" class="mmi-pointer-svg" viewBox="0 0 330 330">
+                    <g transform="translate(160 83)" id="Pointer-with-center" fill="none" fill-rule="evenodd">
+                      <path id="mmiPointerPath" d="M5.03649827,0.963977754 L5.03649827,0.963977754 C5.59328914,0.963977754 6.05130089,1.40250865 6.07548634,1.95877399 L9.81504821,87.968697 C9.92989495,90.6101721 7.88165793,92.8446125 5.24018276,92.9594593 C5.17090752,92.9624712 5.10157502,92.9639778 5.03223433,92.9639778 L5.03223433,92.9639778 C2.38826367,92.9639778 0.244901967,90.820616 0.244901967,88.1766454 C0.244901967,88.1073047 0.246408484,88.0379722 0.249420451,87.968697 L3.98861189,1.96729383 C4.01300447,1.40626441 4.47493882,0.963977754 5.03649827,0.963977754 Z" fill="#ff9923" />
+                    </g>
+                  </svg>
+                </div>
+
+                <!-- Center Value & Updated Time -->
+                <div class="mmi-val-container">
+                  <div id="mmiDialValue" class="mmi-dial-num">43.87</div>
+                  <p id="mmiDialUpdated" class="mmi-dial-date">Updated 2 hours ago</p>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sentiment Description Box -->
+            <div id="mmiSentimentBox" class="mmi-sentiment-box">
+              <div class="mmi-sentiment-head">
+                <span id="mmiZoneBadge" class="mmi-zone-tag">FEAR ZONE</span>
+                <span id="mmiZoneRange" class="mmi-zone-range">(30 — 50)</span>
+              </div>
+              <p id="mmiZoneDesc" class="mmi-zone-desc">It suggests that investors are fearful in the market, but the action to be taken depends on the MMI trajectory.</p>
+            </div>
+
+            <!-- Historical Comparisons -->
+            <div class="mmi-history-grid">
+              <div class="mmi-hist-cell">
+                <span class="mmi-hist-label">Yesterday</span>
+                <span id="mmiHistYesterday" class="mmi-hist-value">38.59</span>
+              </div>
+              <div class="mmi-hist-cell">
+                <span class="mmi-hist-label">Last Week</span>
+                <span id="mmiHistLastWeek" class="mmi-hist-value">49.46</span>
+              </div>
+              <div class="mmi-hist-cell">
+                <span class="mmi-hist-label">Last Month</span>
+                <span id="mmiHistLastMonth" class="mmi-hist-value">74.42</span>
+              </div>
+              <div class="mmi-hist-cell">
+                <span class="mmi-hist-label">Last Year</span>
+                <span id="mmiHistLastYear" class="mmi-hist-value">24.85</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <span class="brand-text">Option Chain</span>
       </div>
       
@@ -188,6 +260,6 @@
   <!-- Floating Corner Toast Notification -->
   <div id="toastContainer" class="toast-container"></div>
 
-  <script src="app.js?v=3.3"></script>
+  <script src="app.js?v=3.5"></script>
 </body>
 </html>

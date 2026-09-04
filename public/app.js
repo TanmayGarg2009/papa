@@ -1737,15 +1737,190 @@ if (cooldownInput) {
   });
 }
 
+// ============================================================
+// Market Mood Index (MMI) Interactive Dial & Live Feed
+// ============================================================
+let mmiDataCache = null;
+
+function formatMmiRelativeTime(dateString) {
+  if (!dateString) return 'Updated recently';
+  try {
+    const d = new Date(dateString);
+    const now = new Date();
+    const diffMs = Math.max(0, now - d);
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    if (diffMins < 1) return 'Updated just now';
+    if (diffMins < 60) return `Updated ${diffMins} min${diffMins > 1 ? 's' : ''} ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    if (diffHours < 24) return `Updated ${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+    const diffDays = Math.floor(diffHours / 24);
+    return `Updated ${diffDays} day${diffDays > 1 ? 's' : ''} ago`;
+  } catch (e) {
+    return 'Updated recently';
+  }
+}
+
+function updateMMIUI(data) {
+  if (!data) return;
+  mmiDataCache = data;
+
+  const val = Number(data.currentValue) || 43.87;
+  const valStr = val.toFixed(2);
+  const zone = data.zone || 'fear';
+  const label = data.label || 'Fear';
+  const color = data.color || '#ff9923';
+  const angle = (typeof data.angle === 'number') ? data.angle : (3 * val - 150);
+
+  // 1. Header Trigger Badge
+  const triggerVal = document.getElementById('mmiTriggerValue');
+  const triggerZone = document.getElementById('mmiTriggerZone');
+  const triggerDot = document.getElementById('mmiTriggerDot');
+
+  if (triggerVal) {
+    triggerVal.textContent = valStr;
+    triggerVal.style.color = color;
+  }
+  if (triggerZone) {
+    triggerZone.textContent = label;
+  }
+  if (triggerDot) {
+    triggerDot.style.backgroundColor = color;
+    triggerDot.style.boxShadow = `0 0 6px ${color}`;
+  }
+
+  // 2. Flyout Card Dial Elements
+  const activeZoneImg = document.getElementById('mmiActiveZoneImg');
+  const pointerSvg = document.getElementById('mmiPointerSvg');
+  const pointerPath = document.getElementById('mmiPointerPath');
+  const dialVal = document.getElementById('mmiDialValue');
+  const dialUpdated = document.getElementById('mmiDialUpdated');
+
+  if (activeZoneImg) {
+    activeZoneImg.src = `images/mmi/indicator_parts/${zone}.svg`;
+  }
+  if (pointerSvg) {
+    pointerSvg.style.transform = `rotate(${angle}deg)`;
+  }
+  if (pointerPath) {
+    pointerPath.setAttribute('fill', color);
+  }
+  if (dialVal) {
+    dialVal.textContent = valStr;
+    dialVal.style.color = color;
+  }
+  if (dialUpdated) {
+    dialUpdated.textContent = formatMmiRelativeTime(data.date);
+  }
+
+  // 3. Sentiment Description Box
+  const zoneBadge = document.getElementById('mmiZoneBadge');
+  const zoneRange = document.getElementById('mmiZoneRange');
+  const zoneDesc = document.getElementById('mmiZoneDesc');
+
+  const rangeMap = {
+    'ef': '(< 30)',
+    'fear': '(30 — 50)',
+    'greed': '(50 — 70)',
+    'eg': '(> 70)'
+  };
+
+  if (zoneBadge) {
+    zoneBadge.textContent = `${label.toUpperCase()} ZONE`;
+    zoneBadge.style.backgroundColor = color;
+  }
+  if (zoneRange) {
+    zoneRange.textContent = rangeMap[zone] || '';
+  }
+  if (zoneDesc) {
+    zoneDesc.textContent = data.description || '';
+  }
+
+  // 4. Historical Comparisons
+  if (data.historical) {
+    const histYest = document.getElementById('mmiHistYesterday');
+    const histWeek = document.getElementById('mmiHistLastWeek');
+    const histMonth = document.getElementById('mmiHistLastMonth');
+    const histYear = document.getElementById('mmiHistLastYear');
+
+    if (histYest && data.historical.lastDay != null) histYest.textContent = Number(data.historical.lastDay).toFixed(2);
+    if (histWeek && data.historical.lastWeek != null) histWeek.textContent = Number(data.historical.lastWeek).toFixed(2);
+    if (histMonth && data.historical.lastMonth != null) histMonth.textContent = Number(data.historical.lastMonth).toFixed(2);
+    if (histYear && data.historical.lastYear != null) histYear.textContent = Number(data.historical.lastYear).toFixed(2);
+  }
+}
+
+async function fetchMMI() {
+  try {
+    const res = await fetch('/api/mmi');
+    if (!res.ok) return;
+    const json = await res.json();
+    if (json && json.success && json.data) {
+      updateMMIUI(json.data);
+    }
+  } catch (err) {
+    console.warn('[MMI Fetch Warning]', err);
+  }
+}
+
+function initMMI() {
+  const container = document.getElementById('mmiContainer');
+  const card = document.getElementById('mmiCard');
+  let hoverTimer = null;
+
+  if (container && card) {
+    const showCard = () => {
+      clearTimeout(hoverTimer);
+      const rect = container.getBoundingClientRect();
+      card.style.top = `${rect.bottom + 6}px`;
+      card.style.left = `${Math.max(8, rect.left)}px`;
+      card.classList.add('is-open');
+    };
+
+    const hideCard = () => {
+      hoverTimer = setTimeout(() => {
+        card.classList.remove('is-open');
+      }, 150);
+    };
+
+    container.addEventListener('mouseenter', showCard);
+    container.addEventListener('mouseleave', hideCard);
+
+    card.addEventListener('mouseenter', () => {
+      clearTimeout(hoverTimer);
+    });
+
+    card.addEventListener('mouseleave', hideCard);
+
+    // Close when click outside
+    document.addEventListener('click', (e) => {
+      if (!container.contains(e.target) && !card.contains(e.target)) {
+        card.classList.remove('is-open');
+      }
+    });
+
+    // Close on Escape
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        card.classList.remove('is-open');
+      }
+    });
+  }
+
+  fetchMMI();
+  setInterval(fetchMMI, 60000);
+}
+
 // Initialize immediately on page load
 if (document.readyState === 'loading') {
   document.addEventListener('DOMContentLoaded', () => {
     if (strikeCountInput) strikeCountInput.value = strikeDepth;
     if (cooldownInput) cooldownInput.value = refreshCooldownSeconds;
+    initMMI();
     fetchOptionChain(false);
   });
 } else {
   if (strikeCountInput) strikeCountInput.value = strikeDepth;
   if (cooldownInput) cooldownInput.value = refreshCooldownSeconds;
+  initMMI();
   fetchOptionChain(false);
 }

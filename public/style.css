@@ -118,6 +118,284 @@ body {
   font-weight: 800;
 }
 
+/* ============================================================
+   Market Mood Index (MMI) Header Trigger & Interactive Flyout
+   ============================================================ */
+.mmi-header-container {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.mmi-trigger-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background-color: #0f172a;
+  border: 1px solid #334155;
+  border-radius: 5px;
+  padding: 2px 7px;
+  cursor: pointer;
+  user-select: none;
+  height: 26px;
+  box-sizing: border-box;
+  transition: all 0.2s ease;
+}
+
+.mmi-trigger-badge:hover {
+  background-color: #1e293b;
+  border-color: #3b82f6;
+  box-shadow: 0 0 8px rgba(59, 130, 246, 0.35);
+}
+
+.mmi-trigger-pill {
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  background-color: #2563eb;
+  color: #ffffff;
+  padding: 1px 4px;
+  border-radius: 3px;
+  line-height: 1.2;
+}
+
+.mmi-trigger-val {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.80rem;
+  font-weight: 700;
+  color: #ff9923;
+  letter-spacing: -0.02em;
+}
+
+.mmi-trigger-zone {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: #94a3b8;
+  text-transform: capitalize;
+}
+
+.mmi-trigger-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #ff9923;
+  box-shadow: 0 0 6px #ff9923;
+  display: inline-block;
+}
+
+/* Flyout Card (1-to-1 Tickertape MMI Dial) */
+.mmi-card-flyout {
+  position: fixed;
+  top: 42px;
+  left: 10px;
+  z-index: 999999;
+  width: 370px;
+  background: #ffffff;
+  border-radius: 16px;
+  box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(0, 0, 0, 0.1);
+  padding: 22px 18px 16px 18px;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(8px) scale(0.98);
+  transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
+              visibility 0.22s;
+}
+
+/* Invisible bridge so mouse hover doesn't drop across gap */
+.mmi-card-flyout::before {
+  content: '';
+  position: absolute;
+  top: -12px;
+  left: 0;
+  width: 100%;
+  height: 12px;
+}
+
+/* Active / Open States */
+.mmi-header-container:hover .mmi-card-flyout,
+.mmi-card-flyout.is-open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+}
+
+.mmi-card-header {
+  text-align: center;
+  margin-bottom: 6px;
+}
+
+.mmi-card-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #1e293b;
+  margin: 0;
+  letter-spacing: -0.02em;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.mmi-card-sub {
+  font-size: 0.72rem;
+  color: #64748b;
+  margin: 3px 0 0 0;
+  font-weight: 500;
+}
+
+/* Dial Container */
+.mmi-dial-wrapper {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 2px 0 6px 0;
+}
+
+.mmi-dial-holder {
+  position: relative;
+  width: 280px;
+  height: 280px;
+}
+
+.mmi-img-base {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  user-select: none;
+}
+
+.mmi-img-active-zone {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  user-select: none;
+  transition: opacity 0.3s ease;
+}
+
+.mmi-pointer-holder {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.mmi-pointer-svg {
+  width: 100%;
+  height: 100%;
+  transform-origin: 50% 50%;
+  transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.mmi-val-container {
+  position: absolute;
+  bottom: 8px;
+  left: 0;
+  width: 100%;
+  text-align: center;
+  pointer-events: none;
+}
+
+.mmi-dial-num {
+  font-size: 2.15rem;
+  font-weight: 800;
+  color: #ff9923;
+  line-height: 1;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  letter-spacing: -0.03em;
+}
+
+.mmi-dial-date {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  margin: 4px 0 0 0;
+  font-weight: 500;
+}
+
+/* Sentiment Description Box */
+.mmi-sentiment-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 9px 12px;
+  margin-top: 4px;
+  text-align: left;
+}
+
+.mmi-sentiment-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.mmi-zone-tag {
+  font-size: 0.66rem;
+  font-weight: 800;
+  color: #ffffff;
+  background-color: #ff9923;
+  padding: 2px 6px;
+  border-radius: 4px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.mmi-zone-range {
+  font-size: 0.70rem;
+  font-weight: 600;
+  color: #64748b;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.mmi-zone-desc {
+  font-size: 0.73rem;
+  color: #334155;
+  line-height: 1.45;
+  margin: 0;
+}
+
+/* History Grid */
+.mmi-history-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.mmi-hist-cell {
+  background: #f8fafc;
+  border-radius: 6px;
+  padding: 5px 3px;
+  text-align: center;
+  border: 1px solid #f1f5f9;
+}
+
+.mmi-hist-label {
+  display: block;
+  font-size: 0.58rem;
+  color: #64748b;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+  margin-bottom: 2px;
+}
+
+.mmi-hist-value {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #1e293b;
+}
+
 .brand-text {
   white-space: nowrap;
 }

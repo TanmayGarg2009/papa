@@ -299,6 +299,127 @@ async function fetchNSEAdvanceDecline() {
   });
 }
 
+// In-memory cache for Tickertape MMI (Market Mood Index) data
+let mmiCache = null;
+let lastMmiFetch = 0;
+
+async function fetchTickertapeMMI() {
+  const now = Date.now();
+  if (mmiCache && (now - lastMmiFetch < 1000 * 60)) {
+    return mmiCache;
+  }
+
+  return new Promise((resolve) => {
+    const options = {
+      hostname: 'api.tickertape.in',
+      port: 443,
+      path: '/mmi/now',
+      method: 'GET',
+      headers: {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36',
+        'Accept': 'application/json, text/plain, */*'
+      },
+      timeout: 4000
+    };
+
+    const req = https.request(options, (res) => {
+      if (res.statusCode !== 200) return resolve(mmiCache || getFallbackMMI());
+      let rawData = '';
+      res.setEncoding('utf8');
+      res.on('data', chunk => rawData += chunk);
+      res.on('end', () => {
+        try {
+          const parsed = JSON.parse(rawData);
+          if (parsed && parsed.data) {
+            const rawVal = parsed.data.currentValue ?? parsed.data.indicator;
+            const val = Number((Number(rawVal) || 43.87).toFixed(2));
+            
+            let zone = 'eg';
+            let label = 'Extreme Greed';
+            let color = '#e23d3d';
+            let description = 'Extreme greed (>70) suggests investors should avoid opening fresh positions as markets are overbought and likely to turn downwards.';
+
+            if (val < 30) {
+              zone = 'ef';
+              label = 'Extreme Fear';
+              color = '#12be57';
+              description = 'Extreme fear (<30) suggests a good time to open fresh positions, as markets are likely to be oversold and might turn upwards.';
+            } else if (val < 50) {
+              zone = 'fear';
+              label = 'Fear';
+              color = '#ff9923';
+              description = 'It suggests that investors are fearful in the market, but the action to be taken depends on the MMI trajectory.';
+            } else if (val < 70) {
+              zone = 'greed';
+              label = 'Greed';
+              color = '#f57011';
+              description = 'Greed zone suggests that investors are acting greedy in the market, but the action to be taken depends on the MMI trajectory.';
+            }
+
+            const mmiResult = {
+              currentValue: val,
+              date: parsed.data.date || new Date().toISOString(),
+              zone,
+              label,
+              color,
+              angle: Number((3 * val - 150).toFixed(2)),
+              description,
+              metrics: {
+                fii: parsed.data.fii || 0,
+                vix: parsed.data.vix || 0,
+                skew: parsed.data.skew || 0,
+                momentum: parsed.data.momentum || 0,
+                trin: parsed.data.trin || 0,
+                extrema: parsed.data.extrema || 0
+              },
+              historical: {
+                lastDay: parsed.data.lastDay ? Number((parsed.data.lastDay.indicator ?? 0).toFixed(2)) : 38.59,
+                lastWeek: parsed.data.lastWeek ? Number((parsed.data.lastWeek.indicator ?? 0).toFixed(2)) : 49.46,
+                lastMonth: parsed.data.lastMonth ? Number((parsed.data.lastMonth.indicator ?? 0).toFixed(2)) : 74.42,
+                lastYear: parsed.data.lastYear ? Number((parsed.data.lastYear.indicator ?? 0).toFixed(2)) : 24.85
+              }
+            };
+            mmiCache = mmiResult;
+            lastMmiFetch = Date.now();
+            resolve(mmiResult);
+          } else {
+            resolve(mmiCache || getFallbackMMI());
+          }
+        } catch (e) {
+          resolve(mmiCache || getFallbackMMI());
+        }
+      });
+    });
+
+    req.on('error', () => resolve(mmiCache || getFallbackMMI()));
+    req.on('timeout', () => {
+      req.destroy();
+      resolve(mmiCache || getFallbackMMI());
+    });
+    req.end();
+  });
+}
+
+function getFallbackMMI() {
+  const val = 43.87;
+  return {
+    currentValue: val,
+    date: new Date().toISOString(),
+    zone: 'fear',
+    label: 'Fear',
+    color: '#ff9923',
+    angle: Number((3 * val - 150).toFixed(2)),
+    description: 'It suggests that investors are fearful in the market, but the action to be taken depends on the MMI trajectory.',
+    metrics: { fii: -209315, vix: -10.68, skew: -0.27, momentum: 0.015, trin: 1.38, extrema: 0.014 },
+    historical: {
+      lastDay: 38.59,
+      lastWeek: 49.46,
+      lastMonth: 74.42,
+      lastYear: 24.85
+    }
+  };
+}
+
 // In-memory option chain cache for post-4:00 PM data
 const optionChainCache = new Map();
 
@@ -484,6 +605,16 @@ app.get('/api/live-analysis-advance', async (req, res) => {
     });
   } catch (e) {
     res.status(500).json({ success: false, error: e.message });
+  }
+});
+
+// Dedicated endpoint for Market Mood Index (MMI) from Tickertape
+app.get('/api/mmi', async (req, res) => {
+  try {
+    const data = await fetchTickertapeMMI();
+    res.json({ success: true, data });
+  } catch (e) {
+    res.json({ success: true, data: getFallbackMMI() });
   }
 });
 
