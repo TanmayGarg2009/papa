@@ -183,34 +183,36 @@ body {
   display: inline-block;
 }
 
-/* Flyout Card (1-to-1 Tickertape MMI Dial) */
+/* Flyout Card (Optimally Sized 1-to-1 Tickertape MMI Dial) */
 .mmi-card-flyout {
   position: fixed;
-  top: 42px;
+  top: 40px;
   left: 10px;
   z-index: 999999;
-  width: 370px;
+  width: 290px;
   background: #ffffff;
-  border-radius: 16px;
-  box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(0, 0, 0, 0.1);
-  padding: 22px 18px 16px 18px;
+  border-radius: 12px;
+  box-shadow: 0 16px 36px -8px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(0, 0, 0, 0.08);
+  padding: 14px 14px 12px 14px;
+  box-sizing: border-box;
+  white-space: normal !important;
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
-  transform: translateY(8px) scale(0.98);
-  transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1),
-              transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
-              visibility 0.22s;
+  transform: translateY(6px) scale(0.98);
+  transition: opacity 0.20s cubic-bezier(0.16, 1, 0.3, 1),
+              transform 0.20s cubic-bezier(0.16, 1, 0.3, 1),
+              visibility 0.20s;
 }
 
 /* Invisible bridge so mouse hover doesn't drop across gap */
 .mmi-card-flyout::before {
   content: '';
   position: absolute;
-  top: -12px;
+  top: -10px;
   left: 0;
   width: 100%;
-  height: 12px;
+  height: 10px;
 }
 
 /* Active / Open States */
@@ -224,11 +226,11 @@ body {
 
 .mmi-card-header {
   text-align: center;
-  margin-bottom: 6px;
+  margin-bottom: 4px;
 }
 
 .mmi-card-title {
-  font-size: 1.25rem;
+  font-size: 1.02rem;
   font-weight: 800;
   color: #1e293b;
   margin: 0;
@@ -237,9 +239,9 @@ body {
 }
 
 .mmi-card-sub {
-  font-size: 0.72rem;
+  font-size: 0.62rem;
   color: #64748b;
-  margin: 3px 0 0 0;
+  margin: 2px 0 0 0;
   font-weight: 500;
 }
 
@@ -248,13 +250,13 @@ body {
   display: flex;
   justify-content: center;
   align-items: center;
-  margin: 2px 0 6px 0;
+  margin: 2px 0 4px 0;
 }
 
 .mmi-dial-holder {
   position: relative;
-  width: 280px;
-  height: 280px;
+  width: 200px;
+  height: 200px;
 }
 
 .mmi-img-base {
@@ -296,7 +298,7 @@ body {
 
 .mmi-val-container {
   position: absolute;
-  bottom: 8px;
+  bottom: 10px;
   left: 0;
   width: 100%;
   text-align: center;
@@ -304,7 +306,7 @@ body {
 }
 
 .mmi-dial-num {
-  font-size: 2.15rem;
+  font-size: 1.55rem;
   font-weight: 800;
   color: #ff9923;
   line-height: 1;
@@ -313,9 +315,9 @@ body {
 }
 
 .mmi-dial-date {
-  font-size: 0.72rem;
+  font-size: 0.62rem;
   color: #94a3b8;
-  margin: 4px 0 0 0;
+  margin: 2px 0 0 0;
   font-weight: 500;
 }
 
@@ -323,75 +325,80 @@ body {
 .mmi-sentiment-box {
   background: #f8fafc;
   border: 1px solid #e2e8f0;
-  border-radius: 10px;
-  padding: 9px 12px;
-  margin-top: 4px;
+  border-radius: 8px;
+  padding: 6px 8px;
+  margin-top: 3px;
   text-align: left;
+  box-sizing: border-box;
+  overflow: hidden;
+  white-space: normal !important;
 }
 
 .mmi-sentiment-head {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 4px;
+  gap: 6px;
+  margin-bottom: 2px;
 }
 
 .mmi-zone-tag {
-  font-size: 0.66rem;
+  font-size: 0.58rem;
   font-weight: 800;
   color: #ffffff;
   background-color: #ff9923;
-  padding: 2px 6px;
-  border-radius: 4px;
+  padding: 1px 5px;
+  border-radius: 3px;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
 .mmi-zone-range {
-  font-size: 0.70rem;
+  font-size: 0.62rem;
   font-weight: 600;
   color: #64748b;
   font-family: 'JetBrains Mono', monospace;
 }
 
 .mmi-zone-desc {
-  font-size: 0.73rem;
+  font-size: 0.66rem;
   color: #334155;
-  line-height: 1.45;
+  line-height: 1.35;
   margin: 0;
+  word-break: break-word;
+  white-space: normal !important;
 }
 
 /* History Grid */
 .mmi-history-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
-  margin-top: 10px;
-  padding-top: 8px;
+  gap: 4px;
+  margin-top: 6px;
+  padding-top: 6px;
   border-top: 1px solid #f1f5f9;
 }
 
 .mmi-hist-cell {
   background: #f8fafc;
-  border-radius: 6px;
-  padding: 5px 3px;
+  border-radius: 5px;
+  padding: 4px 2px;
   text-align: center;
   border: 1px solid #f1f5f9;
 }
 
 .mmi-hist-label {
   display: block;
-  font-size: 0.58rem;
+  font-size: 0.50rem;
   color: #64748b;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.03em;
-  margin-bottom: 2px;
+  margin-bottom: 1px;
 }
 
 .mmi-hist-value {
   font-family: 'JetBrains Mono', monospace;
-  font-size: 0.78rem;
+  font-size: 0.70rem;
   font-weight: 700;
   color: #1e293b;
 }
@@ -652,16 +659,16 @@ input[type="number"] {
   color: #0f172a;
 }
 
-/* Column Width Distributions */
-.col-delta { width: 2.9%; }
-.col-iv { width: 2.8%; }
-.col-oichg { width: 10.8%; }
-.col-oi { width: 9.4%; }
-.col-vol { width: 8.8%; }
-.col-ltp { width: 3.9%; }
-.col-oichg-pct { width: 4.2%; }
-.col-oi-pct { width: 4.0%; }
-.col-strike { width: 6.4%; }
+/* Column Width Distributions (Optimally Balanced - No Column Over-allocated) */
+.col-delta { width: 3.8%; }
+.col-iv { width: 3.5%; }
+.col-oichg { width: 9.5%; }
+.col-oi { width: 7.8%; }
+.col-vol { width: 7.8%; }
+.col-ltp { width: 4.5%; }
+.col-oichg-pct { width: 5.3%; }
+.col-oi-pct { width: 5.2%; }
+.col-strike { width: 5.2%; }
 
 /* Super Header Row - Solid Sticky on Top */
 .super-header th {
@@ -681,21 +688,21 @@ input[type="number"] {
   background-color: #b91c1c !important; /* Refined Deep Red for Calls */
   color: #ffffff !important;
   text-align: center;
-  width: 46.8%;
+  width: 47.4%;
 }
 
 .th-pe {
   background-color: #15803d !important; /* Refined Deep Green for Puts */
   color: #ffffff !important;
   text-align: center;
-  width: 46.8%;
+  width: 47.4%;
 }
 
 .th-strike-title {
   background-color: #1e293b !important;
   color: #ffffff !important;
   text-align: center;
-  width: 6.4%;
+  width: 5.2%;
 }
 
 .header-sr-badge {
