@@ -1063,14 +1063,10 @@ function renderTable(payload) {
         peOiPctStr = pePct.toFixed(1) + '%';
       }
 
-      // Strike bold formatting: Only multiples of 100 are shown in bold; ATM strike has sleek ATM pill
+      // Strike bold formatting: Only multiples of 100 are shown in bold
       const isMultipleOf100 = (Number(strike) % 100 === 0);
-      const isAtm = (atmStrike !== null && Number(strike) === Number(atmStrike));
       const formattedStrike = formatIndianNumber(strike);
-      let strikeInner = isMultipleOf100 ? `<strong>${formattedStrike}</strong>` : formattedStrike;
-      if (isAtm && !isExactMatch) {
-        strikeInner = `<div class="strike-cell-inner">${strikeInner}<span class="atm-badge">ATM</span></div>`;
-      }
+      const strikeInner = isMultipleOf100 ? `<strong>${formattedStrike}</strong>` : formattedStrike;
       const strikeDisplayContent = isExactMatch 
         ? `<span class="golden-badge">${formattedStrike}</span>` 
         : strikeInner;

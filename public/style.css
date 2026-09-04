@@ -544,26 +544,6 @@ input[type="number"] {
   font-weight: 700 !important;
 }
 
-.strike-cell-inner {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-}
-
-.atm-badge {
-  display: inline-block;
-  background-color: #dbeafe;
-  color: #1d4ed8;
-  font-size: 0.58rem;
-  font-weight: 800;
-  padding: 1px 3px;
-  border-radius: 3px;
-  letter-spacing: 0.04em;
-  vertical-align: middle;
-  line-height: 1;
-}
-
 /* Table Footer - Sticky Bottom Summary Rows */
 .total-row {
   position: sticky;
