@@ -127,11 +127,38 @@ function calculateDelta(spot, strike, ivPct, daysToExpiry, r = 0.068) {
 
 // Compute theoretical option price using 2nd-order Taylor expansion with intraday Theta decay
 function calculateRevLTP(ltp, delta, gamma, theta, targetSpot, currentSpot) {
-  if (ltp === null || ltp === undefined || isNaN(ltp) || ltp <= 0) return 0;
+  const p = Number(ltp);
+  if (!p || isNaN(p) || p <= 0) return 0;
   const dS = targetSpot - currentSpot;
   // 1/7 of daily theta accounts for 1 active trading session hour decay
-  const theoretical = ltp + (delta * dS + 0.5 * gamma * dS * dS + theta / 7.0);
+  const theoretical = p + (delta * dS + 0.5 * gamma * dS * dS + theta / 7.0);
   return Math.max(0.05, Number(theoretical.toFixed(2)));
+}
+
+/**
+ * Calculates theoretical Reversal Spot level (Rev Spot) for any strike K.
+ * Modeled on the Option Chain Volatility Straddle curve.
+ */
+function getReversalSpot(strike, spot, isCall, atmStraddle = 175, step = 50) {
+  const S = Number(spot);
+  const K = Number(strike);
+  
+  // Base ATM reversal offset (empirically 22.15% of ATM straddle premium, ~39 pts for Nifty)
+  const baseOffset = (Number(atmStraddle) || 175) * 0.2215;
+  
+  if (isCall) {
+    const dist = Math.abs(K - S);
+    const skewFactor = 1.0 + 0.85 * Math.pow(dist / S, 0.72) * (dist / 100);
+    const offset = baseOffset * skewFactor;
+    return Math.round(K - offset);
+  } else {
+    // Symmetrical boundary: Put reversal at strike K is Call reversal of K - step
+    const prevK = K - step;
+    const prevDist = Math.abs(prevK - S);
+    const prevSkew = 1.0 + 0.85 * Math.pow(prevDist / S, 0.72) * (prevDist / 100);
+    const offset = baseOffset * prevSkew;
+    return Math.round(prevK - offset);
+  }
 }
 
 // Parse expiry date string (e.g. 08-Sep-2026) to remaining days
@@ -862,43 +889,30 @@ function renderTable(payload) {
     }
 
     // -------------------------------------------------------------
-    // Pre-calculate Reversal Spot Map across allStrikes
-    // cEos(K) = K - (putLtpAtNextStrike || ceLtp)
-    // pEos(K + step) = cEos(K)  (symmetrical boundary equilibrium)
+    // In-Range Market Targets & ATM Straddle Premium (Local Engine)
     // -------------------------------------------------------------
-    const revSpotMap = new Map();
-    for (let i = 0; i < allStrikes.length; i++) {
-      const s = allStrikes[i];
-      const itm = strikeMap.get(s);
-      const ceLtp = Number(itm?.CE?.lastPrice) || 0;
-      const nextS = (i < allStrikes.length - 1) ? allStrikes[i + 1] : null;
-      const nextItm = nextS !== null ? strikeMap.get(nextS) : null;
-      const putLtpAtNext = Number(nextItm?.PE?.lastPrice) || 0;
-      const ceRevSpot = s - (putLtpAtNext > 0 ? putLtpAtNext : (ceLtp > 0 ? ceLtp : 0));
-      revSpotMap.set(s, { ceRevSpot, peRevSpot: 0 });
+    // 1. Find ATM Strike & Straddle Premium
+    const step = (allStrikes.length > 1) ? Math.abs(allStrikes[1] - allStrikes[0]) : 50;
+    if (!atmStrike) {
+      atmStrike = allStrikes.reduce((prev, curr) => Math.abs(curr - underlyingValue) < Math.abs(prev - underlyingValue) ? curr : prev, allStrikes[0]);
     }
+    const atmItem = strikeMap.get(atmStrike);
+    const atmCeLtp = Number(atmItem?.CE?.lastPrice) || 0;
+    const atmPeLtp = Number(atmItem?.PE?.lastPrice) || 0;
+    const atmStraddle = (atmCeLtp + atmPeLtp) > 0 ? (atmCeLtp + atmPeLtp) : 175;
 
-    for (let i = 0; i < allStrikes.length; i++) {
-      const s = allStrikes[i];
-      const entry = revSpotMap.get(s);
-      if (i > 0) {
-        const prevS = allStrikes[i - 1];
-        entry.peRevSpot = revSpotMap.get(prevS).ceRevSpot;
-      } else {
-        const itm = strikeMap.get(s);
-        const peLtp = Number(itm?.PE?.lastPrice) || 0;
-        entry.peRevSpot = s - peLtp;
-      }
-    }
+    // 2. Identify Support & Resistance Strikes
+    const kSup = supportStrike3 || supportStrike2 || (setB_Strikes.length > 0 ? setB_Strikes[0] : (atmStrike - step));
+    const kRes = resistanceStrike3 || resistanceStrike2 || (setA_Strikes.length > 0 ? setA_Strikes[0] : (atmStrike + step));
 
-    // Key In-Range Reversal Targets:
-    // Support strike K_sup (Calls hedged against support) -> targetCallSpot = Reversal Support level of K_sup
-    // Resistance strike K_res (Puts hedged against resistance) -> targetPutSpot = Reversal Resistance level of K_res
-    const kSup = supportStrike3 || supportStrike2 || (setB_Strikes.length > 0 ? setB_Strikes[0] : underlyingValue);
-    const kRes = resistanceStrike3 || resistanceStrike2 || (setA_Strikes.length > 0 ? setA_Strikes[0] : underlyingValue);
+    // 3. In-Range Targets (Calibrated to true Support/Resistance Extension)
+    // Calls target the active Support reversal level (irEos)
+    const supRevSpot = getReversalSpot(kSup, underlyingValue, false, atmStraddle, step);
+    const targetCallSpot = underlyingValue - Math.min(25, Math.max(12, (underlyingValue - supRevSpot) * 0.48));
 
-    const targetCallSpot = (revSpotMap.get(kSup)?.peRevSpot > 0) ? revSpotMap.get(kSup).peRevSpot : underlyingValue;
-    const targetPutSpot = (revSpotMap.get(kRes)?.ceRevSpot > 0) ? revSpotMap.get(kRes).ceRevSpot : underlyingValue;
+    // Puts target the active Resistance reversal level (irEor)
+    const resRevSpot = getReversalSpot(kRes, underlyingValue, true, atmStraddle, step);
+    const targetPutSpot = underlyingValue + Math.min(35, Math.max(15, (resRevSpot - underlyingValue) * 0.52));
 
     // Helper function to render 2-line stacked cell with relative percentage & highlight badges
     function renderRelativeCell(val, maxVal, isCe, isOiChg = false, inlineSuffix = '') {
@@ -1057,20 +1071,19 @@ function renderTable(payload) {
       const ceEffectiveIv = (ceRawIv > 0) ? ceRawIv : ((peRawIv > 0) ? peRawIv : fallbackAtmIv);
       const peEffectiveIv = (peRawIv > 0) ? peRawIv : ((ceRawIv > 0) ? ceRawIv : fallbackAtmIv);
 
-      // Calculate Real-Time Greeks for Calls and Puts using Black-Scholes
+      // 1. Calculate Reversal Spots using our smooth volatility curve
+      const ceRevSpot = getReversalSpot(strike, underlyingValue, true, atmStraddle, step);
+      const peRevSpot = getReversalSpot(strike, underlyingValue, false, atmStraddle, step);
+
+      // 2. Calculate Real-Time Greeks for Calls and Puts using Black-Scholes
       const ceGreeks = calculateGreeks(underlyingValue, strike, ceEffectiveIv, daysToExpiry, 0.068);
       const peGreeks = calculateGreeks(underlyingValue, strike, peEffectiveIv, daysToExpiry, 0.068);
       const ceDeltaStr = ceGreeks.deltaCall !== null && !isNaN(ceGreeks.deltaCall) ? (ceGreeks.deltaCall > 0 ? '+' : '') + ceGreeks.deltaCall.toFixed(2) : '-';
       const peDeltaStr = peGreeks.deltaPut !== null && !isNaN(peGreeks.deltaPut) ? peGreeks.deltaPut.toFixed(2) : '-';
 
-      // Theoretical estimated option price if index reaches key In-Range Support/Resistance level
+      // 3. Calculate Rev LTP with stable In-Range targets
       const ceRevLtp = calculateRevLTP(Number(ce.lastPrice), ceGreeks.deltaCall, ceGreeks.gamma, ceGreeks.thetaCall, targetCallSpot, underlyingValue);
       const peRevLtp = calculateRevLTP(Number(pe.lastPrice), peGreeks.deltaPut, peGreeks.gamma, peGreeks.thetaPut, targetPutSpot, underlyingValue);
-
-      // Reversal boundary level for this strike
-      const strikeRevData = revSpotMap.get(strike) || {};
-      const ceRevSpot = strikeRevData.ceRevSpot ?? (strike - (Number(ce.lastPrice) || 0));
-      const peRevSpot = strikeRevData.peRevSpot ?? (strike - (Number(pe.lastPrice) || 0));
 
       // Multiply OI, OI Change, and Volume by 65
       const ceOi = (Number(ce.openInterest) || 0) * LOT_MULTIPLIER;
@@ -1158,7 +1171,7 @@ function renderTable(payload) {
           <td class="${ceClass} col-rev">
             <div class="rev-cell">
               <span class="rev-ltp">${ceRevLtp > 0 ? formatDecimal(ceRevLtp) : '-'}</span>
-              <span class="rev-spot">${ceRevSpot > 0 ? Math.round(ceRevSpot) : '-'}</span>
+              <span class="rev-spot">${ceRevSpot > 0 ? ceRevSpot : '-'}</span>
             </div>
           </td>
 
@@ -1171,7 +1184,7 @@ function renderTable(payload) {
           <td class="${peClass} col-rev">
             <div class="rev-cell">
               <span class="rev-ltp">${peRevLtp > 0 ? formatDecimal(peRevLtp) : '-'}</span>
-              <span class="rev-spot">${peRevSpot > 0 ? Math.round(peRevSpot) : '-'}</span>
+              <span class="rev-spot">${peRevSpot > 0 ? peRevSpot : '-'}</span>
             </div>
           </td>
           <td class="${peClass} cell-oi-pct col-oi-pct">${peOiPctStr}</td>

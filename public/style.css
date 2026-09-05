@@ -677,8 +677,14 @@ input[type="number"] {
 .col-strike { width: 5.0%; }
 
 /* Rev(LTP/Spot) Column & Cell Architecture */
+.col-rev {
+  width: 4.5%;
+  min-width: 68px;
+  text-align: center;
+}
+
 th.col-rev {
-  font-size: 0.68rem;
+  font-size: 0.70rem;
   font-weight: 700;
   letter-spacing: 0.01em;
   color: #334155;
@@ -690,14 +696,14 @@ th.col-rev {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  line-height: 1.2;
-  padding: 1px 2px;
+  line-height: 1.25;
+  padding: 2px 2px !important;
 }
 
 .rev-ltp {
   font-family: 'JetBrains Mono', monospace;
   font-weight: 700;
-  font-size: 0.80rem;
+  font-size: 0.82rem;
   color: #0f172a;
   white-space: nowrap;
 }
@@ -705,7 +711,7 @@ th.col-rev {
 .rev-spot {
   font-family: 'JetBrains Mono', monospace;
   font-weight: 500;
-  font-size: 0.68rem;
+  font-size: 0.70rem;
   color: #64748b;
   margin-top: 1px;
   white-space: nowrap;
