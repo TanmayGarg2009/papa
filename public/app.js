@@ -86,27 +86,52 @@ function normalCdf(x) {
   return 0.5 * (1.0 + sign * y);
 }
 
-// Black-Scholes Delta Calculator
+// Standard normal probability density function (PDF)
+function normalPdf(x) {
+  return (1.0 / Math.sqrt(2 * Math.PI)) * Math.exp(-0.5 * x * x);
+}
+
+// Black-Scholes Greeks Calculator (Delta, Gamma, Theta)
+function calculateGreeks(spot, strike, ivPct, daysToExpiry, r = 0.068) {
+  const S = Number(spot);
+  const K = Number(strike);
+  let sigma = Number(ivPct) / 100.0;
+  if (!sigma || isNaN(sigma) || sigma <= 0) sigma = 0.12; // Fallback to 12% if missing
+  const T = Math.max(daysToExpiry, 0.01) / 365.0; // Time in years
+
+  const d1 = (Math.log(S / K) + (r + 0.5 * sigma * sigma) * T) / (sigma * Math.sqrt(T));
+  const d2 = d1 - sigma * Math.sqrt(T);
+
+  const deltaCall = normalCdf(d1);
+  const deltaPut = deltaCall - 1.0;
+  const gamma = normalPdf(d1) / (S * sigma * Math.sqrt(T));
+
+  // 1-day theta (annualized theta / 365)
+  const thetaCall = (-(S * normalPdf(d1) * sigma) / (2 * Math.sqrt(T)) - r * K * Math.exp(-r * T) * normalCdf(d2)) / 365.0;
+  const thetaPut  = (-(S * normalPdf(d1) * sigma) / (2 * Math.sqrt(T)) + r * K * Math.exp(-r * T) * normalCdf(-d2)) / 365.0;
+
+  return { deltaCall, deltaPut, gamma, thetaCall, thetaPut };
+}
+
+// Backward-compatible Black-Scholes Delta Calculator
 function calculateDelta(spot, strike, ivPct, daysToExpiry, r = 0.068) {
   if (!spot || !strike || daysToExpiry <= 0) {
     return { callDelta: null, putDelta: null };
   }
-  const S = Number(spot);
-  const K = Number(strike);
-  let sigma = Number(ivPct) / 100.0;
-  if (!sigma || isNaN(sigma) || sigma <= 0) {
-    sigma = 0.12; // Fallback to standard 12% IV if completely missing
-  }
-  const T = Math.max(daysToExpiry, 0.01) / 365.0; // Time in years
-
-  const d1 = (Math.log(S / K) + (r + 0.5 * sigma * sigma) * T) / (sigma * Math.sqrt(T));
-  const callDelta = normalCdf(d1);
-  const putDelta = callDelta - 1.0;
-
+  const g = calculateGreeks(spot, strike, ivPct, daysToExpiry, r);
   return {
-    callDelta: Number(callDelta.toFixed(2)),
-    putDelta: Number(putDelta.toFixed(2))
+    callDelta: Number(g.deltaCall.toFixed(2)),
+    putDelta: Number(g.deltaPut.toFixed(2))
   };
+}
+
+// Compute theoretical option price using 2nd-order Taylor expansion with intraday Theta decay
+function calculateRevLTP(ltp, delta, gamma, theta, targetSpot, currentSpot) {
+  if (ltp === null || ltp === undefined || isNaN(ltp) || ltp <= 0) return 0;
+  const dS = targetSpot - currentSpot;
+  // 1/7 of daily theta accounts for 1 active trading session hour decay
+  const theoretical = ltp + (delta * dS + 0.5 * gamma * dS * dS + theta / 7.0);
+  return Math.max(0.05, Number(theoretical.toFixed(2)));
 }
 
 // Parse expiry date string (e.g. 08-Sep-2026) to remaining days
@@ -404,7 +429,7 @@ async function fetchOptionChain(isAutoRefresh = false) {
 
     // DO NOT clear existing table data on network/fetch disconnection
     if (!lastFetchedData) {
-      tableBody.innerHTML = `<tr><td colspan="15" style="text-align:center; padding: 25px; color: #ef4444; font-weight: 600;">Data fetch failed: ${failureReason}. No previous data available.</td></tr>`;
+      tableBody.innerHTML = `<tr><td colspan="19" style="text-align:center; padding: 25px; color: #ef4444; font-weight: 600;">Data fetch failed: ${failureReason}. No previous data available.</td></tr>`;
     }
   } finally {
     isFetchingNow = false;
@@ -503,7 +528,7 @@ function renderTable(payload) {
 
     const allStrikes = Array.from(strikeMap.keys()).sort((a, b) => a - b);
     if (allStrikes.length === 0) {
-      tableBody.innerHTML = '<tr><td colspan="15" style="text-align:center; padding: 20px;">No option chain records found.</td></tr>';
+      tableBody.innerHTML = '<tr><td colspan="19" style="text-align:center; padding: 20px;">No option chain records found.</td></tr>';
       return;
     }
 
@@ -836,6 +861,45 @@ function renderTable(payload) {
       badgeSf2.title = displaySf2 ? `Support Fixed (2 Params: OI, Vol): ${formatIndianNumber(displaySf2)}` : 'SF2 (2-param)';
     }
 
+    // -------------------------------------------------------------
+    // Pre-calculate Reversal Spot Map across allStrikes
+    // cEos(K) = K - (putLtpAtNextStrike || ceLtp)
+    // pEos(K + step) = cEos(K)  (symmetrical boundary equilibrium)
+    // -------------------------------------------------------------
+    const revSpotMap = new Map();
+    for (let i = 0; i < allStrikes.length; i++) {
+      const s = allStrikes[i];
+      const itm = strikeMap.get(s);
+      const ceLtp = Number(itm?.CE?.lastPrice) || 0;
+      const nextS = (i < allStrikes.length - 1) ? allStrikes[i + 1] : null;
+      const nextItm = nextS !== null ? strikeMap.get(nextS) : null;
+      const putLtpAtNext = Number(nextItm?.PE?.lastPrice) || 0;
+      const ceRevSpot = s - (putLtpAtNext > 0 ? putLtpAtNext : (ceLtp > 0 ? ceLtp : 0));
+      revSpotMap.set(s, { ceRevSpot, peRevSpot: 0 });
+    }
+
+    for (let i = 0; i < allStrikes.length; i++) {
+      const s = allStrikes[i];
+      const entry = revSpotMap.get(s);
+      if (i > 0) {
+        const prevS = allStrikes[i - 1];
+        entry.peRevSpot = revSpotMap.get(prevS).ceRevSpot;
+      } else {
+        const itm = strikeMap.get(s);
+        const peLtp = Number(itm?.PE?.lastPrice) || 0;
+        entry.peRevSpot = s - peLtp;
+      }
+    }
+
+    // Key In-Range Reversal Targets:
+    // Support strike K_sup (Calls hedged against support) -> targetCallSpot = Reversal Support level of K_sup
+    // Resistance strike K_res (Puts hedged against resistance) -> targetPutSpot = Reversal Resistance level of K_res
+    const kSup = supportStrike3 || supportStrike2 || (setB_Strikes.length > 0 ? setB_Strikes[0] : underlyingValue);
+    const kRes = resistanceStrike3 || resistanceStrike2 || (setA_Strikes.length > 0 ? setA_Strikes[0] : underlyingValue);
+
+    const targetCallSpot = (revSpotMap.get(kSup)?.peRevSpot > 0) ? revSpotMap.get(kSup).peRevSpot : underlyingValue;
+    const targetPutSpot = (revSpotMap.get(kRes)?.ceRevSpot > 0) ? revSpotMap.get(kRes).ceRevSpot : underlyingValue;
+
     // Helper function to render 2-line stacked cell with relative percentage & highlight badges
     function renderRelativeCell(val, maxVal, isCe, isOiChg = false, inlineSuffix = '') {
       const formattedVal = formatIndianNumber(val);
@@ -993,11 +1057,20 @@ function renderTable(payload) {
       const ceEffectiveIv = (ceRawIv > 0) ? ceRawIv : ((peRawIv > 0) ? peRawIv : fallbackAtmIv);
       const peEffectiveIv = (peRawIv > 0) ? peRawIv : ((ceRawIv > 0) ? ceRawIv : fallbackAtmIv);
 
-      // Calculate Real-Time Delta for Calls and Puts using Black-Scholes
-      const ceDeltaRes = calculateDelta(underlyingValue, strike, ceEffectiveIv, daysToExpiry, 0.068);
-      const peDeltaRes = calculateDelta(underlyingValue, strike, peEffectiveIv, daysToExpiry, 0.068);
-      const ceDeltaStr = ceDeltaRes.callDelta !== null ? (ceDeltaRes.callDelta > 0 ? '+' : '') + ceDeltaRes.callDelta.toFixed(2) : '-';
-      const peDeltaStr = peDeltaRes.putDelta !== null ? peDeltaRes.putDelta.toFixed(2) : '-';
+      // Calculate Real-Time Greeks for Calls and Puts using Black-Scholes
+      const ceGreeks = calculateGreeks(underlyingValue, strike, ceEffectiveIv, daysToExpiry, 0.068);
+      const peGreeks = calculateGreeks(underlyingValue, strike, peEffectiveIv, daysToExpiry, 0.068);
+      const ceDeltaStr = ceGreeks.deltaCall !== null && !isNaN(ceGreeks.deltaCall) ? (ceGreeks.deltaCall > 0 ? '+' : '') + ceGreeks.deltaCall.toFixed(2) : '-';
+      const peDeltaStr = peGreeks.deltaPut !== null && !isNaN(peGreeks.deltaPut) ? peGreeks.deltaPut.toFixed(2) : '-';
+
+      // Theoretical estimated option price if index reaches key In-Range Support/Resistance level
+      const ceRevLtp = calculateRevLTP(Number(ce.lastPrice), ceGreeks.deltaCall, ceGreeks.gamma, ceGreeks.thetaCall, targetCallSpot, underlyingValue);
+      const peRevLtp = calculateRevLTP(Number(pe.lastPrice), peGreeks.deltaPut, peGreeks.gamma, peGreeks.thetaPut, targetPutSpot, underlyingValue);
+
+      // Reversal boundary level for this strike
+      const strikeRevData = revSpotMap.get(strike) || {};
+      const ceRevSpot = strikeRevData.ceRevSpot ?? (strike - (Number(ce.lastPrice) || 0));
+      const peRevSpot = strikeRevData.peRevSpot ?? (strike - (Number(pe.lastPrice) || 0));
 
       // Multiply OI, OI Change, and Volume by 65
       const ceOi = (Number(ce.openInterest) || 0) * LOT_MULTIPLIER;
@@ -1073,7 +1146,7 @@ function renderTable(payload) {
 
       return `
         <tr class="${rowClass}">
-          <!-- CALLS (CE): Delta | IV | OI Chg | OI | Volume | LTP | CHG OI% | CALL OI% -->
+          <!-- CALLS (CE): Delta | IV | OI Chg | OI | Volume | LTP | CHG OI% | CALL OI% | Rev(LTP/Spot) -->
           <td class="${ceClass} col-delta">${ceDeltaStr}</td>
           <td class="${ceClass} col-iv">${formatDecimal(ce.impliedVolatility)}</td>
           <td class="${ceClass} col-oichg">${renderRelativeCell(ceOiChg, maxCeOiChg, true, true, (ceOi !== 0 && ceStrikeOiChgPctStr !== '-') ? `(${ceStrikeOiChgPctStr})` : '')}</td>
@@ -1082,13 +1155,25 @@ function renderTable(payload) {
           <td class="${ceClass} col-ltp">${formatDecimal(ce.lastPrice)}</td>
           <td class="${ceClass} ${ceOiChgPctClass} col-oichg-pct">${ceOiChgPctStr}</td>
           <td class="${ceClass} cell-oi-pct col-oi-pct">${ceOiPctStr}</td>
+          <td class="${ceClass} col-rev">
+            <div class="rev-cell">
+              <span class="rev-ltp">${ceRevLtp > 0 ? formatDecimal(ceRevLtp) : '-'}</span>
+              <span class="rev-spot">${ceRevSpot > 0 ? Math.round(ceRevSpot) : '-'}</span>
+            </div>
+          </td>
 
           <!-- STRIKE PRICE (CENTER) - Multiples of 100 in Bold -->
           <td class="${strikeClass} ${isMultipleOf100 ? 'strike-bold' : ''} col-strike">
             ${strikeDisplayContent}
           </td>
 
-          <!-- PUTS (PE) - Mirrored: PUT OI% | CHG OI% | LTP | Volume | OI | OI Chg | IV | Delta -->
+          <!-- PUTS (PE) - Mirrored: Rev(LTP/Spot) | PUT OI% | CHG OI% | LTP | Volume | OI | OI Chg | IV | Delta -->
+          <td class="${peClass} col-rev">
+            <div class="rev-cell">
+              <span class="rev-ltp">${peRevLtp > 0 ? formatDecimal(peRevLtp) : '-'}</span>
+              <span class="rev-spot">${peRevSpot > 0 ? Math.round(peRevSpot) : '-'}</span>
+            </div>
+          </td>
           <td class="${peClass} cell-oi-pct col-oi-pct">${peOiPctStr}</td>
           <td class="${peClass} ${peOiChgPctClass} col-oichg-pct">${peOiChgPctStr}</td>
           <td class="${peClass} col-ltp">${formatDecimal(pe.lastPrice)}</td>
@@ -1123,7 +1208,7 @@ function renderTable(payload) {
     // 2. Render Spot Baseline Divider Bar (Blue row with SPOT, AUD, F, and O, H, L, R + HF, LF, RF)
     rowsHtml += `
       <tr id="spotDividerRow" class="spot-divider-row">
-        <td colspan="17">
+        <td colspan="19">
           <div class="spot-divider-content">
             <div class="spot-center-title">
               <span class="spot-price-badge">SPOT: ${formatIndianNumber(underlyingValue)} (${spotPrevCloseDiffStr})</span>
@@ -1455,9 +1540,9 @@ function renderTable(payload) {
       const otmPeChgPctStr = sumOtmPeOi !== 0 ? (((sumOtmPeOiChg / sumOtmPeOi) * 100 > 0 ? '+' : '') + ((sumOtmPeOiChg / sumOtmPeOi) * 100).toFixed(1) + '%') : '-';
 
       tableFoot.innerHTML = `
-        <!-- Row 1: TOTAL SUMMARY (All 17 Columns Populated) -->
+        <!-- Row 1: TOTAL SUMMARY (All 19 Columns Populated) -->
         <tr class="total-row">
-          <!-- CALLS (CE) TOTALS: Delta | IV | OI Chg | OI | Volume | LTP | CHG OI% | CALL OI% -->
+          <!-- CALLS (CE) TOTALS: Delta | IV | OI Chg | OI | Volume | LTP | CHG OI% | CALL OI% | Rev(LTP/Spot) -->
           <td class="total-ce col-delta">
             <div class="total-cell-stacked">
               <span class="total-line-sum">${avgCeDeltaStr}</span>
@@ -1506,11 +1591,23 @@ function renderTable(payload) {
               <span class="total-line-pct">Share</span>
             </div>
           </td>
+          <td class="total-ce col-rev">
+            <div class="total-cell-stacked">
+              <span class="total-line-sum">-</span>
+              <span class="total-line-pct">-</span>
+            </div>
+          </td>
 
           <!-- STRIKE TOTAL LABEL -->
           <td class="total-strike col-strike">TOTAL (${visibleStrikes.length})</td>
 
-          <!-- PUTS (PE) TOTALS: PUT OI% | CHG OI% | LTP | Volume | OI | OI Chg | IV | Delta -->
+          <!-- PUTS (PE) TOTALS: Rev(LTP/Spot) | PUT OI% | CHG OI% | LTP | Volume | OI | OI Chg | IV | Delta -->
+          <td class="total-pe col-rev">
+            <div class="total-cell-stacked">
+              <span class="total-line-sum">-</span>
+              <span class="total-line-pct">-</span>
+            </div>
+          </td>
           <td class="total-pe col-oi-pct">
             <div class="total-cell-stacked">
               <span class="total-line-sum"><strong>${peOiTotalPctStr}</strong></span>
@@ -1561,9 +1658,9 @@ function renderTable(payload) {
           </td>
         </tr>
 
-        <!-- Row 2: ITM & OTM BREAKDOWN (All 17 Columns Populated cleanly without clutter) -->
+        <!-- Row 2: ITM & OTM BREAKDOWN (All 19 Columns Populated cleanly without clutter) -->
         <tr class="breakdown-row">
-          <!-- CALLS (CE) ITM / OTM: Delta | IV | OI Chg | OI | Volume | LTP | CHG OI% | CALL OI% -->
+          <!-- CALLS (CE) ITM / OTM: Delta | IV | OI Chg | OI | Volume | LTP | CHG OI% | CALL OI% | Rev(LTP/Spot) -->
           <td class="breakdown-ce col-delta">
             <div class="breakdown-cell-stacked">
               <span class="val-itm">${itmCeDeltaStr}</span>
@@ -1612,6 +1709,12 @@ function renderTable(payload) {
               <span class="val-otm">${otmCeOiPctStr}</span>
             </div>
           </td>
+          <td class="breakdown-ce col-rev">
+            <div class="breakdown-cell-stacked">
+              <span class="val-itm">-</span>
+              <span class="val-otm">-</span>
+            </div>
+          </td>
 
           <!-- STRIKE BREAKDOWN LABEL (Labels row 1 as ITM and row 2 as OTM) -->
           <td class="breakdown-strike col-strike">
@@ -1621,7 +1724,13 @@ function renderTable(payload) {
             </div>
           </td>
 
-          <!-- PUTS (PE) ITM / OTM: PUT OI% | CHG OI% | LTP | Volume | OI | OI Chg | IV | Delta -->
+          <!-- PUTS (PE) ITM / OTM: Rev(LTP/Spot) | PUT OI% | CHG OI% | LTP | Volume | OI | OI Chg | IV | Delta -->
+          <td class="breakdown-pe col-rev">
+            <div class="breakdown-cell-stacked">
+              <span class="val-itm">-</span>
+              <span class="val-otm">-</span>
+            </div>
+          </td>
           <td class="breakdown-pe col-oi-pct">
             <div class="breakdown-cell-stacked">
               <span class="val-itm">${itmPeOiPctStr}</span>

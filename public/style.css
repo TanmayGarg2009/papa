@@ -657,23 +657,59 @@ input[type="number"] {
 /* Option Chain Table Architecture */
 .oc-table {
   width: 100%;
-  min-width: 1460px;
+  min-width: 1560px;
   border-collapse: collapse;
   table-layout: fixed;
   background-color: #ffffff;
   color: #0f172a;
 }
 
-/* Column Width Distributions (Optimally Balanced - No Column Over-allocated) */
-.col-delta { width: 3.8%; }
-.col-iv { width: 3.5%; }
-.col-oichg { width: 9.5%; }
-.col-oi { width: 7.8%; }
-.col-vol { width: 7.8%; }
-.col-ltp { width: 4.5%; }
-.col-oichg-pct { width: 5.3%; }
-.col-oi-pct { width: 5.2%; }
-.col-strike { width: 5.2%; }
+/* Column Width Distributions (19 Columns - Strict 100.0% Optimal Balancing) */
+.col-delta { width: 3.5%; }
+.col-iv { width: 3.2%; }
+.col-oichg { width: 8.6%; }
+.col-oi { width: 7.0%; }
+.col-vol { width: 7.0%; }
+.col-ltp { width: 4.2%; }
+.col-oichg-pct { width: 4.8%; }
+.col-oi-pct { width: 4.7%; }
+.col-rev { width: 4.5%; }
+.col-strike { width: 5.0%; }
+
+/* Rev(LTP/Spot) Column & Cell Architecture */
+th.col-rev {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: #334155;
+  text-align: center;
+}
+
+.rev-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.2;
+  padding: 1px 2px;
+}
+
+.rev-ltp {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 700;
+  font-size: 0.80rem;
+  color: #0f172a;
+  white-space: nowrap;
+}
+
+.rev-spot {
+  font-family: 'JetBrains Mono', monospace;
+  font-weight: 500;
+  font-size: 0.68rem;
+  color: #64748b;
+  margin-top: 1px;
+  white-space: nowrap;
+}
 
 /* Super Header Row - Solid Sticky on Top */
 .super-header th {
@@ -693,21 +729,21 @@ input[type="number"] {
   background-color: #b91c1c !important; /* Refined Deep Red for Calls */
   color: #ffffff !important;
   text-align: center;
-  width: 47.4%;
+  width: 47.5%;
 }
 
 .th-pe {
   background-color: #15803d !important; /* Refined Deep Green for Puts */
   color: #ffffff !important;
   text-align: center;
-  width: 47.4%;
+  width: 47.5%;
 }
 
 .th-strike-title {
   background-color: #1e293b !important;
   color: #ffffff !important;
   text-align: center;
-  width: 5.2%;
+  width: 5.0%;
 }
 
 .header-sr-badge {
